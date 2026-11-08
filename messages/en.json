@@ -218,7 +218,7 @@
     "email": "Email",
     "phone": "Phone",
     "lastNameRequired": "Last name is required.",
-    "markAsTeacher": "Teacher (TEACHER function)",
+    "markAsTeacher": "Teacher",
     "stats": {
       "total": "Total",
       "teachers": "Teachers",
@@ -226,6 +226,7 @@
       "support": "Admin / support"
     },
     "tableCount": "{count, plural, one {# member shown} other {# members shown}}",
+    "tabsNav": "Staff filters",
     "columns": {
       "name": "Name",
       "number": "Staff no.",

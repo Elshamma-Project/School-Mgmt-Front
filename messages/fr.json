@@ -218,7 +218,7 @@
     "email": "E-mail",
     "phone": "Téléphone",
     "lastNameRequired": "Le nom est obligatoire.",
-    "markAsTeacher": "Enseignant (fonction TEACHER)",
+    "markAsTeacher": "Enseignant",
     "stats": {
       "total": "Total",
       "teachers": "Enseignants",
@@ -226,6 +226,7 @@
       "support": "Admin. / soutien"
     },
     "tableCount": "{count, plural, one {# membre affiché} other {# membres affichés}}",
+    "tabsNav": "Filtres du personnel",
     "columns": {
       "name": "Nom",
       "number": "Matricule",

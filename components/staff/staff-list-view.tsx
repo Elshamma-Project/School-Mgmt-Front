@@ -507,8 +507,11 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
         />
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+        <nav
+          aria-label={t("tabsNav")}
+          className="flex min-w-0 items-stretch gap-0 overflow-x-auto border-b border-[var(--ios-separator)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {STAFF_LIST_TABS.map((key) => {
             const active = tab === key;
             return (
@@ -516,20 +519,28 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
                 key={key}
                 type="button"
                 onClick={() => selectTab(key)}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "pressable shrink-0 rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] font-semibold transition-colors focus-visible:shadow-[var(--focus-ring)]",
+                  "relative shrink-0 px-3 py-2.5 text-[12px] font-medium tracking-[-0.01em] transition-colors duration-[var(--duration-fast)] focus-visible:shadow-[var(--focus-ring)] sm:px-3.5",
                   active
-                    ? "bg-[var(--ios-blue)] text-white"
-                    : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)] hover:text-[var(--ios-label)]",
+                    ? "text-[var(--ios-label)]"
+                    : "text-[var(--ios-secondary-label)] hover:text-[var(--ios-label)]",
                 )}
               >
                 {t(`tabs.${key}`)}
+                {active ? (
+                  <span
+                    className="absolute inset-x-2 bottom-[-1px] h-[2px] rounded-full bg-[var(--ios-blue)]"
+                    aria-hidden
+                  />
+                ) : null}
               </button>
             );
           })}
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[320px] sm:flex-row">
-          <div className="min-w-0 flex-1 sm:w-[220px] sm:flex-none">
+        </nav>
+
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="min-w-0 flex-1 lg:w-[220px] lg:flex-none">
             <IconInput
               value={query}
               onChange={(e) => setQuery(e.target.value)}
