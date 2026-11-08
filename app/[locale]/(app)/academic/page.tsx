@@ -1,16 +1,11 @@
 import { BookOpen } from "lucide-react";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 
-type AcademicPageProps = {
-  params: Promise<{ locale: string }>;
-};
+export const instant = false;
 
-export default async function AcademicPage({ params }: AcademicPageProps) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-
+export default async function AcademicPage() {
   const t = await getTranslations("academic");
   const tCommon = await getTranslations("common");
 

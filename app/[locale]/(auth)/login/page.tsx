@@ -1,15 +1,11 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 
-type LoginPageProps = {
-  params: Promise<{ locale: string }>;
-};
+/** Traductions next-intl = runtime locale → hors shell Instant pour l’instant. */
+export const instant = false;
 
-export default async function LoginPage({ params }: LoginPageProps) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-
+export default async function LoginPage() {
   const t = await getTranslations("auth");
   const tCommon = await getTranslations("common");
 

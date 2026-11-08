@@ -10,6 +10,9 @@ type LocaleLayoutProps = {
   params: Promise<{ locale: string }>;
 };
 
+/** Locale dans l’URL : ce layout peut bloquer ; les pages enfants restent éligibles à Instant. */
+export const instant = false;
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }

@@ -1,15 +1,10 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { ChangePasswordStub } from "@/components/auth/change-password-stub";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 
-type ChangePasswordPageProps = {
-  params: Promise<{ locale: string }>;
-};
+export const instant = false;
 
-export default async function ChangePasswordPage({ params }: ChangePasswordPageProps) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-
+export default async function ChangePasswordPage() {
   const t = await getTranslations("auth");
   const tCommon = await getTranslations("common");
 

@@ -1,16 +1,11 @@
 import { Inbox } from "lucide-react";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 
-type HomePageProps = {
-  params: Promise<{ locale: string }>;
-};
+export const instant = false;
 
-export default async function HomePage({ params }: HomePageProps) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-
+export default async function HomePage() {
   const t = await getTranslations("home");
   const tCommon = await getTranslations("common");
 
