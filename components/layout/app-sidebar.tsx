@@ -1,34 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SidebarNav } from "@/components/layout/app-nav";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { SidebarAccount } from "@/components/layout/sidebar-account";
 import { cn } from "@/lib/utils/cn";
-
-const STORAGE_KEY = "smels-sidebar-collapsed";
+import { useSidebarStore } from "@/stores/sidebar-store";
 
 export function AppSidebar() {
   const t = useTranslations("common");
   const tNav = useTranslations("nav");
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = useSidebarStore((s) => s.collapsed);
+  const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "1") setCollapsed(true);
-    setReady(true);
+    setReady(useSidebarStore.persist.hasHydrated());
+    return useSidebarStore.persist.onFinishHydration(() => setReady(true));
   }, []);
-
-  function toggle() {
-    setCollapsed((current) => {
-      const next = !current;
-      window.localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
-      return next;
-    });
-  }
 
   return (
     <aside
@@ -48,14 +39,12 @@ export function AppSidebar() {
         {collapsed ? (
           <button
             type="button"
-            onClick={toggle}
-            aria-pressed
+            onClick={toggleCollapsed}
             aria-label={tNav("expandSidebar")}
             title={tNav("expandSidebar")}
-            className="pressable flex size-9 cursor-pointer items-center justify-center gap-0.5 rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)] focus-visible:shadow-[var(--focus-ring)]"
+            className="pressable cursor-pointer rounded-[var(--radius-md)] focus-visible:shadow-[var(--focus-ring)]"
           >
             <BrandMark size="sm" />
-            <PanelLeftOpen className="size-4 shrink-0 stroke-[1.75]" aria-hidden />
           </button>
         ) : (
           <>
@@ -70,7 +59,7 @@ export function AppSidebar() {
             </div>
             <button
               type="button"
-              onClick={toggle}
+              onClick={toggleCollapsed}
               aria-pressed={false}
               aria-label={tNav("collapseSidebar")}
               title={tNav("collapseSidebar")}
