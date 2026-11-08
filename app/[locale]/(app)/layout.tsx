@@ -1,4 +1,5 @@
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { RoleGuard } from "@/components/auth/role-guard";
 import { AppShell } from "@/components/layout/app-shell";
 
 type AppLayoutProps = {
@@ -8,7 +9,9 @@ type AppLayoutProps = {
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
     <AuthGuard>
-      <AppShell>{children}</AppShell>
+      <RoleGuard>
+        <AppShell>{children}</AppShell>
+      </RoleGuard>
     </AuthGuard>
   );
 }

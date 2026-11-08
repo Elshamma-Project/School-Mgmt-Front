@@ -2,50 +2,125 @@ import type { LucideIcon } from "lucide-react";
 import {
   Bell,
   BookOpen,
+  Building2,
+  CalendarDays,
+  ClipboardList,
+  FileSpreadsheet,
   GraduationCap,
   Home,
+  LayoutDashboard,
   Settings,
+  Shield,
+  UserRound,
   Users,
 } from "lucide-react";
+import { getRoleHomePath } from "@/lib/auth/workspaces";
 import type { AppRole } from "@/types/auth";
 
 export type NavItemKey =
   | "home"
-  | "staff"
+  | "myClasses"
+  | "grades"
+  | "timetable"
+  | "children"
+  | "reportCards"
   | "students"
+  | "staff"
   | "academic"
+  | "sequences"
+  | "reporting"
+  | "audit"
+  | "adminAccounts"
+  | "schools"
+  | "platform"
   | "notifications"
   | "settings";
 
+export type NavHref = `/${string}`;
+
 export type NavItem = {
-  href: "/" | "/staff" | "/students" | "/academic" | "/notifications" | "/settings";
+  href: NavHref;
   key: NavItemKey;
   icon: LucideIcon;
 };
 
-const ALL_ITEMS: NavItem[] = [
-  { href: "/", key: "home", icon: Home },
-  { href: "/staff", key: "staff", icon: Users },
-  { href: "/students", key: "students", icon: GraduationCap },
-  { href: "/academic", key: "academic", icon: BookOpen },
-  { href: "/notifications", key: "notifications", icon: Bell },
-  { href: "/settings", key: "settings", icon: Settings },
-];
+function item(href: NavHref, key: NavItemKey, icon: LucideIcon): NavItem {
+  return { href, key, icon };
+}
 
-/** Modules visibles par rôle (mock UI — à affiner avec les droits API). */
-const ROLE_NAV: Record<AppRole, NavItemKey[]> = {
-  super_admin: ["home", "staff", "students", "academic", "notifications", "settings"],
-  staff: ["home", "staff", "students", "academic", "notifications", "settings"],
-  teacher: ["home", "students", "academic", "notifications", "settings"],
-  guardian: ["home", "students", "academic", "notifications", "settings"],
-};
-
+/** Navigation par espace de rôle — plus de menu unique partagé. */
 export function getNavItemsForRole(role: AppRole | null): NavItem[] {
   if (!role) {
-    return ALL_ITEMS.filter(
-      (item) => item.key === "home" || item.key === "notifications" || item.key === "settings",
-    );
+    return [
+      item("/settings", "settings", Settings),
+      item("/notifications", "notifications", Bell),
+    ];
   }
-  const allowed = new Set(ROLE_NAV[role]);
-  return ALL_ITEMS.filter((item) => allowed.has(item.key));
+
+  const home = getRoleHomePath(role);
+  const sharedTail: NavItem[] = [
+    item("/notifications", "notifications", Bell),
+    item("/settings", "settings", Settings),
+  ];
+
+  switch (role) {
+    case "TEACHER":
+      return [
+        item(home, "home", Home),
+        item(`${home}/classes`, "myClasses", BookOpen),
+        item(`${home}/grades`, "grades", ClipboardList),
+        item(`${home}/timetable`, "timetable", CalendarDays),
+        ...sharedTail,
+      ];
+    case "PARENT":
+      return [
+        item(home, "home", Home),
+        item(`${home}/children`, "children", Users),
+        item(`${home}/grades`, "grades", ClipboardList),
+        item(`${home}/report-cards`, "reportCards", FileSpreadsheet),
+        item(`${home}/timetable`, "timetable", CalendarDays),
+        ...sharedTail,
+      ];
+    case "STUDENT":
+      return [
+        item(home, "home", Home),
+        item(`${home}/grades`, "grades", ClipboardList),
+        item(`${home}/report-cards`, "reportCards", FileSpreadsheet),
+        item(`${home}/timetable`, "timetable", CalendarDays),
+        ...sharedTail,
+      ];
+    case "ADMINISTRATION":
+      return [
+        item(home, "home", LayoutDashboard),
+        item(`${home}/students`, "students", GraduationCap),
+        item(`${home}/staff`, "staff", Users),
+        item(`${home}/academic`, "academic", BookOpen),
+        item(`${home}/grades`, "grades", ClipboardList),
+        item(`${home}/reporting`, "reporting", FileSpreadsheet),
+        item(`${home}/timetable`, "timetable", CalendarDays),
+        ...sharedTail,
+      ];
+    case "DIRECTOR":
+      return [
+        item(home, "home", LayoutDashboard),
+        item(`${home}/students`, "students", GraduationCap),
+        item(`${home}/staff`, "staff", Users),
+        item(`${home}/academic`, "academic", BookOpen),
+        item(`${home}/sequences`, "sequences", Shield),
+        item(`${home}/reporting`, "reporting", FileSpreadsheet),
+        item(`${home}/admin-accounts`, "adminAccounts", UserRound),
+        item(`${home}/timetable`, "timetable", CalendarDays),
+        ...sharedTail,
+      ];
+    case "SUPER_ADMIN":
+      return [
+        item(home, "home", LayoutDashboard),
+        item(`${home}/schools`, "schools", Building2),
+        item(`${home}/platform`, "platform", Shield),
+        item(`${home}/audit`, "audit", ClipboardList),
+        ...sharedTail,
+      ];
+    default:
+      return sharedTail;
+  }
 }

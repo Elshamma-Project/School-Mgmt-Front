@@ -1,11 +1,24 @@
+/** Rôles alignés sur `docs/05-roles-permissions.md` / module user (JWT). */
 export const APP_ROLES = [
-  "teacher",
-  "staff",
-  "super_admin",
-  "guardian",
+  "STUDENT",
+  "PARENT",
+  "TEACHER",
+  "ADMINISTRATION",
+  "DIRECTOR",
+  "SUPER_ADMIN",
 ] as const;
 
 export type AppRole = (typeof APP_ROLES)[number];
+
+/** Rôles proposés en connexion démo (élève activé plus tard côté prod). */
+export const DEMO_LOGIN_ROLES: AppRole[] = [
+  "TEACHER",
+  "PARENT",
+  "ADMINISTRATION",
+  "DIRECTOR",
+  "SUPER_ADMIN",
+  "STUDENT",
+];
 
 export type AuthUser = {
   id: string;
@@ -14,7 +27,9 @@ export type AuthUser = {
   email?: string;
   /** Rôle principal de la session (mock ou API). */
   role: AppRole;
+  /** Union des rôles du compte (cumul possible). */
   roles: AppRole[];
+  schoolId?: string;
 };
 
 export type LoginRequest = {
@@ -46,4 +61,10 @@ export function isAppRole(value: string): value is AppRole {
 export function primaryRole(user: AuthUser | null): AppRole | null {
   if (!user) return null;
   return user.role ?? user.roles[0] ?? null;
+}
+
+/** Droit effectif = union des rôles du compte. */
+export function userHasRole(user: AuthUser | null, role: AppRole): boolean {
+  if (!user) return false;
+  return user.roles.includes(role) || user.role === role;
 }

@@ -21,7 +21,7 @@
   },
   "auth": {
     "loginTitle": "Connexion",
-    "loginSubtitle": "Accédez à l’espace de gestion de l’école.",
+    "loginSubtitle": "Accédez à l’espace adapté à votre rôle.",
     "username": "Identifiant",
     "password": "Mot de passe",
     "schoolId": "École (optionnel)",
@@ -41,49 +41,80 @@
     "requiredField": "Ce champ est requis",
     "invalidCredentials": "Identifiant ou mot de passe incorrect.",
     "demoMode": "Mode démo (sans API)",
-    "demoModeHint": "Connexion fictive pour explorer les interfaces par rôle. L’auth réelle sera branchée plus tard.",
-    "chooseRole": "Profil à simuler",
+    "demoModeHint": "Connexion fictive pour explorer chaque espace de rôle. L’auth réelle sera branchée plus tard.",
+    "chooseRole": "Rôle à simuler",
     "apiDisabled": "L’authentification API n’est pas encore activée. Recochez le mode démo pour continuer."
   },
   "roles": {
-    "teacher": {
-      "label": "Enseignant",
-      "hint": "Classes, notes, suivi pédagogique",
-      "homeBlurb": "Espace enseignant — vos classes et le suivi scolaire.",
-      "studentsBlurb": "Élèves de vos classes (vue enseignant).",
-      "academicBlurb": "Notes, matières et bulletins de vos classes.",
-      "staffBlurb": "Le personnel n’est pas géré depuis ce profil."
+    "STUDENT": {
+      "label": "Élève",
+      "hint": "Matricule — activation prod plus tard",
+      "homeBlurb": "Espace élève — vos notes, emploi du temps et bulletin annuel.",
+      "comingSoonTitle": "Connexion élève (aperçu)",
+      "comingSoonBody": "En production, l’accès élève sera activé plus tard (matricule + mot de passe temporaire)."
     },
-    "staff": {
-      "label": "Staff",
-      "hint": "Administration scolaire au quotidien",
-      "homeBlurb": "Espace staff — opérations et dossiers de l’école.",
-      "studentsBlurb": "Dossiers élèves (accès staff).",
-      "academicBlurb": "Organisation académique et suivi.",
-      "staffBlurb": "Gestion du personnel enseignant et administratif."
-    },
-    "super_admin": {
-      "label": "Super admin",
-      "hint": "Configuration complète de l’école",
-      "homeBlurb": "Espace super admin — vue d’ensemble et paramétrage.",
-      "studentsBlurb": "Tous les dossiers élèves (administration).",
-      "academicBlurb": "Pilotage académique complet.",
-      "staffBlurb": "Administration complète du personnel."
-    },
-    "guardian": {
+    "PARENT": {
       "label": "Parent / tuteur",
-      "hint": "Suivi des enfants scolarisés",
-      "homeBlurb": "Espace famille — suivi de vos enfants.",
-      "studentsBlurb": "Enfants liés à votre compte (sans données d’autres élèves).",
-      "academicBlurb": "Notes et bulletins de vos enfants.",
-      "staffBlurb": "Le personnel n’est pas visible pour ce profil."
+      "hint": "Suivi de tous ses enfants uniquement",
+      "homeBlurb": "Espace famille — enfants liés à votre compte, notes et bulletin annuel."
+    },
+    "TEACHER": {
+      "label": "Enseignant",
+      "hint": "ClassSubject, notes, emploi du temps",
+      "homeBlurb": "Espace enseignant — vos classes, fiches de notes (séquence ouverte) et cours."
+    },
+    "ADMINISTRATION": {
+      "label": "Administration",
+      "hint": "Secrétariat, censeur, surveillants",
+      "homeBlurb": "Espace administration — établissement au quotidien, hors comptes admin et réouverture."
+    },
+    "DIRECTOR": {
+      "label": "Directeur",
+      "hint": "Chef d’établissement",
+      "homeBlurb": "Espace direction — pilotage complet, y compris réouverture de séquence et comptes admin."
+    },
+    "SUPER_ADMIN": {
+      "label": "Super admin",
+      "hint": "Plateforme, multi-établissements",
+      "homeBlurb": "Espace plateforme — établissements, support et accès journalisé."
     }
+  },
+  "capabilities": {
+    "viewOwnProfile": "Consulter son profil",
+    "viewOwnChildren": "Voir ses enfants uniquement",
+    "viewOwnGrades": "Consulter les notes autorisées",
+    "downloadAnnualReport": "Télécharger le bulletin annuel publié",
+    "viewTeacherClasses": "Voir ses ClassSubject",
+    "editOpenSequenceGrades": "Saisir / corriger notes (séquence ouverte)",
+    "manageSchoolStructure": "Gérer structure académique",
+    "manageStaff": "Gérer le personnel",
+    "manageStudents": "Gérer élèves et tuteurs",
+    "manageEnrollments": "Gérer les inscriptions",
+    "manageTimetable": "Gérer l’emploi du temps",
+    "manageReportCards": "Bulletins et reporting",
+    "manageAbsences": "Absences, retards, sanctions",
+    "reopenClosedSequence": "Rouvrir une séquence clôturée",
+    "manageAdminAccounts": "Comptes d’administration",
+    "manageGradeTemplates": "Barèmes et gabarits",
+    "viewAuditJournal": "Journal d’audit",
+    "managePlatform": "Plateforme multi-écoles"
   },
   "nav": {
     "home": "Accueil",
-    "staff": "Personnel",
+    "myClasses": "Mes classes",
+    "grades": "Notes",
+    "timetable": "Emploi du temps",
+    "children": "Mes enfants",
+    "reportCards": "Bulletins",
     "students": "Élèves",
+    "staff": "Personnel",
     "academic": "Académique",
+    "sequences": "Séquences",
+    "reporting": "Reporting",
+    "audit": "Audit",
+    "adminAccounts": "Comptes admin",
+    "schools": "Établissements",
+    "platform": "Plateforme",
     "notifications": "Notifications",
     "settings": "Réglages",
     "main": "Navigation principale",
@@ -100,31 +131,134 @@
     "description": "Tableau de bord SMELS.",
     "greeting": "Bonjour, {name}",
     "profileSection": "Session",
-    "roleLabel": "Profil",
+    "roleLabel": "Rôle",
     "accountLabel": "Compte",
-    "modulesSection": "Modules",
+    "schoolLabel": "Établissement",
+    "modulesSection": "Modules de cet espace",
+    "scopeSection": "Périmètre (UI)",
+    "scopeFooter": "Indicatif — le serveur applique toujours les règles du jeton.",
     "demoFooter": "Session fictive — aucune donnée réelle d’élève n’est chargée."
-  },
-  "staff": {
-    "title": "Personnel",
-    "description": "Gestion du personnel enseignant et administratif."
-  },
-  "students": {
-    "title": "Élèves",
-    "description": "Dossiers élèves (données protégées — aucun détail en journalisation client)."
-  },
-  "academic": {
-    "title": "Académique",
-    "description": "Classes, matières, notes et bulletins."
   },
   "settings": {
     "title": "Réglages",
     "description": "Préférences de l’application et de la session.",
     "languageSection": "Langue de l’interface",
     "sessionSection": "Session",
-    "switchRoleSection": "Changer de profil (démo)",
-    "switchRoleFooter": "Temporaire : bascule rapide entre les interfaces sans se déconnecter.",
+    "switchRoleSection": "Changer de rôle (démo)",
+    "switchRoleFooter": "Bascule vers l’espace URL du rôle choisi.",
     "activeRole": "Actif"
+  },
+  "workspace": {
+    "teacherClasses": {
+      "description": "Classes et matières qui vous sont affectées.",
+      "empty": "Aucune ClassSubject chargée (API à brancher)."
+    },
+    "teacherGrades": {
+      "description": "Fiches de notes de vos matières.",
+      "hint": "Saisie limitée à vos ClassSubject et séquence OPEN.",
+      "empty": "Aucune fiche de notes pour le moment."
+    },
+    "teacherTimetable": {
+      "description": "Vos cours publiés.",
+      "empty": "Aucun cours à afficher."
+    },
+    "parentChildren": {
+      "description": "Enfants liés à votre compte tuteur.",
+      "hint": "Uniquement via Student.guardians — jamais d’autres élèves.",
+      "empty": "Aucun enfant lié pour cette démo."
+    },
+    "parentGrades": {
+      "description": "Notes de vos enfants (temps réel).",
+      "empty": "Aucune note à afficher."
+    },
+    "parentReportCards": {
+      "description": "Bulletins annuels téléchargeables.",
+      "hint": "Uniquement ANNUAL + PUBLISHED.",
+      "empty": "Aucun bulletin publié."
+    },
+    "parentTimetable": {
+      "description": "Emploi du temps des classes de vos enfants.",
+      "empty": "Aucun emploi du temps."
+    },
+    "adminStudents": {
+      "description": "Élèves, tuteurs et inscriptions.",
+      "empty": "Module élèves — fondations prêtes."
+    },
+    "adminStaff": {
+      "description": "Personnel enseignant et administratif (hors comptes admin).",
+      "empty": "Module personnel — fondations prêtes."
+    },
+    "adminAcademic": {
+      "description": "Niveaux, classes, matières, coefficients.",
+      "empty": "Module académique — fondations prêtes."
+    },
+    "adminGrades": {
+      "description": "Notes et corrections (y compris après clôture avec motif).",
+      "empty": "Module notes — fondations prêtes."
+    },
+    "adminReporting": {
+      "description": "Absences, sanctions, bulletins.",
+      "empty": "Module reporting — fondations prêtes."
+    },
+    "adminTimetable": {
+      "description": "Création et publication de l’emploi du temps.",
+      "empty": "Module emploi du temps — fondations prêtes."
+    },
+    "directorStudents": {
+      "description": "Pilotage élèves / inscriptions.",
+      "empty": "Module élèves (direction)."
+    },
+    "directorStaff": {
+      "description": "Personnel et organisation.",
+      "empty": "Module personnel (direction)."
+    },
+    "directorAcademic": {
+      "description": "Structure académique et coefficients.",
+      "empty": "Module académique (direction)."
+    },
+    "directorSequences": {
+      "description": "Ouverture, clôture et réouverture de séquences.",
+      "hint": "Réouverture : directeur (ou super admin) uniquement.",
+      "empty": "Module séquences — fondations prêtes."
+    },
+    "directorReporting": {
+      "description": "Bulletins, gabarits et barèmes.",
+      "empty": "Module reporting (direction)."
+    },
+    "directorAdminAccounts": {
+      "description": "Comptes d’administration de l’établissement.",
+      "empty": "Module comptes admin — fondations prêtes."
+    },
+    "directorTimetable": {
+      "description": "Emploi du temps établissement.",
+      "empty": "Module emploi du temps (direction)."
+    },
+    "superSchools": {
+      "description": "Établissements de la plateforme.",
+      "empty": "Module multi-écoles — fondations prêtes."
+    },
+    "superPlatform": {
+      "description": "Support plateforme et configuration globale.",
+      "hint": "Accès journalisé côté serveur.",
+      "empty": "Module plateforme — fondations prêtes."
+    },
+    "superAudit": {
+      "description": "Journaux d’accès et d’audit.",
+      "empty": "Module audit — fondations prêtes."
+    },
+    "studentGrades": {
+      "description": "Vos notes de séquence.",
+      "empty": "Aucune note à afficher."
+    },
+    "studentReportCards": {
+      "description": "Votre bulletin annuel publié.",
+      "hint": "Téléchargement : ANNUAL + PUBLISHED uniquement.",
+      "empty": "Aucun bulletin publié."
+    },
+    "studentTimetable": {
+      "description": "Emploi du temps de votre classe.",
+      "empty": "Aucun emploi du temps."
+    }
   },
   "errors": {
     "generic": "Une erreur est survenue.",

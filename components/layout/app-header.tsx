@@ -4,11 +4,14 @@ import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { usePathname } from "@/i18n/navigation";
 import { getNavKeyFromPathname } from "@/lib/navigation/page-meta";
+import { useAuthStore } from "@/stores/auth-store";
+import { primaryRole } from "@/types/auth";
 
 export function AppHeader() {
   const tNav = useTranslations("nav");
   const pathname = usePathname();
-  const title = tNav(getNavKeyFromPathname(pathname));
+  const role = primaryRole(useAuthStore((s) => s.user));
+  const title = tNav(getNavKeyFromPathname(pathname, role));
 
   return (
     <header className="sticky top-0 z-30 h-[var(--app-topbar-height)] shrink-0 border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-bg)_88%,transparent)] backdrop-blur-xl">

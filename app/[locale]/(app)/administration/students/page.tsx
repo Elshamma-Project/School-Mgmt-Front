@@ -1,0 +1,8 @@
+import { GraduationCap } from "lucide-react";
+import { ModulePage } from "@/components/workspace/module-page";
+
+export const instant = false;
+
+export default function AdminStudentsPage() {
+  return <ModulePage ns="adminStudents" icon={GraduationCap} />;
+}
