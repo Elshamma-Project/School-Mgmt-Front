@@ -43,6 +43,7 @@
     "demoMode": "Demo mode (no API)",
     "demoModeHint": "Fictional sign-in to explore each role workspace. Real auth comes later.",
     "chooseRole": "Role to simulate",
+    "rolePreview": "preview",
     "apiDisabled": "API authentication is not enabled yet. Re-check demo mode to continue."
   },
   "roles": {

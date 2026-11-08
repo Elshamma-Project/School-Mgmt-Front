@@ -27,7 +27,9 @@ export function SidebarNav({ collapsed = false }: SidebarNavProps) {
     >
       {items.map(({ href, key, icon: Icon }) => {
         const active =
-          href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+          key === "home"
+            ? pathname === href
+            : pathname === href || pathname.startsWith(`${href}/`);
         const label = t(key);
 
         return (
@@ -78,7 +80,9 @@ export function MobileTabBar() {
       >
         {items.map(({ href, key, icon: Icon }) => {
           const active =
-            href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+            key === "home"
+              ? pathname === href
+              : pathname === href || pathname.startsWith(`${href}/`);
 
           return (
             <li key={href}>

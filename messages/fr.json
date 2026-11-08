@@ -43,6 +43,7 @@
     "demoMode": "Mode démo (sans API)",
     "demoModeHint": "Connexion fictive pour explorer chaque espace de rôle. L’auth réelle sera branchée plus tard.",
     "chooseRole": "Rôle à simuler",
+    "rolePreview": "aperçu",
     "apiDisabled": "L’authentification API n’est pas encore activée. Recochez le mode démo pour continuer."
   },
   "roles": {

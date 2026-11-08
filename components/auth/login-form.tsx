@@ -7,7 +7,8 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { createMockLogin, listMockRoles } from "@/lib/auth/mock-users";
+import { createMockLogin, isComingSoonRole, listMockRoles } from "@/lib/auth/mock-users";
+import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { notify } from "@/lib/ui/notify";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/cn";
@@ -20,7 +21,7 @@ export function LoginForm() {
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
   const [demoMode, setDemoMode] = useState(true);
-  const [role, setRole] = useState<AppRole>("teacher");
+  const [role, setRole] = useState<AppRole>("TEACHER");
   const [submitting, setSubmitting] = useState(false);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -39,7 +40,7 @@ export function LoginForm() {
     notify.success(t("loginSuccess"), {
       description: tRoles(`${role}.label`),
     });
-    router.replace("/");
+    router.replace(getRoleHomePath(role));
     setSubmitting(false);
   }
 
@@ -63,7 +64,7 @@ export function LoginForm() {
           <div
             role="radiogroup"
             aria-labelledby="role-picker-label"
-            className="mt-2 overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-fill)]"
+            className="mt-2 max-h-[320px] overflow-y-auto overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-fill)]"
           >
             {listMockRoles().map((value, index) => {
               const selected = role === value;
@@ -83,6 +84,11 @@ export function LoginForm() {
                   <span>
                     <span className="block text-[var(--text-body)] font-medium text-[var(--ios-label)]">
                       {tRoles(`${value}.label`)}
+                      {isComingSoonRole(value) ? (
+                        <span className="ml-2 text-[var(--text-caption)] font-normal text-[var(--ios-warning)]">
+                          · {t("rolePreview")}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="mt-0.5 block text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
                       {tRoles(`${value}.hint`)}

@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { PageHeader } from "@/components/ui/page-header";
 import { createMockLogin, listMockRoles } from "@/lib/auth/mock-users";
+import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
@@ -40,7 +41,7 @@ export function SettingsView() {
       mustChangePassword: false,
       isMock: true,
     });
-    router.replace("/");
+    router.replace(getRoleHomePath(role));
   }
 
   return (
