@@ -21,7 +21,7 @@
   },
   "auth": {
     "loginTitle": "Sign in",
-    "loginSubtitle": "Access the school management workspace.",
+    "loginSubtitle": "Enter the workspace tailored to your role.",
     "username": "Username",
     "password": "Password",
     "schoolId": "School (optional)",
@@ -41,49 +41,80 @@
     "requiredField": "This field is required",
     "invalidCredentials": "Invalid username or password.",
     "demoMode": "Demo mode (no API)",
-    "demoModeHint": "Fictional sign-in to explore role-based interfaces. Real auth comes later.",
-    "chooseRole": "Profile to simulate",
+    "demoModeHint": "Fictional sign-in to explore each role workspace. Real auth comes later.",
+    "chooseRole": "Role to simulate",
     "apiDisabled": "API authentication is not enabled yet. Re-check demo mode to continue."
   },
   "roles": {
-    "teacher": {
-      "label": "Teacher",
-      "hint": "Classes, grades, academic follow-up",
-      "homeBlurb": "Teacher workspace — your classes and academic follow-up.",
-      "studentsBlurb": "Students in your classes (teacher view).",
-      "academicBlurb": "Grades, subjects and report cards for your classes.",
-      "staffBlurb": "Staff management is not available for this profile."
+    "STUDENT": {
+      "label": "Student",
+      "hint": "Matricule — production later",
+      "homeBlurb": "Student workspace — your grades, timetable and annual report card.",
+      "comingSoonTitle": "Student login (preview)",
+      "comingSoonBody": "In production, student access will be enabled later (matricule + temporary password)."
     },
-    "staff": {
-      "label": "Staff",
-      "hint": "Day-to-day school administration",
-      "homeBlurb": "Staff workspace — school operations and records.",
-      "studentsBlurb": "Student records (staff access).",
-      "academicBlurb": "Academic organisation and follow-up.",
-      "staffBlurb": "Teaching and administrative staff management."
-    },
-    "super_admin": {
-      "label": "Super admin",
-      "hint": "Full school configuration",
-      "homeBlurb": "Super admin workspace — overview and configuration.",
-      "studentsBlurb": "All student records (administration).",
-      "academicBlurb": "Full academic oversight.",
-      "staffBlurb": "Full staff administration."
-    },
-    "guardian": {
+    "PARENT": {
       "label": "Parent / guardian",
-      "hint": "Follow your children’s schooling",
-      "homeBlurb": "Family workspace — follow your children.",
-      "studentsBlurb": "Children linked to your account (no other students).",
-      "academicBlurb": "Grades and report cards for your children.",
-      "staffBlurb": "Staff is not visible for this profile."
+      "hint": "Follow all their children only",
+      "homeBlurb": "Family workspace — linked children, grades and annual report cards."
+    },
+    "TEACHER": {
+      "label": "Teacher",
+      "hint": "ClassSubject, grades, timetable",
+      "homeBlurb": "Teacher workspace — your classes, grade sheets (open sequence) and lessons."
+    },
+    "ADMINISTRATION": {
+      "label": "Administration",
+      "hint": "Secretariat, discipline officers",
+      "homeBlurb": "Administration workspace — day-to-day school ops, except admin accounts and reopening."
+    },
+    "DIRECTOR": {
+      "label": "Director",
+      "hint": "Head of school",
+      "homeBlurb": "Director workspace — full oversight, including sequence reopen and admin accounts."
+    },
+    "SUPER_ADMIN": {
+      "label": "Super admin",
+      "hint": "Platform, multi-school",
+      "homeBlurb": "Platform workspace — schools, support and logged access."
     }
+  },
+  "capabilities": {
+    "viewOwnProfile": "View own profile",
+    "viewOwnChildren": "View linked children only",
+    "viewOwnGrades": "View allowed grades",
+    "downloadAnnualReport": "Download published annual report",
+    "viewTeacherClasses": "View assigned ClassSubjects",
+    "editOpenSequenceGrades": "Edit grades (open sequence)",
+    "manageSchoolStructure": "Manage academic structure",
+    "manageStaff": "Manage staff",
+    "manageStudents": "Manage students & guardians",
+    "manageEnrollments": "Manage enrollments",
+    "manageTimetable": "Manage timetable",
+    "manageReportCards": "Report cards & reporting",
+    "manageAbsences": "Absences, lateness, sanctions",
+    "reopenClosedSequence": "Reopen a closed sequence",
+    "manageAdminAccounts": "Administration accounts",
+    "manageGradeTemplates": "Scales & templates",
+    "viewAuditJournal": "Audit journal",
+    "managePlatform": "Multi-school platform"
   },
   "nav": {
     "home": "Home",
-    "staff": "Staff",
+    "myClasses": "My classes",
+    "grades": "Grades",
+    "timetable": "Timetable",
+    "children": "My children",
+    "reportCards": "Report cards",
     "students": "Students",
+    "staff": "Staff",
     "academic": "Academic",
+    "sequences": "Sequences",
+    "reporting": "Reporting",
+    "audit": "Audit",
+    "adminAccounts": "Admin accounts",
+    "schools": "Schools",
+    "platform": "Platform",
     "notifications": "Notifications",
     "settings": "Settings",
     "main": "Main navigation",
@@ -100,31 +131,134 @@
     "description": "SMELS dashboard.",
     "greeting": "Hello, {name}",
     "profileSection": "Session",
-    "roleLabel": "Profile",
+    "roleLabel": "Role",
     "accountLabel": "Account",
-    "modulesSection": "Modules",
+    "schoolLabel": "School",
+    "modulesSection": "Modules in this workspace",
+    "scopeSection": "Scope (UI)",
+    "scopeFooter": "Indicative — the server always enforces token rules.",
     "demoFooter": "Demo session — no real student data is loaded."
-  },
-  "staff": {
-    "title": "Staff",
-    "description": "Teaching and administrative staff management."
-  },
-  "students": {
-    "title": "Students",
-    "description": "Student records (protected data — no student identifiers in client logs)."
-  },
-  "academic": {
-    "title": "Academic",
-    "description": "Classes, subjects, grades and report cards."
   },
   "settings": {
     "title": "Settings",
     "description": "Application and session preferences.",
     "languageSection": "Interface language",
     "sessionSection": "Session",
-    "switchRoleSection": "Switch profile (demo)",
-    "switchRoleFooter": "Temporary: quickly switch interfaces without signing out.",
+    "switchRoleSection": "Switch role (demo)",
+    "switchRoleFooter": "Jumps to the URL workspace for the selected role.",
     "activeRole": "Active"
+  },
+  "workspace": {
+    "teacherClasses": {
+      "description": "Classes and subjects assigned to you.",
+      "empty": "No ClassSubject loaded (API pending)."
+    },
+    "teacherGrades": {
+      "description": "Grade sheets for your subjects.",
+      "hint": "Editing limited to your ClassSubjects and OPEN sequences.",
+      "empty": "No grade sheets yet."
+    },
+    "teacherTimetable": {
+      "description": "Your published lessons.",
+      "empty": "No lessons to show."
+    },
+    "parentChildren": {
+      "description": "Children linked to your guardian account.",
+      "hint": "Only via Student.guardians — never other students.",
+      "empty": "No linked children in this demo."
+    },
+    "parentGrades": {
+      "description": "Your children’s grades (live).",
+      "empty": "No grades to show."
+    },
+    "parentReportCards": {
+      "description": "Downloadable annual report cards.",
+      "hint": "ANNUAL + PUBLISHED only.",
+      "empty": "No published report card."
+    },
+    "parentTimetable": {
+      "description": "Timetable for your children’s classes.",
+      "empty": "No timetable."
+    },
+    "adminStudents": {
+      "description": "Students, guardians and enrollments.",
+      "empty": "Students module — foundation ready."
+    },
+    "adminStaff": {
+      "description": "Teaching and admin staff (except admin accounts).",
+      "empty": "Staff module — foundation ready."
+    },
+    "adminAcademic": {
+      "description": "Levels, classes, subjects, coefficients.",
+      "empty": "Academic module — foundation ready."
+    },
+    "adminGrades": {
+      "description": "Grades and corrections (incl. after close with reason).",
+      "empty": "Grades module — foundation ready."
+    },
+    "adminReporting": {
+      "description": "Absences, sanctions, report cards.",
+      "empty": "Reporting module — foundation ready."
+    },
+    "adminTimetable": {
+      "description": "Create and publish the timetable.",
+      "empty": "Timetable module — foundation ready."
+    },
+    "directorStudents": {
+      "description": "Student / enrollment oversight.",
+      "empty": "Students module (director)."
+    },
+    "directorStaff": {
+      "description": "Staff and organisation.",
+      "empty": "Staff module (director)."
+    },
+    "directorAcademic": {
+      "description": "Academic structure and coefficients.",
+      "empty": "Academic module (director)."
+    },
+    "directorSequences": {
+      "description": "Open, close and reopen sequences.",
+      "hint": "Reopen: director (or super admin) only.",
+      "empty": "Sequences module — foundation ready."
+    },
+    "directorReporting": {
+      "description": "Report cards, templates and scales.",
+      "empty": "Reporting module (director)."
+    },
+    "directorAdminAccounts": {
+      "description": "School administration accounts.",
+      "empty": "Admin accounts module — foundation ready."
+    },
+    "directorTimetable": {
+      "description": "School timetable.",
+      "empty": "Timetable module (director)."
+    },
+    "superSchools": {
+      "description": "Platform schools.",
+      "empty": "Multi-school module — foundation ready."
+    },
+    "superPlatform": {
+      "description": "Platform support and global configuration.",
+      "hint": "Access is logged on the server.",
+      "empty": "Platform module — foundation ready."
+    },
+    "superAudit": {
+      "description": "Access and audit journals.",
+      "empty": "Audit module — foundation ready."
+    },
+    "studentGrades": {
+      "description": "Your sequence grades.",
+      "empty": "No grades to show."
+    },
+    "studentReportCards": {
+      "description": "Your published annual report card.",
+      "hint": "Download: ANNUAL + PUBLISHED only.",
+      "empty": "No published report card."
+    },
+    "studentTimetable": {
+      "description": "Your class timetable.",
+      "empty": "No timetable."
+    }
   },
   "errors": {
     "generic": "Something went wrong.",
