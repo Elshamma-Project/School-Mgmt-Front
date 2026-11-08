@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
+import { AppFooter } from "@/components/layout/app-footer";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 
 /** Traductions next-intl = runtime locale → hors shell Instant pour l’instant. */
@@ -29,7 +30,7 @@ export default async function LoginPage() {
           </p>
         </div>
 
-        <div className="w-full max-w-[380px] rounded-[16px] bg-[var(--ios-card)] p-6 shadow-[var(--ios-shadow)]">
+        <div className="w-full max-w-[380px] rounded-[var(--radius-xl)] bg-[var(--ios-card)] p-6 shadow-[var(--ios-shadow)]">
           <h2 className="mb-5 text-[22px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
             {t("loginTitle")}
           </h2>
@@ -40,6 +41,8 @@ export default async function LoginPage() {
           <LocaleSwitcher />
         </div>
       </div>
+
+      <AppFooter />
     </div>
   );
 }

@@ -16,7 +16,8 @@
     "language": "Language",
     "french": "Français",
     "english": "English",
-    "demoBadge": "Demo"
+    "demoBadge": "Demo",
+    "copyright": "© {year} {school}. {app} — All rights reserved."
   },
   "auth": {
     "loginTitle": "Sign in",
