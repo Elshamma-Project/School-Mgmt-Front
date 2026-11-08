@@ -63,7 +63,8 @@ export async function apiRequest<T>(
   // Accès statique NEXT_PUBLIC_* via getTenantConfig (inliné au build / dev).
   const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "") || "http://localhost:8090";
 
-  if (body !== undefined && !requestHeaders.has("Content-Type")) {
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !isFormData && !requestHeaders.has("Content-Type")) {
     requestHeaders.set("Content-Type", "application/json");
   }
 
@@ -79,7 +80,12 @@ export async function apiRequest<T>(
     response = await fetch(`${baseUrl}${path}`, {
       ...rest,
       headers: requestHeaders,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : isFormData
+            ? (body as FormData)
+            : JSON.stringify(body),
     });
   } catch {
     throw new ApiError(0, "network");

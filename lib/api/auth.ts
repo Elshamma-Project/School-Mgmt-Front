@@ -70,3 +70,36 @@ export async function changePassword(payload: ChangePasswordRequest): Promise<Us
     body: payload,
   });
 }
+
+export async function uploadAvatar(file: File): Promise<UserAccountDto> {
+  const form = new FormData();
+  form.append("file", file);
+  return apiRequest<UserAccountDto>("/api/v1/auth/me/avatar", {
+    method: "PUT",
+    body: form,
+  });
+}
+
+export async function fetchAvatarBlob(): Promise<Blob | null> {
+  const { getTenantConfig } = await import("@/lib/tenant/config");
+  const { useAuthStore } = await import("@/stores/auth-store");
+  const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "") || "http://localhost:8090";
+  const token = useAuthStore.getState().accessToken;
+  if (!token) return null;
+  try {
+    const response = await fetch(`${baseUrl}/api/v1/auth/me/avatar`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.status === 404) return null;
+    if (!response.ok) return null;
+    return await response.blob();
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteAvatar(): Promise<void> {
+  await apiRequest<void>("/api/v1/auth/me/avatar", {
+    method: "DELETE",
+  });
+}

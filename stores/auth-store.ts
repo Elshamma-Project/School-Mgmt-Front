@@ -1,8 +1,9 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { AUTH_COOKIE_NAME, AUTH_STORAGE_KEY } from "@/lib/auth/constants";
+import { createAuthPersistStorage } from "@/lib/auth/remember";
 import type { AuthSession, AuthUser, LoginResponse } from "@/types/auth";
 import { mapUserAccountDto, type UserAccountDto } from "@/types/auth";
 
@@ -17,7 +18,7 @@ type AuthState = AuthSession & {
   }) => void;
   applyTokens: (tokens: LoginResponse) => void;
   syncFromAccount: (dto: UserAccountDto) => void;
-  updateUser: (patch: Partial<Pick<AuthUser, "displayName" | "email">>) => void;
+  updateUser: (patch: Partial<Pick<AuthUser, "displayName" | "email" | "hasAvatar">>) => void;
   clearSession: () => void;
   setMustChangePassword: (value: boolean) => void;
 };
@@ -110,6 +111,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: AUTH_STORAGE_KEY,
       skipHydration: true,
+      storage: createJSONStorage(() => createAuthPersistStorage()),
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,

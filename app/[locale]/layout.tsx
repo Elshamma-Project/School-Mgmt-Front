@@ -50,7 +50,6 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     >
       <body className="min-h-full font-sans">
         <NextIntlClientProvider messages={messages}>
-          <StoreHydration />
           {children}
           <AppToaster />
         </NextIntlClientProvider>

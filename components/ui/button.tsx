@@ -66,7 +66,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...props}
       >
-        {loading ? <Spinner size="sm" tone={variant === "secondary" || variant === "ghost" || variant === "plain" ? "default" : "inverse"} /> : leadingIcon}
+        {loading ? (
+          <Spinner
+            size="sm"
+            tone={
+              variant === "ghost"
+                ? "blue"
+                : variant === "secondary" || variant === "plain"
+                  ? "default"
+                  : "inverse"
+            }
+          />
+        ) : (
+          leadingIcon
+        )}
         {children}
         {!loading ? trailingIcon : null}
       </button>

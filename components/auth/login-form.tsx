@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Eye, EyeOff, KeyRound, Mail } from "lucide-react";
 import { LoginLoading } from "@/components/auth/login-loading";
@@ -12,6 +12,12 @@ import { IconInput } from "@/components/ui/icon-input";
 import { Label } from "@/components/ui/label";
 import { login as apiLogin } from "@/lib/api/auth";
 import { createMockLogin, isComingSoonRole, listMockRoles } from "@/lib/auth/mock-users";
+import {
+  readRememberedEmail,
+  readRememberMe,
+  writeRememberedEmail,
+  writeRememberMe,
+} from "@/lib/auth/remember";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { getTenantConfig } from "@/lib/tenant/config";
 import { notify } from "@/lib/ui/notify";
@@ -44,12 +50,29 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  /** Se souvenir : e-mail + session durable — jamais le mot de passe en clair. */
+  const [rememberMe, setRememberMe] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
     password?: string;
   }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setRememberMe(readRememberMe());
+    const remembered = readRememberedEmail();
+    if (remembered) setEmail(remembered);
+  }, []);
+
+  function applyRememberPreference(emailValue: string) {
+    writeRememberMe(rememberMe);
+    if (rememberMe) {
+      writeRememberedEmail(emailValue);
+    } else {
+      writeRememberedEmail(null);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,6 +87,7 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
       }
       setSubmitting(true);
       const started = Date.now();
+      writeRememberMe(rememberMe);
       const response = createMockLogin(role);
       setSession({
         accessToken: response.accessToken,
@@ -98,6 +122,8 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
     setSubmitting(true);
     const started = Date.now();
     try {
+      // Préférence avant setSession pour écrire tokens au bon storage.
+      applyRememberPreference(emailValue);
       // schoolId automatique (env / domaine). SUPER_ADMIN résolu côté API en secours.
       const response = await apiLogin({
         email: emailValue,
@@ -249,6 +275,19 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
                 }
               />
             </Field>
+
+            <div className="rounded-[var(--radius-md)] bg-[var(--ios-fill)] px-3.5 py-3">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                disabled={submitting}
+                onChange={(event) => setRememberMe(event.target.checked)}
+                label={t("rememberMe")}
+              />
+              <p className="mt-1.5 pl-7 text-[var(--text-footnote)] leading-snug text-[var(--ios-secondary-label)]">
+                {t("rememberMeHint")}
+              </p>
+            </div>
           </div>
         )}
 

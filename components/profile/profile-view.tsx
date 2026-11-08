@@ -7,17 +7,21 @@ import {
   IdCard,
   KeyRound,
   LockKeyhole,
+  Phone,
   RefreshCw,
   Shield,
   UserRound,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DetailRow } from "@/components/ui/detail-row";
 import { Field } from "@/components/ui/field";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { IconInput } from "@/components/ui/icon-input";
 import { changePassword, fetchMe } from "@/lib/api/auth";
+import { getStaff, updateStaffIdentity, type StaffResponse } from "@/lib/api/staff";
 import { notify } from "@/lib/ui/notify";
 import { useAuthStore } from "@/stores/auth-store";
 import { ApiError } from "@/types/api";
@@ -29,10 +33,13 @@ type PasswordErrors = {
   confirmPassword?: string;
 };
 
+type IdentityErrors = {
+  lastName?: string;
+  firstName?: string;
+};
+
 /**
- * Profil compte (module user).
- * displayName / e-mail métier viennent des fiches Staff/Student/Guardian — étape suivante.
- * Ici : synchronisation `/me` + changement de mot de passe API.
+ * Profil compte (module user) + identité fiche liée (Staff pour le personnel).
  */
 export function ProfileView() {
   const t = useTranslations("profile");
@@ -42,6 +49,7 @@ export function ProfileView() {
   const user = useAuthStore((s) => s.user);
   const isMock = useAuthStore((s) => s.isMock);
   const syncFromAccount = useAuthStore((s) => s.syncFromAccount);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const setMustChangePassword = useAuthStore((s) => s.setMustChangePassword);
   const role = primaryRole(user);
 
@@ -52,12 +60,39 @@ export function ProfileView() {
   const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
   const [savingPassword, setSavingPassword] = useState(false);
 
+  const [staff, setStaff] = useState<StaffResponse | null>(null);
+  const [identityLoading, setIdentityLoading] = useState(false);
+  const [lastName, setLastName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [identityErrors, setIdentityErrors] = useState<IdentityErrors>({});
+  const [savingIdentity, setSavingIdentity] = useState(false);
+
+  /** Élèves / tuteurs : noms figés (bulletins). Personnel STAFF uniquement. */
+  const canEditStaffIdentity =
+    user?.profileType === "STAFF" && (isMock || Boolean(user.profileId));
+
+  const applyStaffToForm = useCallback(
+    (member: StaffResponse) => {
+      setStaff(member);
+      setLastName(member.lastName);
+      setFirstName(member.firstName);
+      setPhone(member.contact.phones[0] ?? "");
+      updateUser({ displayName: member.fullName });
+    },
+    [updateUser],
+  );
+
   const refreshAccount = useCallback(async () => {
     if (isMock || !user) return;
     setRefreshing(true);
     try {
       const account = await fetchMe();
       syncFromAccount(account);
+      if (account.profileType === "STAFF" && account.profileId) {
+        const member = await getStaff(account.profileId, account.schoolId);
+        applyStaffToForm(member);
+      }
       notify.success(t("accountSynced"));
     } catch (error) {
       if (error instanceof ApiError) {
@@ -68,22 +103,45 @@ export function ProfileView() {
     } finally {
       setRefreshing(false);
     }
-  }, [isMock, syncFromAccount, t, tAuth, user]);
+  }, [applyStaffToForm, isMock, syncFromAccount, t, tAuth, user]);
 
   useEffect(() => {
-    if (!isMock && user) {
-      void fetchMe()
-        .then((account) => syncFromAccount(account))
-        .catch(() => {
-          /* session invalide gérée par le client HTTP */
-        });
+    if (!user) return;
+    if (isMock) {
+      const parts = (user.displayName ?? "").trim().split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) {
+        setLastName(parts[0] ?? "");
+        setFirstName(parts.slice(1).join(" "));
+      } else {
+        setLastName(user.displayName ?? "");
+        setFirstName("");
+      }
+      return;
     }
+    void fetchMe()
+      .then((account) => {
+        syncFromAccount(account);
+        if (account.profileType === "STAFF" && account.profileId) {
+          return getStaff(account.profileId, account.schoolId).then(applyStaffToForm);
+        }
+        return undefined;
+      })
+      .catch(() => {
+        /* session invalide gérée par le client HTTP */
+      });
     // Sync initiale une fois à l’ouverture du profil
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const passwordDirty =
     currentPassword.length > 0 || newPassword.length > 0 || confirmPassword.length > 0;
+
+  const identityDirty =
+    staff != null
+      ? lastName.trim() !== staff.lastName ||
+        firstName.trim() !== staff.firstName ||
+        phone.trim() !== (staff.contact.phones[0] ?? "")
+      : lastName.trim().length > 0 || firstName.trim().length > 0;
 
   function validatePassword(): PasswordErrors {
     const next: PasswordErrors = {};
@@ -95,6 +153,61 @@ export function ProfileView() {
       next.confirmPassword = t("passwordMismatch");
     }
     return next;
+  }
+
+  function validateIdentity(): IdentityErrors {
+    const next: IdentityErrors = {};
+    if (!lastName.trim()) next.lastName = tAuth("requiredField");
+    return next;
+  }
+
+  async function onSaveIdentity(event: FormEvent) {
+    event.preventDefault();
+    const errors = validateIdentity();
+    setIdentityErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setSavingIdentity(true);
+    try {
+      if (isMock || user?.profileType !== "STAFF" || !user.profileId) {
+        const displayName = [lastName.trim(), firstName.trim()].filter(Boolean).join(" ");
+        updateUser({ displayName });
+        notify.success(t("profileSaved"), {
+          description: isMock ? t("mockHint") : t("identityLocalOnlyHint"),
+        });
+      } else {
+        const phones = [
+          phone.trim(),
+          ...(staff?.contact.phones.slice(1) ?? []),
+        ].filter(Boolean);
+        const member = await updateStaffIdentity(
+          user.profileId,
+          {
+            lastName: lastName.trim(),
+            firstName: firstName.trim(),
+            civility: staff?.civility ?? null,
+            contact: {
+              phones,
+              // E-mail = compte de connexion : on conserve celui de la fiche, jamais modifié ici.
+              email: staff?.contact.email ?? user.username,
+              address: staff?.contact.address ?? null,
+              city: staff?.contact.city ?? null,
+            },
+          },
+          user.schoolId,
+        );
+        applyStaffToForm(member);
+        notify.success(t("profileSaved"));
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        notify.error(error.message);
+      } else {
+        notify.error(tAuth("networkError"));
+      }
+    } finally {
+      setSavingIdentity(false);
+    }
   }
 
   async function onChangePassword(event: FormEvent) {
@@ -133,18 +246,18 @@ export function ProfileView() {
     }
   }
 
-  const title = user?.displayName?.trim() || user?.username || "—";
+  const title =
+    user?.displayName?.trim() ||
+    staff?.fullName ||
+    [lastName, firstName].filter((p) => p.trim()).join(" ") ||
+    user?.username ||
+    "—";
   const schoolLabel = user?.schoolId ?? t("platformAccount");
 
   return (
     <div className="mx-auto max-w-[560px] space-y-6 slide-up">
       <section className="flex flex-col items-center text-center">
-        <div
-          className="flex size-20 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
-          aria-hidden
-        >
-          <UserRound className="size-9 stroke-[1.5]" />
-        </div>
+        <ProfileAvatar />
         <h2 className="mt-4 text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
           {title}
         </h2>
@@ -158,76 +271,144 @@ export function ProfileView() {
         </div>
       </section>
 
-      <GroupedList header={t("accountSection")} footer={t("accountSectionHint")}>
-        <GroupedListItem className="block py-3">
-          <Field id="profile-username" label={t("username")} hint={t("usernameHint")}>
-            <IconInput
-              id="profile-username"
-              icon={<AtSign className="size-4 stroke-[1.75]" />}
-              value={user?.username ?? ""}
-              readOnly
-              disabled
-              autoComplete="username"
-            />
-          </Field>
+      <GroupedList header={t("accountSection")}>
+        <GroupedListItem>
+          <DetailRow
+            label={t("username")}
+            value={user?.username ?? "—"}
+            icon={<AtSign className="size-4 stroke-[1.75]" />}
+            stacked
+          />
         </GroupedListItem>
 
-        <GroupedListItem className="block py-3">
-          <Field id="profile-school" label={t("schoolId")}>
-            <IconInput
-              id="profile-school"
-              icon={<Building2 className="size-4 stroke-[1.75]" />}
-              value={user?.schoolId ?? "—"}
-              readOnly
-              disabled
-            />
-          </Field>
+        <GroupedListItem>
+          <DetailRow
+            label={t("schoolId")}
+            value={user?.schoolId ?? "—"}
+            icon={<Building2 className="size-4 stroke-[1.75]" />}
+          />
         </GroupedListItem>
 
-        <GroupedListItem className="block py-3">
-          <Field id="profile-role" label={t("role")}>
-            <IconInput
-              id="profile-role"
-              icon={<Shield className="size-4 stroke-[1.75]" />}
-              value={
-                user?.roles?.length
-                  ? user.roles.map((r) => tRoles(`${r}.label`)).join(", ")
-                  : role
-                    ? tRoles(`${role}.label`)
-                    : "—"
-              }
-              readOnly
-              disabled
-            />
-          </Field>
+        <GroupedListItem>
+          <DetailRow
+            label={t("role")}
+            value={
+              user?.roles?.length
+                ? user.roles.map((r) => tRoles(`${r}.label`)).join(", ")
+                : role
+                  ? tRoles(`${role}.label`)
+                  : "—"
+            }
+            icon={<Shield className="size-4 stroke-[1.75]" />}
+          />
         </GroupedListItem>
 
-        <GroupedListItem className="block py-3">
-          <Field id="profile-type" label={t("profileType")} hint={t("profileTypeHint")}>
-            <IconInput
-              id="profile-type"
-              icon={<IdCard className="size-4 stroke-[1.75]" />}
-              value={`${user?.profileType ?? "—"} · ${user?.profileId ?? "—"}`}
-              readOnly
-              disabled
-            />
-          </Field>
+        <GroupedListItem>
+          <DetailRow
+            label={t("profileType")}
+            value={
+              user?.profileId
+                ? `${user.profileType} · ${user.profileId}`
+                : (user?.profileType ?? "—")
+            }
+            icon={<IdCard className="size-4 stroke-[1.75]" />}
+            stacked
+          />
         </GroupedListItem>
       </GroupedList>
 
       {!isMock ? (
-        <div className="flex justify-end px-1">
-          <Button
-            type="button"
-            variant="secondary"
-            loading={refreshing}
-            onClick={() => void refreshAccount()}
-          >
-            <RefreshCw className="size-4 stroke-[1.75]" aria-hidden />
-            {t("syncAccount")}
-          </Button>
-        </div>
+        <GroupedList>
+          <GroupedListItem className="p-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              className="h-12 w-full justify-center gap-2.5 rounded-none font-medium text-[var(--ios-blue)] hover:bg-[color-mix(in_srgb,var(--ios-blue)_8%,transparent)] active:bg-[color-mix(in_srgb,var(--ios-blue)_14%,transparent)]"
+              loading={refreshing || identityLoading}
+              leadingIcon={
+                <RefreshCw
+                  className="size-4 stroke-[1.75] text-[var(--ios-blue)]"
+                  aria-hidden
+                />
+              }
+              onClick={() => void refreshAccount()}
+            >
+              {t("syncAccount")}
+            </Button>
+          </GroupedListItem>
+        </GroupedList>
       ) : null}
+
+      {canEditStaffIdentity ? (
+        <form onSubmit={onSaveIdentity} className="space-y-3">
+          <GroupedList header={t("identitySection")}>
+            <GroupedListItem className="block py-3">
+              <Field
+                id="profile-last-name"
+                label={t("lastName")}
+                error={identityErrors.lastName}
+              >
+                <IconInput
+                  id="profile-last-name"
+                  icon={<UserRound className="size-4 stroke-[1.75]" />}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  invalid={Boolean(identityErrors.lastName)}
+                  autoComplete="family-name"
+                  disabled={savingIdentity || identityLoading}
+                />
+              </Field>
+            </GroupedListItem>
+
+            <GroupedListItem className="block py-3">
+              <Field id="profile-first-name" label={t("firstName")} error={identityErrors.firstName}>
+                <IconInput
+                  id="profile-first-name"
+                  icon={<UserRound className="size-4 stroke-[1.75]" />}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  invalid={Boolean(identityErrors.firstName)}
+                  autoComplete="given-name"
+                  disabled={savingIdentity || identityLoading}
+                />
+              </Field>
+            </GroupedListItem>
+
+            <GroupedListItem className="block py-3">
+              <Field id="profile-phone" label={t("phone")}>
+                <IconInput
+                  id="profile-phone"
+                  type="tel"
+                  icon={<Phone className="size-4 stroke-[1.75]" />}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel"
+                  disabled={savingIdentity || identityLoading}
+                />
+              </Field>
+            </GroupedListItem>
+          </GroupedList>
+
+          <div className="flex justify-end px-1">
+            <Button
+              type="submit"
+              loading={savingIdentity}
+              disabled={(!identityDirty && !savingIdentity) || identityLoading}
+            >
+              {t("saveIdentity")}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <GroupedList header={t("identitySection")} footer={t("identityUnavailableHint")}>
+          <GroupedListItem className="block py-3">
+            <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
+              {t("identityUnavailableBody")}
+            </p>
+          </GroupedListItem>
+        </GroupedList>
+      )}
 
       <form onSubmit={onChangePassword} className="space-y-3">
         <GroupedList header={t("passwordSection")} footer={t("passwordSectionHint")}>

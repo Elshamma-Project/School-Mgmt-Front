@@ -44,6 +44,7 @@ export type UserAccountDto = {
   roles: AppRole[];
   profileType: ProfileType;
   profileId: string | null;
+  hasAvatar?: boolean;
   status: AccountStatus;
   mustChangePassword: boolean;
   lastLoginAt: string | null;
@@ -55,6 +56,8 @@ export type AuthUser = {
   /** Préférence UI locale éventuelle — la fiche métier (Staff/Student) viendra plus tard. */
   displayName?: string;
   email?: string;
+  /** Photo de profil UI (pas bulletin). */
+  hasAvatar?: boolean;
   /** Rôle principal pour l’espace UI. */
   role: AppRole;
   /** Union des rôles du compte (cumul possible). */
@@ -128,7 +131,10 @@ export function pickPrimaryRole(roles: AppRole[]): AppRole | null {
   return roles[0] ?? null;
 }
 
-export function mapUserAccountDto(dto: UserAccountDto, local?: Pick<AuthUser, "displayName" | "email">): AuthUser {
+export function mapUserAccountDto(
+  dto: UserAccountDto,
+  local?: Pick<AuthUser, "displayName" | "email">,
+): AuthUser {
   const roles = normalizeRoles(dto.roles);
   const role = pickPrimaryRole(roles) ?? "TEACHER";
   return {
@@ -136,6 +142,7 @@ export function mapUserAccountDto(dto: UserAccountDto, local?: Pick<AuthUser, "d
     username: dto.username,
     displayName: local?.displayName,
     email: local?.email,
+    hasAvatar: Boolean(dto.hasAvatar),
     role,
     roles,
     schoolId: dto.schoolId,

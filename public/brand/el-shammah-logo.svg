@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="El Shammah">
+  <defs>
+    <linearGradient id="es-ring" x1="18" y1="12" x2="110" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="es-core" x1="40" y1="36" x2="92" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#EFF6FF"/>
+  <circle cx="64" cy="64" r="54" fill="none" stroke="url(#es-ring)" stroke-width="4"/>
+  <circle cx="64" cy="64" r="42" fill="url(#es-core)"/>
+  <path d="M40 78V50h12.5c7.2 0 11.6 3.5 11.6 9.2 0 3.7-2 6.5-5.3 7.9L71 78h-9.2l-10.6-10.2H48.6V78H40zm8.6-17.4h3.4c3.2 0 5-1.4 5-3.8s-1.8-3.7-5-3.7h-3.4v7.5z" fill="#fff"/>
+  <path d="M74 78V50h18.8v7.2H82.6v4.3h9.2v6.6h-9.2V78H74z" fill="#fff"/>
+  <circle cx="64" cy="64" r="54" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/>
+</svg>
