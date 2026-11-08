@@ -105,7 +105,14 @@ export function AppHeader() {
                       {clickable ? (
                         <Link
                           href={crumb.href as `/${string}`}
-                          className="shrink-0 rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] transition-colors hover:text-[var(--ios-blue)] focus-visible:shadow-[var(--focus-ring)]"
+                          className={cn(
+                            "shrink-0 rounded-[var(--radius-sm)] px-1.5 py-0.5 -mx-0.5",
+                            "text-[var(--ios-secondary-label)] underline-offset-[3px]",
+                            "transition-[color,background-color,text-decoration-color] duration-[var(--duration-fast)]",
+                            "hover:bg-[color-mix(in_srgb,var(--ios-blue)_12%,transparent)]",
+                            "hover:text-[var(--ios-blue)] hover:underline",
+                            "focus-visible:shadow-[var(--focus-ring)] focus-visible:text-[var(--ios-blue)]",
+                          )}
                         >
                           {crumb.label}
                         </Link>

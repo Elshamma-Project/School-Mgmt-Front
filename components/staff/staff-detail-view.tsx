@@ -1,22 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Briefcase,
+  AtSign,
+  BookOpen,
   Clock3,
   Hash,
-  Mail,
+  IdCard,
   Phone,
   Power,
   PowerOff,
+  School,
+  Shield,
   UserRound,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DetailRow } from "@/components/ui/detail-row";
 import { EmptyState } from "@/components/ui/empty-state";
+import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  listTeacherAssignments,
+  localizedLabel,
+  type TeacherAssignmentResponse,
+} from "@/lib/api/academic";
 import {
   deactivateStaff,
   getStaff,
@@ -27,7 +37,6 @@ import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { formatInstant } from "@/lib/datetime/format";
 import { staffListPath, type StaffTypeSlug } from "@/lib/staff/routes";
 import { notify } from "@/lib/ui/notify";
-import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { usePageHeadingStore } from "@/stores/page-heading-store";
 import { ApiError, isAuthFailure } from "@/types/api";
@@ -39,10 +48,7 @@ type StaffDetailViewProps = {
 };
 
 function initialsOf(fullName: string): string {
-  const parts = fullName
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
@@ -61,7 +67,9 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
   const clearOverride = usePageHeadingStore((s) => s.clearOverride);
 
   const [member, setMember] = useState<StaffResponse | null>(null);
+  const [assignments, setAssignments] = useState<TeacherAssignmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [pendingKind, setPendingKind] = useState<"deactivate" | "reactivate" | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
@@ -74,12 +82,28 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
       setCrumbs([
         { label: tNav("staff"), href: listHref },
         { label: t(`tabs.${type}`), href: typeListHref },
-        ...(fullName?.trim()
-          ? [{ label: fullName.trim() }]
-          : []),
+        ...(fullName?.trim() ? [{ label: fullName.trim() }] : []),
       ]);
     },
     [listHref, setCrumbs, t, tNav, type, typeListHref],
+  );
+
+  const loadAssignments = useCallback(
+    async (staffId: string) => {
+      setAssignmentsLoading(true);
+      try {
+        const rows = await listTeacherAssignments(staffId, { schoolId });
+        setAssignments(rows);
+      } catch (error) {
+        if (!isAuthFailure(error)) {
+          console.warn("[staff] assignments load failed", error);
+        }
+        setAssignments([]);
+      } finally {
+        setAssignmentsLoading(false);
+      }
+    },
+    [schoolId],
   );
 
   const load = useCallback(async () => {
@@ -91,6 +115,7 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
       const data = await getStaff(id, schoolId);
       setMember(data);
       applyCrumbs(data.fullName);
+      void loadAssignments(data.id);
     } catch (error) {
       if (isAuthFailure(error)) return;
       setMember(null);
@@ -104,7 +129,7 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
     } finally {
       setLoading(false);
     }
-  }, [applyCrumbs, id, schoolId, setBackHref, t, typeListHref]);
+  }, [applyCrumbs, id, loadAssignments, schoolId, setBackHref, t, typeListHref]);
 
   useEffect(() => {
     void load();
@@ -132,25 +157,39 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
     }
   }
 
+  const subjectsTaught = useMemo(() => {
+    const map = new Map<string, { code: string; name: string }>();
+    for (const row of assignments) {
+      if (!map.has(row.subjectId)) {
+        map.set(row.subjectId, {
+          code: row.subjectCode,
+          name: localizedLabel(row.subjectName, locale),
+        });
+      }
+    }
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, locale));
+  }, [assignments, locale]);
+
+  const classesTaught = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const row of assignments) {
+      if (!map.has(row.classId)) map.set(row.classId, row.className);
+    }
+    return [...map.entries()]
+      .map(([classId, className]) => ({ classId, className }))
+      .sort((a, b) => a.className.localeCompare(b.className, locale));
+  }, [assignments, locale]);
+
   if (loading) {
     return (
-      <div className="space-y-4 slide-up">
-        <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/60 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
-          <div className="h-20 bg-[var(--ios-fill)]/50 sm:h-24" />
-          <div className="-mt-10 px-5 pb-5 sm:px-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <Skeleton className="size-20 rounded-[var(--radius-lg)] ring-4 ring-[var(--ios-card)]" />
-              <div className="min-w-0 flex-1 space-y-2 pb-1">
-                <Skeleton className="h-5 w-48" />
-                <Skeleton className="h-3 w-32" />
-              </div>
-            </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-[88px] w-full rounded-[var(--radius-md)]" />
-              ))}
-            </div>
-          </div>
+      <div className="space-y-6 slide-up">
+        <div className="mx-auto flex w-full max-w-[560px] flex-col items-center">
+          <Skeleton className="size-20 rounded-full" />
+          <Skeleton className="mt-4 h-28 w-full rounded-[var(--radius-md)]" />
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Skeleton className="h-48 w-full rounded-[var(--radius-md)]" />
+          <Skeleton className="h-48 w-full rounded-[var(--radius-md)]" />
         </div>
       </div>
     );
@@ -172,149 +211,203 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
   const initials = initialsOf(member.fullName);
   const email = member.contact.email?.trim() || null;
   const phone = member.contact.phones[0]?.trim() || null;
+  const isTeacher = member.functions.includes("TEACHER");
 
   return (
-    <div className="space-y-4 slide-up sm:space-y-5">
-      <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/60 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
-        {/* Bandeau */}
+    <div className="space-y-6 slide-up">
+      {/* En-tête style profil */}
+      <section className="mx-auto flex w-full max-w-[560px] flex-col items-center text-center">
         <div
-          className={cn(
-            "relative h-20 sm:h-24",
+          className={
             member.active
-              ? "bg-[linear-gradient(135deg,color-mix(in_srgb,var(--ios-blue)_22%,transparent),color-mix(in_srgb,var(--ios-blue)_6%,transparent)_55%,transparent)]"
-              : "bg-[linear-gradient(135deg,color-mix(in_srgb,var(--ios-fill)_90%,transparent),transparent)]",
-          )}
+              ? "flex size-20 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[22px] font-semibold tracking-[-0.02em] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_18%,transparent)]"
+              : "flex size-20 items-center justify-center rounded-full bg-[var(--ios-fill)] text-[22px] font-semibold tracking-[-0.02em] text-[var(--ios-secondary-label)]"
+          }
+          aria-hidden
         >
-          <div className="absolute inset-x-0 bottom-0 h-px bg-[var(--ios-separator)]/50" />
+          {initials}
         </div>
-
-        <div className="relative -mt-11 px-4 pb-5 sm:-mt-12 sm:px-6 sm:pb-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex min-w-0 items-end gap-3.5 sm:gap-4">
-              <div
-                className={cn(
-                  "flex size-20 shrink-0 items-center justify-center rounded-[var(--radius-lg)] text-[22px] font-semibold tracking-[-0.02em] shadow-[var(--ios-shadow)] ring-4 ring-[var(--ios-card)] sm:size-[88px] sm:text-[24px]",
-                  member.active
-                    ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
-                    : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
-                )}
-                aria-hidden
-              >
-                {initials}
-              </div>
-              <div className="min-w-0 pb-0.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate text-[18px] font-semibold tracking-[-0.02em] text-[var(--ios-label)] sm:text-[20px]">
-                    {member.fullName}
-                  </h2>
-                  <Badge tone={member.active ? "success" : "neutral"}>
-                    {member.active ? t("statusActive") : t("inactive")}
-                  </Badge>
-                </div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  <Badge tone="blue">{t(`tabs.${type}`)}</Badge>
-                  {member.staffNumber ? (
-                    <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-[var(--ios-fill)]/80 px-2 py-0.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                      <Hash className="size-3 stroke-[1.75]" aria-hidden />
-                      {member.staffNumber}
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-[var(--ios-secondary-label)]">
-                      {t("noStaffNumber")}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap gap-2 sm:pb-1">
-              {member.active ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  leadingIcon={<PowerOff className="size-3.5 stroke-[1.75]" aria-hidden />}
-                  onClick={() => setPendingKind("deactivate")}
-                >
-                  {t("actionDeactivate")}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  size="sm"
-                  leadingIcon={<Power className="size-3.5 stroke-[1.75]" aria-hidden />}
-                  onClick={() => setPendingKind("reactivate")}
-                >
-                  {t("actionReactivate")}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Tuiles infos */}
-          <div className="mt-5 grid gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
-            <InfoTile
-              icon={<Mail className="size-4 stroke-[1.75]" aria-hidden />}
-              label={t("email")}
-              value={email ?? "—"}
-              muted={!email}
-              href={email ? `mailto:${email}` : undefined}
-            />
-            <InfoTile
-              icon={<Phone className="size-4 stroke-[1.75]" aria-hidden />}
-              label={t("phone")}
-              value={phone ?? "—"}
-              muted={!phone}
-              href={phone ? `tel:${phone}` : undefined}
-            />
-            <InfoTile
-              icon={<Clock3 className="size-4 stroke-[1.75]" aria-hidden />}
-              label={t("columns.lastLogin")}
-              value={lastLogin}
-              muted={!member.lastLoginAt}
-            />
-            <InfoTile
-              icon={<Hash className="size-4 stroke-[1.75]" aria-hidden />}
-              label={t("columns.number")}
-              value={member.staffNumber || "—"}
-              muted={!member.staffNumber}
-              mono={Boolean(member.staffNumber)}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Fonctions */}
-      <section className="rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/60 bg-[var(--ios-card)] p-4 shadow-[var(--ios-shadow)] sm:p-5">
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]">
-            <Briefcase className="size-4 stroke-[1.75]" aria-hidden />
-          </span>
-          <div className="min-w-0">
-            <h3 className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
-              {t("columns.functions")}
-            </h3>
-            <p className="text-[11px] text-[var(--ios-secondary-label)]">
-              {t("detailFunctionsHint")}
+        <div className="mt-4 w-full overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+          <div className="px-5 pb-3 pt-5">
+            <h2 className="text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
+              {member.fullName}
+            </h2>
+            <p className="mt-1.5 truncate text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
+              {member.staffNumber
+                ? `${t("columns.number")} · ${member.staffNumber}`
+                : t("noStaffNumber")}
             </p>
           </div>
+          <div className="mx-5 border-t border-[var(--ios-separator)]" />
+          <div className="flex flex-wrap items-center justify-center gap-2 px-5 py-3.5">
+            <Badge tone={member.active ? "success" : "neutral"} className="gap-1.5 pl-1.5">
+              <span className="size-1.5 shrink-0 rounded-full bg-current opacity-90" aria-hidden />
+              {member.active ? t("statusActive") : t("inactive")}
+            </Badge>
+            <Badge tone="blue" className="gap-1.5 pl-1.5">
+              <Shield className="size-3 stroke-[2]" aria-hidden />
+              {t(`tabs.${type}`)}
+            </Badge>
+            {member.functions.map((fn) => (
+              <Badge key={fn} tone={fn === "TEACHER" ? "blue" : "neutral"}>
+                {t.has(`functions.${fn}`) ? t(`functions.${fn}`) : fn}
+              </Badge>
+            ))}
+          </div>
         </div>
-        <div className="mt-3.5 flex flex-wrap gap-2">
-          {member.functions.map((fn) => (
-            <span
-              key={fn}
-              className={cn(
-                "inline-flex items-center rounded-full px-3 py-1.5 text-[12px] font-semibold",
-                fn === "TEACHER"
-                  ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
-                  : "bg-[var(--ios-fill)] text-[var(--ios-label)]",
-              )}
+
+        <div className="mt-3 flex w-full justify-center">
+          {member.active ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              leadingIcon={<PowerOff className="size-3.5 stroke-[1.75]" aria-hidden />}
+              onClick={() => setPendingKind("deactivate")}
             >
-              {t.has(`functions.${fn}`) ? t(`functions.${fn}`) : fn}
-            </span>
-          ))}
+              {t("actionDeactivate")}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              leadingIcon={<Power className="size-3.5 stroke-[1.75]" aria-hidden />}
+              onClick={() => setPendingKind("reactivate")}
+            >
+              {t("actionReactivate")}
+            </Button>
+          )}
         </div>
       </section>
+
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <GroupedList header={t("detailContactSection")}>
+          <GroupedListItem>
+            <DetailRow
+              label={t("email")}
+              value={email ?? "—"}
+              icon={<AtSign className="size-4 stroke-[1.75]" />}
+              stacked
+            />
+          </GroupedListItem>
+          <GroupedListItem>
+            <DetailRow
+              label={t("phone")}
+              value={phone ?? "—"}
+              icon={<Phone className="size-4 stroke-[1.75]" />}
+            />
+          </GroupedListItem>
+          <GroupedListItem>
+            <DetailRow
+              label={t("columns.lastLogin")}
+              value={lastLogin}
+              icon={<Clock3 className="size-4 stroke-[1.75]" />}
+              stacked
+            />
+          </GroupedListItem>
+          <GroupedListItem>
+            <DetailRow
+              label={t("columns.number")}
+              value={member.staffNumber || "—"}
+              icon={<Hash className="size-4 stroke-[1.75]" />}
+            />
+          </GroupedListItem>
+        </GroupedList>
+
+        <GroupedList
+          header={t("columns.functions")}
+          footer={t("detailFunctionsHint")}
+        >
+          {member.functions.map((fn) => (
+            <GroupedListItem key={fn}>
+              <DetailRow
+                label={t.has(`functions.${fn}`) ? t(`functions.${fn}`) : fn}
+                value={fn}
+                icon={<IdCard className="size-4 stroke-[1.75]" />}
+              />
+            </GroupedListItem>
+          ))}
+        </GroupedList>
+
+        <GroupedList
+          header={t("detailSubjectsSection")}
+          footer={
+            isTeacher
+              ? t("detailSubjectsHint")
+              : t("detailNotTeacherHint")
+          }
+        >
+          {assignmentsLoading ? (
+            <GroupedListItem className="block py-3">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </GroupedListItem>
+          ) : subjectsTaught.length === 0 ? (
+            <GroupedListItem className="block py-3">
+              <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
+                {t("detailSubjectsEmpty")}
+              </p>
+            </GroupedListItem>
+          ) : (
+            subjectsTaught.map((subject) => (
+              <GroupedListItem key={subject.code}>
+                <DetailRow
+                  label={subject.name}
+                  value={subject.code}
+                  icon={<BookOpen className="size-4 stroke-[1.75]" />}
+                />
+              </GroupedListItem>
+            ))
+          )}
+        </GroupedList>
+
+        <GroupedList
+          header={t("detailClassesSection")}
+          footer={
+            isTeacher ? t("detailClassesHint") : t("detailNotTeacherHint")
+          }
+        >
+          {assignmentsLoading ? (
+            <GroupedListItem className="block py-3">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </GroupedListItem>
+          ) : classesTaught.length === 0 ? (
+            <GroupedListItem className="block py-3">
+              <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
+                {t("detailClassesEmpty")}
+              </p>
+            </GroupedListItem>
+          ) : (
+            classesTaught.map((clazz) => {
+              const classSubjects = assignments.filter((a) => a.classId === clazz.classId);
+              return (
+                <GroupedListItem key={clazz.classId} className="block py-3">
+                  <div className="flex w-full gap-3">
+                    <span className="mt-0.5 inline-flex shrink-0 text-[var(--ios-secondary-label)]">
+                      <School className="size-4 stroke-[1.75]" aria-hidden />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[var(--text-body)] font-medium text-[var(--ios-label)]">
+                        {clazz.className}
+                      </p>
+                      <p className="mt-0.5 text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
+                        {classSubjects
+                          .map((a) => localizedLabel(a.subjectName, locale))
+                          .join(" · ")}
+                      </p>
+                    </div>
+                  </div>
+                </GroupedListItem>
+              );
+            })
+          )}
+        </GroupedList>
+      </div>
 
       <ConfirmDialog
         open={Boolean(pendingKind)}
@@ -340,58 +433,4 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
       />
     </div>
   );
-}
-
-function InfoTile({
-  icon,
-  label,
-  value,
-  muted,
-  href,
-  mono,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  muted?: boolean;
-  href?: string;
-  mono?: boolean;
-}) {
-  const content = (
-    <>
-      <div className="flex items-center gap-2">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]">
-          {icon}
-        </span>
-        <p className="truncate text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--ios-secondary-label)]">
-          {label}
-        </p>
-      </div>
-      <p
-        className={cn(
-          "mt-2.5 truncate text-[13px] font-medium tracking-[-0.01em]",
-          muted ? "text-[var(--ios-secondary-label)]" : "text-[var(--ios-label)]",
-          mono && "font-mono text-[12px]",
-        )}
-      >
-        {value}
-      </p>
-    </>
-  );
-
-  const className =
-    "block rounded-[var(--radius-md)] border border-[var(--ios-separator)]/50 bg-[color-mix(in_srgb,var(--ios-fill)_35%,var(--ios-card))] p-3.5 transition-colors";
-
-  if (href) {
-    return (
-      <a
-        href={href}
-        className={cn(className, "hover:border-[color-mix(in_srgb,var(--ios-blue)_28%,var(--ios-separator))] hover:bg-[color-mix(in_srgb,var(--ios-blue)_5%,var(--ios-card))]")}
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return <div className={className}>{content}</div>;
 }

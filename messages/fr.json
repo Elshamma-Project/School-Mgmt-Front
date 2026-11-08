@@ -202,6 +202,14 @@
     "detailNotFoundDescription": "Ce membre n’existe pas ou n’est plus accessible.",
     "detailEditHint": "L’édition complète des fonctions et du contact arrivera sur cette fiche ; la désactivation est déjà disponible.",
     "detailFunctionsHint": "Rôles RH cumulables sur une même fiche.",
+    "detailContactSection": "Coordonnées",
+    "detailSubjectsSection": "Matières enseignées",
+    "detailSubjectsHint": "Issu des affectations ClassSubject (enseignant titulaire).",
+    "detailSubjectsEmpty": "Aucune matière affectée pour le moment.",
+    "detailClassesSection": "Classes",
+    "detailClassesHint": "Classes où ce membre est enseignant titulaire.",
+    "detailClassesEmpty": "Aucune classe affectée pour le moment.",
+    "detailNotTeacherHint": "Visible surtout pour les fiches avec la fonction Enseignant.",
     "createTitle": "Nouveau membre",
     "createDescription": "Une seule fiche Staff : enseignant et/ou fonctions admin.",
     "createSubmit": "Créer",
@@ -217,6 +225,7 @@
       "leadership": "Direction",
       "support": "Admin. / soutien"
     },
+    "tableCount": "{count, plural, one {# membre affiché} other {# membres affichés}}",
     "columns": {
       "name": "Nom",
       "number": "Matricule",

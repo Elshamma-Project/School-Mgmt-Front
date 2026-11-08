@@ -81,65 +81,146 @@ function matchesQuery(member: StaffResponse, q: string): boolean {
   return haystack.includes(q.toLowerCase());
 }
 
+function staffInitials(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
+}
+
+function StaffAvatar({
+  name,
+  active,
+  size = "md",
+}: {
+  name: string;
+  active: boolean;
+  size?: "sm" | "md";
+}) {
+  const dim = size === "sm" ? "size-9 text-[11px]" : "size-10 text-[12px]";
+  return (
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-full font-semibold tracking-[-0.02em]",
+        dim,
+        active
+          ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_16%,transparent)]"
+          : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
+      )}
+      aria-hidden
+    >
+      {staffInitials(name)}
+    </span>
+  );
+}
+
+type StatTone = "blue" | "green" | "amber" | "slate";
+
 type StatCardProps = {
   label: string;
   value: number;
   icon: ReactNode;
-  tone: "blue" | "indigo" | "amber" | "slate";
+  tone: StatTone;
   loading?: boolean;
+  active?: boolean;
+  onSelect?: () => void;
 };
 
-const toneStyles: Record<StatCardProps["tone"], { wrap: string; icon: string }> = {
+const toneStyles: Record<
+  StatTone,
+  { accent: string; icon: string; value: string; ring: string }
+> = {
   blue: {
-    wrap: "bg-[color-mix(in_srgb,var(--ios-blue)_8%,var(--ios-card))]",
+    accent: "bg-[var(--ios-blue)]",
     icon: "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]",
+    value: "text-[var(--ios-blue)]",
+    ring: "ring-[color-mix(in_srgb,var(--ios-blue)_35%,transparent)]",
   },
-  indigo: {
-    wrap: "bg-[color-mix(in_srgb,#6366f1_8%,var(--ios-card))]",
-    icon: "bg-[color-mix(in_srgb,#6366f1_14%,transparent)] text-[#6366f1]",
+  green: {
+    accent: "bg-[var(--ios-success)]",
+    icon: "bg-[var(--ios-success-soft)] text-[var(--ios-success)]",
+    value: "text-[var(--ios-success)]",
+    ring: "ring-[color-mix(in_srgb,var(--ios-success)_35%,transparent)]",
   },
   amber: {
-    wrap: "bg-[color-mix(in_srgb,var(--ios-warning)_8%,var(--ios-card))]",
+    accent: "bg-[var(--ios-warning)]",
     icon: "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]",
+    value: "text-[var(--ios-warning)]",
+    ring: "ring-[color-mix(in_srgb,var(--ios-warning)_35%,transparent)]",
   },
   slate: {
-    wrap: "bg-[color-mix(in_srgb,var(--ios-fill)_55%,var(--ios-card))]",
+    accent: "bg-[var(--ios-secondary-label)]",
     icon: "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
+    value: "text-[var(--ios-label)]",
+    ring: "ring-[color-mix(in_srgb,var(--ios-fill-tertiary)_55%,transparent)]",
   },
 };
 
-function StatCard({ label, value, icon, tone, loading }: StatCardProps) {
+function StatCard({
+  label,
+  value,
+  icon,
+  tone,
+  loading,
+  active = false,
+  onSelect,
+}: StatCardProps) {
   const styles = toneStyles[tone];
+  const interactive = Boolean(onSelect);
+
   return (
-    <div
+    <button
+      type="button"
+      disabled={!interactive || loading}
+      aria-pressed={interactive ? active : undefined}
+      onClick={onSelect}
       className={cn(
-        "rounded-[var(--radius-md)] border border-[var(--ios-separator)]/70 p-3.5 shadow-[var(--ios-shadow)] sm:p-4",
-        styles.wrap,
+        "group relative w-full overflow-hidden rounded-[var(--radius-lg)] border bg-[var(--ios-card)] text-left shadow-[var(--ios-shadow)] transition-[box-shadow,border-color,transform] duration-[var(--duration-fast)]",
+        active
+          ? cn("border-transparent ring-2", styles.ring)
+          : "border-[var(--ios-separator)]/55",
+        interactive &&
+          !loading &&
+          "pressable hover:border-[var(--ios-separator)] hover:shadow-[var(--ios-shadow-md)] focus-visible:shadow-[var(--focus-ring)]",
+        (!interactive || loading) && "cursor-default",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--ios-secondary-label)] sm:text-[11px]">
-            {label}
-          </p>
-          {loading ? (
-            <Skeleton className="mt-2 h-7 w-12" />
-          ) : (
-            <p className="mt-1.5 text-[22px] font-semibold leading-none tracking-[-0.02em] text-[var(--ios-label)] tabular-nums sm:text-[26px]">
-              {value}
-            </p>
-          )}
-        </div>
+      <span
+        className={cn(
+          "absolute inset-x-0 top-0 h-[3px]",
+          styles.accent,
+          !active && "opacity-70",
+        )}
+        aria-hidden
+      />
+      <div className="flex items-center gap-3 px-3.5 py-3.5 sm:gap-3.5 sm:px-4 sm:py-4">
         <span
           className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] sm:size-9",
+            "flex size-10 shrink-0 items-center justify-center rounded-full sm:size-11",
             styles.icon,
           )}
         >
           {icon}
         </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)] sm:text-[11px]">
+            {label}
+          </p>
+          {loading ? (
+            <Skeleton className="mt-2 h-7 w-14" />
+          ) : (
+            <p
+              className={cn(
+                "mt-1 text-[26px] font-semibold leading-none tracking-[-0.03em] tabular-nums sm:text-[28px]",
+                active ? styles.value : "text-[var(--ios-label)]",
+              )}
+            >
+              {value}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -393,28 +474,36 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
           value={stats.total}
           loading={loading}
           tone="blue"
-          icon={<Users className="size-4 stroke-[1.75]" aria-hidden />}
+          active={tab === "all"}
+          onSelect={() => selectTab("all")}
+          icon={<Users className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
         <StatCard
           label={t("stats.teachers")}
           value={stats.teachers}
           loading={loading}
-          tone="indigo"
-          icon={<UserRound className="size-4 stroke-[1.75]" aria-hidden />}
+          tone="green"
+          active={tab === "teachers"}
+          onSelect={() => selectTab("teachers")}
+          icon={<UserRound className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
         <StatCard
           label={t("stats.leadership")}
           value={stats.leadership}
           loading={loading}
           tone="amber"
-          icon={<Shield className="size-4 stroke-[1.75]" aria-hidden />}
+          active={tab === "leadership"}
+          onSelect={() => selectTab("leadership")}
+          icon={<Shield className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
         <StatCard
           label={t("stats.support")}
           value={stats.support}
           loading={loading}
           tone="slate"
-          icon={<Briefcase className="size-4 stroke-[1.75]" aria-hidden />}
+          active={tab === "support"}
+          onSelect={() => selectTab("support")}
+          icon={<Briefcase className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
       </div>
 
@@ -498,35 +587,43 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
         />
       ) : (
         <>
-          <ul className="space-y-2 md:hidden">
+          <ul className="space-y-2.5 md:hidden">
             {items.map((member) => (
               <li
                 key={member.id}
-                className="rounded-[var(--radius-md)] border border-[var(--ios-separator)]/70 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
+                className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 p-3.5">
                   <button
                     type="button"
                     onClick={() => openDetail(member)}
                     className="flex min-w-0 flex-1 items-start gap-3 text-left focus-visible:shadow-[var(--focus-ring)]"
                   >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)]">
-                      <UserRound className="size-4 stroke-[1.75]" aria-hidden />
-                    </span>
+                    <StaffAvatar name={member.fullName} active={member.active} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
-                        {member.fullName}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                          {member.fullName}
+                        </p>
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                            member.active
+                              ? "bg-[var(--ios-success-soft)] text-[var(--ios-success)]"
+                              : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
+                          )}
+                        >
+                          <span className="size-1.5 rounded-full bg-current opacity-90" aria-hidden />
+                          {member.active ? t("statusActive") : t("inactive")}
+                        </span>
+                      </div>
                       <p className="mt-0.5 truncate text-[11px] text-[var(--ios-secondary-label)]">
+                        {member.contact.email || t("noContact")}
+                      </p>
+                      <p className="mt-1 font-mono text-[10px] text-[var(--ios-secondary-label)]">
                         {member.staffNumber || "—"}
                       </p>
-                      <p className="mt-1.5 text-[11px] text-[var(--ios-secondary-label)]">
-                        {lastLoginLabel(member)}
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        <Badge tone={member.active ? "success" : "neutral"}>
-                          {member.active ? t("statusActive") : t("inactive")}
-                        </Badge>
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
                         {member.functions.map((fn) => (
                           <Badge key={fn} tone={fn === "TEACHER" ? "blue" : "neutral"}>
                             {t.has(`functions.${fn}`) ? t(`functions.${fn}`) : fn}
@@ -541,33 +638,33 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
             ))}
           </ul>
 
-          <div className="hidden overflow-hidden rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/60 bg-[var(--ios-card)] shadow-[var(--ios-shadow)] md:block">
+          <div className="hidden overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/50 bg-[var(--ios-card)] shadow-[var(--ios-shadow)] md:block">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[780px] border-collapse text-left">
+              <table className="w-full min-w-[820px] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-[var(--ios-separator)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ios-fill)_70%,transparent),color-mix(in_srgb,var(--ios-fill)_35%,transparent))]">
-                    <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                  <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
+                    <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                       {t("columns.name")}
                     </th>
-                    <th className="px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                    <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                       {t("columns.number")}
                     </th>
-                    <th className="px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                    <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                       {t("columns.lastLogin")}
                     </th>
-                    <th className="px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                    <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                       {t("columns.functions")}
                     </th>
-                    <th className="px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                    <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                       {t("columns.status")}
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                    <th className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                       {t("columns.actions")}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((member) => (
+                  {items.map((member, index) => (
                     <tr
                       key={member.id}
                       tabIndex={0}
@@ -580,39 +677,45 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
                         }
                       }}
                       className={cn(
-                        "cursor-pointer border-b border-[var(--ios-separator)]/80 last:border-b-0 transition-colors",
-                        "hover:bg-[color-mix(in_srgb,var(--ios-blue)_4%,var(--ios-card))]",
-                        "focus-visible:bg-[color-mix(in_srgb,var(--ios-blue)_6%,var(--ios-card))] focus-visible:outline-none",
-                        !member.active && "opacity-75",
+                        "group cursor-pointer border-b border-[var(--ios-separator)]/55 last:border-b-0 transition-colors duration-[var(--duration-fast)]",
+                        index % 2 === 1 && "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
+                        "hover:bg-[color-mix(in_srgb,var(--ios-blue)_6%,var(--ios-card))]",
+                        "focus-visible:bg-[color-mix(in_srgb,var(--ios-blue)_8%,var(--ios-card))] focus-visible:outline-none",
+                        !member.active && "opacity-70",
                       )}
                     >
-                      <td className="px-4 py-3.5">
-                        <div className="flex min-w-[200px] items-center gap-3">
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_18%,transparent)]">
-                            <UserRound className="size-4 stroke-[1.75]" aria-hidden />
-                          </span>
+                      <td className="px-5 py-3.5">
+                        <div className="flex min-w-[220px] items-center gap-3">
+                          <StaffAvatar name={member.fullName} active={member.active} size="sm" />
                           <div className="min-w-0">
-                            <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                            <p className="truncate text-[13px] font-semibold tracking-[-0.015em] text-[var(--ios-label)] group-hover:text-[var(--ios-blue)]">
                               {member.fullName}
                             </p>
-                            <p className="mt-0.5 truncate text-[11px] text-[var(--ios-tertiary-label,var(--ios-secondary-label))]">
+                            <p className="mt-0.5 truncate text-[11px] text-[var(--ios-secondary-label)]">
                               {member.contact.email || t("noContact")}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-3 py-3.5">
-                        <span className="rounded-[var(--radius-sm)] bg-[var(--ios-fill)]/80 px-2 py-1 font-mono text-[11px] text-[var(--ios-secondary-label)]">
+                        <span className="inline-flex rounded-[var(--radius-sm)] border border-[var(--ios-separator)]/70 bg-[var(--ios-card)] px-2 py-1 font-mono text-[11px] text-[var(--ios-secondary-label)]">
                           {member.staffNumber || "—"}
                         </span>
                       </td>
                       <td className="px-3 py-3.5">
-                        <span className="whitespace-nowrap text-[12px] text-[var(--ios-label)]">
+                        <span
+                          className={cn(
+                            "whitespace-nowrap text-[12px]",
+                            member.lastLoginAt
+                              ? "text-[var(--ios-label)]"
+                              : "text-[var(--ios-secondary-label)]",
+                          )}
+                        >
                           {lastLoginLabel(member)}
                         </span>
                       </td>
                       <td className="px-3 py-3.5">
-                        <div className="flex min-w-[140px] flex-wrap gap-1.5">
+                        <div className="flex min-w-[150px] flex-wrap gap-1.5">
                           {member.functions.map((fn) => (
                             <Badge key={fn} tone={fn === "TEACHER" ? "blue" : "neutral"}>
                               {t.has(`functions.${fn}`) ? t(`functions.${fn}`) : fn}
@@ -621,12 +724,23 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
                         </div>
                       </td>
                       <td className="px-3 py-3.5">
-                        <Badge tone={member.active ? "success" : "neutral"}>
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                            member.active
+                              ? "bg-[var(--ios-success-soft)] text-[var(--ios-success)]"
+                              : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
+                          )}
+                        >
+                          <span className="size-1.5 rounded-full bg-current" aria-hidden />
                           {member.active ? t("statusActive") : t("inactive")}
-                        </Badge>
+                        </span>
                       </td>
-                      <td className="px-4 py-3.5 text-right">
-                        <div className="inline-flex items-center justify-end gap-1" onClick={stopRowNav}>
+                      <td className="px-5 py-3.5 text-right">
+                        <div
+                          className="inline-flex items-center justify-end gap-0.5 rounded-[var(--radius-md)] bg-[var(--ios-fill)]/0 p-0.5 transition-colors group-hover:bg-[var(--ios-fill)]/55"
+                          onClick={stopRowNav}
+                        >
                           {member.active ? (
                             <button
                               type="button"
@@ -652,7 +766,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
                             type="button"
                             title={t("actionEdit")}
                             aria-label={t("actionEdit")}
-                            className="pressable inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)] focus-visible:shadow-[var(--focus-ring)]"
+                            className="pressable inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-card)] hover:text-[var(--ios-label)] focus-visible:shadow-[var(--focus-ring)]"
                             onClick={() => openDetail(member)}
                           >
                             <Pencil className="size-3.5 stroke-[1.75]" aria-hidden />
@@ -664,6 +778,11 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="flex items-center justify-between border-t border-[var(--ios-separator)]/60 bg-[color-mix(in_srgb,var(--ios-fill)_28%,var(--ios-card))] px-5 py-2.5">
+              <p className="text-[11px] text-[var(--ios-secondary-label)]">
+                {t("tableCount", { count: items.length })}
+              </p>
             </div>
           </div>
         </>
