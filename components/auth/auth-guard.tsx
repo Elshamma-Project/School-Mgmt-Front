@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { useAuthStore } from "@/stores/auth-store";
@@ -50,8 +51,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
     pathname === "/"
   ) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-[var(--ios-bg)] text-[var(--ios-secondary-label)]">
-        <span className="text-[var(--text-subhead)]">…</span>
+      <div className="min-h-dvh bg-[var(--ios-bg)] px-5 py-8 md:px-8">
+        <PageSkeleton variant="home" />
       </div>
     );
   }

@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { LogOut } from "lucide-react";
 import { Dialog, type DialogAction } from "@/components/ui/dialog";
 
 type ConfirmDialogProps = {
@@ -12,6 +14,7 @@ type ConfirmDialogProps = {
   onConfirm: () => void;
   /** destructive = rouge (déconnexion, suppression…) */
   tone?: "default" | "destructive";
+  icon?: ReactNode;
 };
 
 /** Boîte de confirmation prête à l’emploi pour les actions critiques. */
@@ -24,6 +27,7 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   tone = "destructive",
+  icon,
 }: ConfirmDialogProps) {
   const actions: DialogAction[] = [
     {
@@ -39,6 +43,12 @@ export function ConfirmDialog({
     },
   ];
 
+  const resolvedIcon =
+    icon ??
+    (tone === "destructive" ? (
+      <LogOut className="size-5 stroke-[1.75]" aria-hidden />
+    ) : null);
+
   return (
     <Dialog
       open={open}
@@ -46,6 +56,8 @@ export function ConfirmDialog({
       title={title}
       description={description}
       actions={actions}
+      tone={tone}
+      icon={resolvedIcon}
     />
   );
 }

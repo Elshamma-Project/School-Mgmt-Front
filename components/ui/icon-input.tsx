@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, type InputHTMLAttributes, type ReactNode } from "react";
-import { controlBase, controlDisabled, focusRing } from "@/lib/ui/classes";
+import { controlBase, controlDisabled } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils/cn";
 
 export type IconInputProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -37,8 +37,7 @@ export const IconInput = forwardRef<HTMLInputElement, IconInputProps>(
           disabled={disabled}
           aria-invalid={invalid || undefined}
           className={cn(
-            "h-full w-full bg-transparent py-0 pl-11 pr-3.5 text-[var(--text-body)] text-[var(--ios-label)] outline-none placeholder:text-[var(--ios-tertiary-label)]",
-            focusRing,
+            "h-full w-full bg-transparent py-0 pl-11 pr-3.5 text-[var(--text-body)] text-[var(--ios-label)] outline-none placeholder:text-[var(--ios-tertiary-label)] focus-visible:outline-none",
             controlDisabled,
             className,
           )}

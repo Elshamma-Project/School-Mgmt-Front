@@ -40,14 +40,14 @@ export function SidebarNav({ collapsed = false }: SidebarNavProps) {
             aria-label={collapsed ? label : undefined}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "pressable flex items-center rounded-[var(--radius-sm)] text-[var(--text-footnote)] font-medium transition-colors duration-[var(--duration-fast)] focus-visible:shadow-[var(--focus-ring)]",
-              collapsed ? "size-9 justify-center" : "gap-2.5 px-2.5 py-2",
+              "pressable flex items-center rounded-[var(--radius-sm)] text-[11px] font-medium transition-colors duration-[var(--duration-fast)] focus-visible:shadow-[var(--focus-ring)]",
+              collapsed ? "size-9 justify-center" : "gap-2 px-2 py-1.5",
               active
                 ? "bg-[var(--ios-blue)]/10 text-[var(--ios-blue)]"
                 : "text-[var(--ios-label)] hover:bg-[var(--ios-fill)]",
             )}
           >
-            <Icon className="size-4 shrink-0 stroke-[1.75]" aria-hidden />
+            <Icon className="size-3.5 shrink-0 stroke-[1.75]" aria-hidden />
             {!collapsed ? <span className="truncate">{label}</span> : null}
           </Link>
         );

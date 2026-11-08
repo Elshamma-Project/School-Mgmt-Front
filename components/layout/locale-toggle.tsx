@@ -77,7 +77,7 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
           initial={reduceMotion ? false : { opacity: 0, y: 3 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-          className="min-w-[1.25rem] text-center text-[var(--text-caption)] font-semibold uppercase tracking-[0.06em]"
+          className="min-w-[1.25rem] text-center text-[10px] font-semibold uppercase tracking-[0.06em]"
         >
           {locale}
         </motion.span>
@@ -137,7 +137,7 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
                     selected && "bg-[var(--ios-blue)]/10",
                   )}
                 >
-                  <span className="flex items-center gap-2 text-[var(--text-footnote)] font-medium leading-none text-[var(--ios-label)]">
+                  <span className="flex items-center gap-2 text-[11px] font-medium leading-none text-[var(--ios-label)]">
                     <LocaleFlag locale={code} />
                     {t(LOCALE_LABELS[code])}
                   </span>

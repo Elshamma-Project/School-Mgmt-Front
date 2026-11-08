@@ -13,6 +13,7 @@ export { IconInput } from "./icon-input";
 export { Input } from "./input";
 export { Label } from "./label";
 export { PageHeader } from "./page-header";
+export { PageSkeleton } from "./page-skeleton";
 export { SegmentedControl } from "./segmented-control";
 export { Select } from "./select";
 export { Skeleton } from "./skeleton";

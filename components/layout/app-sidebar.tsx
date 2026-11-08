@@ -61,10 +61,10 @@ export function AppSidebar() {
           <>
             <BrandMark size="sm" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[var(--text-caption)] font-semibold uppercase tracking-[0.1em] text-[var(--ios-secondary-label)]">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--ios-secondary-label)]">
                 {t("schoolName")}
               </p>
-              <p className="truncate text-[var(--text-subhead)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
+              <p className="truncate text-[12px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
                 {t("appName")}
               </p>
             </div>

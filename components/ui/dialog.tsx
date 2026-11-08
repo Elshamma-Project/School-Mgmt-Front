@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export type DialogAction = {
@@ -24,6 +25,9 @@ type DialogProps = {
   description?: string;
   children?: ReactNode;
   actions: DialogAction[];
+  /** Icône optionnelle au-dessus du titre (ex. déconnexion). */
+  icon?: ReactNode;
+  tone?: "default" | "destructive";
   /** Accessible name override; defaults to title. */
   "aria-label"?: string;
 };
@@ -39,6 +43,8 @@ export function Dialog({
   description,
   children,
   actions,
+  icon,
+  tone = "default",
   "aria-label": ariaLabel,
 }: DialogProps) {
   const titleId = useId();
@@ -73,12 +79,19 @@ export function Dialog({
 
   if (!open || !mounted) return null;
 
+  const stacked = actions.length > 2 || tone === "destructive";
+  const headerIcon =
+    icon ??
+    (tone === "destructive" ? (
+      <LogOut className="size-6 stroke-[1.75]" aria-hidden />
+    ) : null);
+
   return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
       <button
         type="button"
         aria-label="Close"
-        className="absolute inset-0 cursor-pointer bg-black/35 backdrop-blur-[2px]"
+        className="absolute inset-0 cursor-pointer bg-black/40 backdrop-blur-[6px] fade-in"
         onClick={() => onOpenChange(false)}
       />
 
@@ -89,19 +102,33 @@ export function Dialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
         aria-label={ariaLabel}
-        className="relative z-10 w-full max-w-[270px] overflow-hidden rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--ios-card)_94%,transparent)] shadow-[var(--ios-shadow-lg)] backdrop-blur-xl slide-up"
+        className="relative z-10 w-full max-w-[300px] overflow-hidden rounded-[var(--radius-xl)] bg-[var(--ios-card)] shadow-[var(--ios-shadow-lg)] ring-1 ring-[var(--ios-separator)] slide-up"
       >
-        <div className="px-4 pb-3.5 pt-5 text-center">
+        <div className="px-5 pb-4 pt-6 text-center">
+          {headerIcon ? (
+            <div
+              className={cn(
+                "mx-auto mb-4 flex size-14 items-center justify-center rounded-full",
+                tone === "destructive"
+                  ? "bg-[var(--ios-danger-soft)] text-[var(--ios-danger)]"
+                  : "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]",
+              )}
+              aria-hidden
+            >
+              {headerIcon}
+            </div>
+          ) : null}
+
           <h2
             id={titleId}
-            className="text-[var(--text-body)] font-semibold tracking-[-0.01em] text-[var(--ios-label)]"
+            className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]"
           >
             {title}
           </h2>
           {description ? (
             <p
               id={descriptionId}
-              className="mt-1 text-[var(--text-footnote)] leading-snug text-[var(--ios-secondary-label)]"
+              className="mt-1.5 text-[12px] leading-relaxed text-[var(--ios-secondary-label)]"
             >
               {description}
             </p>
@@ -111,8 +138,8 @@ export function Dialog({
 
         <div
           className={cn(
-            "grid border-t border-[var(--ios-separator)]",
-            actions.length > 1 ? "grid-cols-2" : "grid-cols-1",
+            "border-t border-[var(--ios-separator)]",
+            stacked ? "flex flex-col-reverse" : "grid grid-cols-2",
           )}
         >
           {actions.map((action, index) => (
@@ -125,10 +152,13 @@ export function Dialog({
                 onOpenChange(false);
               }}
               className={cn(
-                "pressable min-h-11 cursor-pointer px-2 py-2.5 text-[var(--text-body)] transition-colors hover:bg-[var(--ios-fill)]/60 focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
-                index > 0 && actions.length > 1
-                  ? "border-l border-[var(--ios-separator)]"
-                  : null,
+                "pressable min-h-11 cursor-pointer px-3 py-3 text-[13px] transition-colors hover:bg-[var(--ios-fill)]/70 focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
+                !stacked &&
+                  index > 0 &&
+                  "border-l border-[var(--ios-separator)]",
+                stacked &&
+                  index < actions.length - 1 &&
+                  "border-t border-[var(--ios-separator)]",
                 action.variant === "destructive" &&
                   "font-semibold text-[var(--ios-danger)]",
                 action.variant === "cancel" &&

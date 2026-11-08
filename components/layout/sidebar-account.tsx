@@ -81,20 +81,20 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
           type="button"
           onClick={() => router.push("/profile")}
           aria-label={t("openProfile")}
-          className="pressable flex w-full cursor-pointer items-start gap-2.5 rounded-[var(--radius-md)] bg-[var(--ios-fill)]/70 px-2.5 py-2.5 text-left transition-colors hover:bg-[var(--ios-fill)] focus-visible:shadow-[var(--focus-ring)]"
+          className="pressable flex w-full cursor-pointer items-start gap-2 rounded-[var(--radius-md)] bg-[var(--ios-fill)]/70 px-2 py-2 text-left transition-colors hover:bg-[var(--ios-fill)] focus-visible:shadow-[var(--focus-ring)]"
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--ios-card)] text-[var(--ios-blue)] shadow-[var(--ios-shadow-sm)]">
-            <UserRound className="size-4 stroke-[1.75]" aria-hidden />
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--ios-card)] text-[var(--ios-blue)] shadow-[var(--ios-shadow-sm)]">
+            <UserRound className="size-3.5 stroke-[1.75]" aria-hidden />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[var(--text-footnote)] font-semibold text-[var(--ios-label)]">
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-[11px] font-semibold text-[var(--ios-label)]">
               {name}
             </p>
-            <p className="truncate text-[var(--text-caption)] text-[var(--ios-secondary-label)]">
+            <p className="mt-0.5 truncate text-[10px] text-[var(--ios-secondary-label)]">
               {email}
             </p>
             {roleLabel ? (
-              <p className="mt-0.5 truncate text-[var(--text-caption)] font-medium text-[var(--ios-blue)]">
+              <p className="mt-0.5 truncate text-[10px] font-medium text-[var(--ios-blue)]">
                 {roleLabel}
                 {isMock ? ` · ${tCommon("demoBadge")}` : null}
               </p>
@@ -106,11 +106,11 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
           type="button"
           onClick={() => setConfirmLogout(true)}
           className={cn(
-            "pressable flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-2.5 py-2 text-[var(--text-footnote)] font-medium",
+            "pressable flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-[11px] font-medium",
             "text-[var(--ios-danger)] hover:bg-[var(--ios-danger)]/10 focus-visible:shadow-[var(--focus-ring)]",
           )}
         >
-          <LogOut className="size-4 stroke-[1.75]" aria-hidden />
+          <LogOut className="size-3.5 stroke-[1.75]" aria-hidden />
           {t("logout")}
         </button>
       </div>

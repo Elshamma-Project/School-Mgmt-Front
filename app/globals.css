@@ -48,14 +48,14 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  /* ——— Typo ——— */
+  /* ——— Typo (référence chrome nav = 11px ; sidebar en tailles locales) ——— */
   --text-caption: 11px;
-  --text-footnote: 13px;
-  --text-subhead: 15px;
-  --text-body: 17px;
-  --text-title3: 20px;
-  --text-title2: 22px;
-  --text-title1: 28px;
+  --text-footnote: 11px;
+  --text-subhead: 12px;
+  --text-body: 12px;
+  --text-title3: 14px;
+  --text-title2: 15px;
+  --text-title1: 22px;
   --font-ios:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI",
     sans-serif;
@@ -191,6 +191,32 @@ html.dark ::selection {
 
 .pressable:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: var(--ios-fill);
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ios-card) 70%, transparent),
+    transparent
+  );
+  animation: smels-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes smels-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .fade-in {
