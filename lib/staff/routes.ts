@@ -29,7 +29,19 @@ export function staffDetailPath(
   return `${base}/staff/${type}/${encodeURIComponent(id)}` as `/${string}`;
 }
 
-export function staffListPath(workspaceHome: `/${string}`): `/${string}` {
+export function staffListPath(
+  workspaceHome: `/${string}`,
+  tab?: StaffListTab | null,
+): `/${string}` {
   const base = workspaceHome.replace(/\/$/, "") as `/${string}`;
-  return `${base}/staff` as `/${string}`;
+  if (!tab || tab === "all") {
+    return `${base}/staff` as `/${string}`;
+  }
+  return `${base}/staff?tab=${encodeURIComponent(tab)}` as `/${string}`;
+}
+
+export function parseStaffListTab(value: string | null | undefined): StaffListTab | null {
+  if (!value) return null;
+  if (value === "all" || isStaffTypeSlug(value)) return value;
+  return null;
 }

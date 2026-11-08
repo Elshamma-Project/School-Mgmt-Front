@@ -78,6 +78,14 @@ async function tryRefreshAccessToken(clearOnFailure: boolean): Promise<boolean> 
   return refreshInFlight;
 }
 
+function throwHttpError(status: number, problem: ProblemDetails | null): never {
+  const message =
+    (typeof problem?.detail === "string" && problem.detail) ||
+    (typeof problem?.title === "string" && problem.title) ||
+    `HTTP ${status}`;
+  throw new ApiError(status, message, problem);
+}
+
 /**
  * Client HTTP vers l’API SMELS.
  * Ne journalise jamais d’identifiants élèves côté client.
@@ -104,7 +112,14 @@ export async function apiRequest<T>(
   }
 
   if (auth) {
-    const token = resolveToken(useAuthStore.getState().accessToken);
+    let token = resolveToken(useAuthStore.getState().accessToken);
+    // Access absent mais refresh présent → renouveler avant d’appeler (évite toast « Authentication required »).
+    if (!token && !skipRefresh) {
+      const refreshed = await tryRefreshAccessToken(clearSessionOnFailure);
+      if (refreshed) {
+        token = resolveToken(useAuthStore.getState().accessToken);
+      }
+    }
     if (token) {
       requestHeaders.set("Authorization", `Bearer ${token}`);
     }
@@ -131,31 +146,25 @@ export async function apiRequest<T>(
     if (refreshed) {
       return apiRequest<T>(path, { ...options, skipRefresh: true });
     }
-    if (clearSessionOnFailure && useAuthStore.getState().accessToken) {
-      // Refresh raté pour cause auth : session déjà nettoyée dans tryRefresh si 401.
-      // Si refresh a échoué sans clear (réseau), on laisse la session.
+    // Session morte : déconnecter silencieusement ; le AuthGuard envoie vers /login.
+    if (clearSessionOnFailure) {
+      useAuthStore.getState().clearSession();
     }
+    const problem = await parseProblem(response);
+    throwHttpError(401, problem ?? { title: "UNAUTHORIZED", detail: "Authentication required", status: 401 });
   }
 
   if (response.status === 204 || responseType === "void") {
     if (!response.ok && response.status !== 204) {
       const problem = await parseProblem(response);
-      throw new ApiError(
-        response.status,
-        (typeof problem?.detail === "string" && problem.detail) || `HTTP ${response.status}`,
-        problem,
-      );
+      throwHttpError(response.status, problem);
     }
     return undefined as T;
   }
 
   if (!response.ok) {
     const problem = await parseProblem(response);
-    const message =
-      (typeof problem?.detail === "string" && problem.detail) ||
-      (typeof problem?.title === "string" && problem.title) ||
-      `HTTP ${response.status}`;
-    throw new ApiError(response.status, message, problem);
+    throwHttpError(response.status, problem);
   }
 
   if (responseType === "blob") {

@@ -201,6 +201,7 @@
     "detailNotFoundTitle": "Fiche introuvable",
     "detailNotFoundDescription": "Ce membre n’existe pas ou n’est plus accessible.",
     "detailEditHint": "L’édition complète des fonctions et du contact arrivera sur cette fiche ; la désactivation est déjà disponible.",
+    "detailFunctionsHint": "Rôles RH cumulables sur une même fiche.",
     "createTitle": "Nouveau membre",
     "createDescription": "Une seule fiche Staff : enseignant et/ou fonctions admin.",
     "createSubmit": "Créer",

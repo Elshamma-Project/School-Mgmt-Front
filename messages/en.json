@@ -201,6 +201,7 @@
     "detailNotFoundTitle": "Profile not found",
     "detailNotFoundDescription": "This staff member does not exist or is no longer accessible.",
     "detailEditHint": "Full editing of functions and contact will land on this page; deactivation is already available.",
+    "detailFunctionsHint": "HR roles can be combined on one staff record.",
     "createTitle": "New staff member",
     "createDescription": "One Staff record: teaching and/or admin functions.",
     "createSubmit": "Create",

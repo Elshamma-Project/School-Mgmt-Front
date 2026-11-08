@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { IconInput } from "@/components/ui/icon-input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import {
   createStaff,
@@ -43,11 +44,16 @@ import {
   STAFF_LIST_TABS,
   type StaffListTab,
 } from "@/lib/staff/functions";
-import { staffDetailPath, staffTypeSlug } from "@/lib/staff/routes";
+import {
+  parseStaffListTab,
+  staffDetailPath,
+  staffListPath,
+  staffTypeSlug,
+} from "@/lib/staff/routes";
 import { notify } from "@/lib/ui/notify";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
-import { ApiError } from "@/types/api";
+import { ApiError, isAuthFailure } from "@/types/api";
 import { primaryRole } from "@/types/auth";
 
 function useDebounced<T>(value: T, delayMs: number): T {
@@ -147,13 +153,24 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const schoolId = useAuthStore((s) => s.user?.schoolId);
   const role = primaryRole(useAuthStore((s) => s.user));
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
 
-  const [tab, setTab] = useState<StaffListTab>("all");
+  const tabFromUrl = parseStaffListTab(searchParams.get("tab")) ?? "all";
+  const [tab, setTab] = useState<StaffListTab>(tabFromUrl);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounced(query, 280);
+
+  useEffect(() => {
+    setTab(tabFromUrl);
+  }, [tabFromUrl]);
+
+  function selectTab(next: StaffListTab) {
+    setTab(next);
+    router.replace(staffListPath(workspaceHome, next));
+  }
   const [allItems, setAllItems] = useState<StaffResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -180,6 +197,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
       });
       setAllItems(page.content);
     } catch (error) {
+      if (isAuthFailure(error)) return;
       if (error instanceof ApiError) notify.error(error.message);
       else notify.error(t("loadError"));
       setAllItems([]);
@@ -285,6 +303,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
       setPending(null);
       await load();
     } catch (error) {
+      if (isAuthFailure(error)) return;
       if (error instanceof ApiError) notify.error(error.message);
       else notify.error(t("actionError"));
     } finally {
@@ -407,7 +426,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
               <button
                 key={key}
                 type="button"
-                onClick={() => setTab(key)}
+                onClick={() => selectTab(key)}
                 className={cn(
                   "pressable shrink-0 rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] font-semibold transition-colors focus-visible:shadow-[var(--focus-ring)]",
                   active

@@ -1,24 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, PanelLeftOpen } from "lucide-react";
+import { ArrowLeft, Menu, PanelLeftOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { usePathname } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { getNavKeyFromPathname } from "@/lib/navigation/page-meta";
 import { useAuthStore } from "@/stores/auth-store";
 import { usePageHeadingStore } from "@/stores/page-heading-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
+import { cn } from "@/lib/utils/cn";
 import { primaryRole } from "@/types/auth";
 
 export function AppHeader() {
   const tNav = useTranslations("nav");
+  const tCommon = useTranslations("common");
   const pathname = usePathname();
+  const router = useRouter();
   const role = primaryRole(useAuthStore((s) => s.user));
-  const headingOverride = usePageHeadingStore((s) => s.override);
-  const title = headingOverride ?? tNav(getNavKeyFromPathname(pathname, role));
+  const crumbs = usePageHeadingStore((s) => s.crumbs);
+  const backHref = usePageHeadingStore((s) => s.backHref);
+  const title = tNav(getNavKeyFromPathname(pathname, role));
   const collapsed = useSidebarStore((s) => s.collapsed);
   const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
   const [ready, setReady] = useState(false);
@@ -67,8 +71,62 @@ export function AppHeader() {
             </button>
           ) : null}
 
+          {backHref ? (
+            <button
+              type="button"
+              onClick={() => router.push(backHref as `/${string}`)}
+              aria-label={tCommon("back")}
+              title={tCommon("back")}
+              className="pressable inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] bg-[var(--ios-fill)] text-[var(--ios-label)] hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]"
+            >
+              <ArrowLeft className="size-4 stroke-[1.75]" aria-hidden />
+            </button>
+          ) : null}
+
           <h1 className="min-w-0 flex-1 truncate text-[var(--text-title3)] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
-            {title}
+            {crumbs && crumbs.length > 0 ? (
+              <span className="inline-flex max-w-full items-center gap-1.5">
+                {crumbs.map((crumb, index) => {
+                  const isLast = index === crumbs.length - 1;
+                  const clickable = Boolean(crumb.href) && !isLast;
+                  return (
+                    <span
+                      key={`${crumb.label}-${index}`}
+                      className="inline-flex min-w-0 items-center gap-1.5"
+                    >
+                      {index > 0 ? (
+                        <span
+                          className="shrink-0 font-medium text-[var(--ios-tertiary-label,var(--ios-secondary-label))]"
+                          aria-hidden
+                        >
+                          ›
+                        </span>
+                      ) : null}
+                      {clickable ? (
+                        <Link
+                          href={crumb.href as `/${string}`}
+                          className="shrink-0 rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] transition-colors hover:text-[var(--ios-blue)] focus-visible:shadow-[var(--focus-ring)]"
+                        >
+                          {crumb.label}
+                        </Link>
+                      ) : (
+                        <span
+                          className={cn(
+                            isLast
+                              ? "truncate text-[var(--ios-label)]"
+                              : "shrink-0 text-[var(--ios-secondary-label)]",
+                          )}
+                        >
+                          {crumb.label}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })}
+              </span>
+            ) : (
+              title
+            )}
           </h1>
           <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
