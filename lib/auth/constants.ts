@@ -1,17 +1,22 @@
-/** Cookie lu par le proxy pour les redirects auth (miroir du token localStorage). */
-export const AUTH_COOKIE_NAME = "smels_access_token";
+/**
+ * Cookie **opaque** pour le proxy Next (présence de session seulement).
+ * Ne contient plus le JWT — réduit l’exposition XSS via document.cookie.
+ */
+export const AUTH_COOKIE_NAME = "smels_session";
 
-/** Clé de persistance zustand (localStorage). */
+/** Valeur fixe du cookie de présence (pas un secret). */
+export const AUTH_COOKIE_PRESENT = "1";
+
+/** Clé de persistance zustand. */
 export const AUTH_STORAGE_KEY = "smels-auth";
 
 /**
- * Choix de persistance (fondations) :
- * - access/refresh tokens + user dans localStorage via zustand/persist
- * - cookie non-httpOnly miroir pour que proxy.ts puisse rediriger sans token
+ * Persistance :
+ * - access/refresh scellés (token-vault) dans localStorage ou sessionStorage
+ * - cookie opaque pour proxy.ts (redirects)
  *
  * Sécurité :
- * - jamais de passwordHash ni de données élèves dans le store
- * - refresh unique (single-flight) côté client HTTP
- * - logout serveur + purge locale
- * Évolution prévue : cookies httpOnly gérés par BFF (plus sûr contre XSS).
+ * - jamais passwordHash / données élèves
+ * - refresh single-flight + lock multi-onglets
+ * - Évolution : cookies HttpOnly BFF
  */

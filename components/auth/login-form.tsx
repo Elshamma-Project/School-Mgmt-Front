@@ -28,7 +28,8 @@ import { ApiError } from "@/types/api";
 import type { AppRole } from "@/types/auth";
 import { primaryRole } from "@/types/auth";
 
-const LOGIN_MIN_MS = 700;
+/** Délai minimal loader — assez court pour ne pas ralentir inutilement. */
+const LOGIN_MIN_MS = 320;
 
 type LoginFormProps = {
   /** schoolId lu côté serveur depuis .env (prioritaire). */

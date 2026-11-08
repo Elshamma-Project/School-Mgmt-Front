@@ -7,9 +7,12 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   auth?: boolean;
   /** Évite une boucle infinie lors du refresh. */
   skipRefresh?: boolean;
+  /** Réponse binaire (avatar). */
+  responseType?: "json" | "blob" | "void";
 };
 
 let refreshInFlight: Promise<boolean> | null = null;
+const REFRESH_LOCK = "smels-auth-refresh";
 
 async function parseProblem(response: Response): Promise<ProblemDetails | null> {
   const contentType = response.headers.get("content-type") ?? "";
@@ -24,10 +27,19 @@ async function parseProblem(response: Response): Promise<ProblemDetails | null> 
   }
 }
 
+async function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
+  const nav = typeof navigator !== "undefined" ? navigator : undefined;
+  const locks = nav && "locks" in nav ? nav.locks : undefined;
+  if (!locks?.request) {
+    return fn();
+  }
+  return locks.request(REFRESH_LOCK, { mode: "exclusive" }, () => fn());
+}
+
 async function tryRefreshAccessToken(): Promise<boolean> {
   if (refreshInFlight) return refreshInFlight;
 
-  refreshInFlight = (async () => {
+  refreshInFlight = withRefreshLock(async () => {
     const { refreshToken, isMock, applyTokens, clearSession } = useAuthStore.getState();
     if (isMock || !refreshToken) {
       clearSession();
@@ -42,10 +54,10 @@ async function tryRefreshAccessToken(): Promise<boolean> {
     } catch {
       clearSession();
       return false;
-    } finally {
-      refreshInFlight = null;
     }
-  })();
+  }).finally(() => {
+    refreshInFlight = null;
+  });
 
   return refreshInFlight;
 }
@@ -58,9 +70,15 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, auth = true, headers, skipRefresh = false, ...rest } = options;
+  const {
+    body,
+    auth = true,
+    headers,
+    skipRefresh = false,
+    responseType = "json",
+    ...rest
+  } = options;
   const requestHeaders = new Headers(headers);
-  // Accès statique NEXT_PUBLIC_* via getTenantConfig (inliné au build / dev).
   const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "") || "http://localhost:8090";
 
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
@@ -98,7 +116,15 @@ export async function apiRequest<T>(
     }
   }
 
-  if (response.status === 204) {
+  if (response.status === 204 || responseType === "void") {
+    if (!response.ok && response.status !== 204) {
+      const problem = await parseProblem(response);
+      throw new ApiError(
+        response.status,
+        (typeof problem?.detail === "string" && problem.detail) || `HTTP ${response.status}`,
+        problem,
+      );
+    }
     return undefined as T;
   }
 
@@ -109,6 +135,10 @@ export async function apiRequest<T>(
       (typeof problem?.title === "string" && problem.title) ||
       `HTTP ${response.status}`;
     throw new ApiError(response.status, message, problem);
+  }
+
+  if (responseType === "blob") {
+    return (await response.blob()) as T;
   }
 
   const contentType = response.headers.get("content-type") ?? "";

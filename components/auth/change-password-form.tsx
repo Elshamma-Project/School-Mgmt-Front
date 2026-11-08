@@ -25,7 +25,7 @@ export function ChangePasswordForm() {
   const tProfile = useTranslations("profile");
   const router = useRouter();
   const setMustChangePassword = useAuthStore((s) => s.setMustChangePassword);
-  const syncFromAccount = useAuthStore((s) => s.syncFromAccount);
+  const applyTokens = useAuthStore((s) => s.applyTokens);
   const isMock = useAuthStore((s) => s.isMock);
   const user = useAuthStore((s) => s.user);
 
@@ -63,16 +63,15 @@ export function ChangePasswordForm() {
           description: tProfile("mockHint"),
         });
       } else {
-        const account = await changePassword({
+        const tokens = await changePassword({
           currentPassword,
           newPassword,
           confirmPassword,
         });
-        syncFromAccount(account);
-        setMustChangePassword(false);
+        applyTokens(tokens);
         notify.success(tProfile("passwordSaved"));
       }
-      const role = primaryRole(user);
+      const role = primaryRole(useAuthStore.getState().user) ?? primaryRole(user);
       router.replace(role ? getRoleHomePath(role) : "/");
     } catch (error) {
       if (error instanceof ApiError) {

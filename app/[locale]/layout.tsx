@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { StoreHydration } from "@/components/providers/store-hydration";
 import { AppToaster } from "@/components/ui/toaster";
-import { THEME_COOKIE_NAME, isAppTheme } from "@/lib/theme/constants";
 import { routing } from "@/i18n/routing";
-import { cn } from "@/lib/utils/cn";
 
 type LocaleLayoutProps = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 };
 
-/** Locale dans l’URL : ce layout peut bloquer ; les pages enfants restent éligibles à Instant. */
+/**
+ * Pas de `cookies()` ici : évite de forcer toute la route en dynamique
+ * (accélère le premier paint). Le thème est appliqué côté client (theme-store).
+ */
 export const instant = false;
 
 export function generateStaticParams() {
@@ -38,18 +38,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   setRequestLocale(locale);
   const messages = await getMessages();
-  const themeCookie = (await cookies()).get(THEME_COOKIE_NAME)?.value;
-  const theme = isAppTheme(themeCookie) ? themeCookie : "light";
 
   return (
-    <html
-      lang={locale}
-      className={cn("h-full antialiased", theme === "dark" && "dark")}
-      style={{ colorScheme: theme }}
-      suppressHydrationWarning
-    >
+    <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full font-sans">
         <NextIntlClientProvider messages={messages}>
+          <StoreHydration />
           {children}
           <AppToaster />
         </NextIntlClientProvider>

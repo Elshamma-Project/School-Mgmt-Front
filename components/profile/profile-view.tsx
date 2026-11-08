@@ -50,6 +50,7 @@ export function ProfileView() {
   const isMock = useAuthStore((s) => s.isMock);
   const syncFromAccount = useAuthStore((s) => s.syncFromAccount);
   const updateUser = useAuthStore((s) => s.updateUser);
+  const applyTokens = useAuthStore((s) => s.applyTokens);
   const setMustChangePassword = useAuthStore((s) => s.setMustChangePassword);
   const role = primaryRole(user);
 
@@ -222,13 +223,12 @@ export function ProfileView() {
         setMustChangePassword(false);
         notify.success(t("passwordSaved"), { description: t("mockHint") });
       } else {
-        const account = await changePassword({
+        const tokens = await changePassword({
           currentPassword,
           newPassword,
           confirmPassword,
         });
-        syncFromAccount(account);
-        setMustChangePassword(false);
+        applyTokens(tokens);
         notify.success(t("passwordSaved"));
       }
       setCurrentPassword("");

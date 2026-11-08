@@ -18,6 +18,7 @@ type ProfileAvatarProps = {
 
 /**
  * Photo de profil compte (UI). Jamais utilisée sur les bulletins.
+ * Une seule ObjectURL à la fois — toujours révoquée.
  */
 export function ProfileAvatar({ className }: ProfileAvatarProps) {
   const t = useTranslations("profile");
@@ -27,33 +28,46 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
   const syncFromAccount = useAuthStore((s) => s.syncFromAccount);
   const updateUser = useAuthStore((s) => s.updateUser);
   const inputRef = useRef<HTMLInputElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  function replacePreview(next: string | null) {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    objectUrlRef.current = next;
+    setPreviewUrl(next);
+  }
+
   useEffect(() => {
-    let revoked = false;
-    let objectUrl: string | null = null;
+    let cancelled = false;
 
     async function load() {
       if (isMock || !user?.hasAvatar) {
-        setPreviewUrl(null);
+        if (!cancelled) replacePreview(null);
         return;
       }
       const blob = await fetchAvatarBlob();
-      if (revoked) return;
-      if (!blob) {
-        setPreviewUrl(null);
+      if (cancelled) return;
+      if (!blob || blob.size === 0) {
+        replacePreview(null);
         return;
       }
-      objectUrl = URL.createObjectURL(blob);
-      setPreviewUrl(objectUrl);
+      replacePreview(URL.createObjectURL(blob));
     }
 
     void load();
     return () => {
-      revoked = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      cancelled = true;
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
     };
+    // Recharge seulement quand le compte / drapeau avatar change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMock, user?.hasAvatar, user?.id]);
 
   async function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -71,9 +85,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
     }
 
     if (isMock) {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+      replacePreview(URL.createObjectURL(file));
       updateUser({ hasAvatar: true });
       notify.success(t("avatarSaved"), { description: t("mockHint") });
       return;
@@ -84,8 +96,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
       const account = await uploadAvatar(file);
       syncFromAccount(account);
       updateUser({ hasAvatar: true });
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(URL.createObjectURL(file));
+      replacePreview(URL.createObjectURL(file));
       notify.success(t("avatarSaved"));
     } catch (error) {
       if (error instanceof ApiError) {
@@ -100,8 +111,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
 
   async function onRemove() {
     if (isMock) {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
+      replacePreview(null);
       updateUser({ hasAvatar: false });
       notify.success(t("avatarRemoved"), { description: t("mockHint") });
       return;
@@ -109,8 +119,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
     setBusy(true);
     try {
       await deleteAvatar();
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
+      replacePreview(null);
       updateUser({ hasAvatar: false });
       notify.success(t("avatarRemoved"));
     } catch (error) {

@@ -51,6 +51,7 @@ export async function logout(): Promise<void> {
   await apiRequest<void>("/api/v1/auth/logout", {
     method: "POST",
     skipRefresh: true,
+    responseType: "void",
   });
 }
 
@@ -64,11 +65,13 @@ export async function fetchMe(): Promise<UserAccountDto> {
   return apiRequest<UserAccountDto>("/api/v1/auth/me");
 }
 
-export async function changePassword(payload: ChangePasswordRequest): Promise<UserAccountDto> {
-  return apiRequest<UserAccountDto>("/api/v1/auth/change-password", {
+/** Renvoie de nouveaux jetons (mcp à jour) après changement de MDP. */
+export async function changePassword(payload: ChangePasswordRequest): Promise<LoginResponse> {
+  const raw = await apiRequest<AuthTokensResponse>("/api/v1/auth/change-password", {
     method: "POST",
     body: payload,
   });
+  return toLoginResponse(raw);
 }
 
 export async function uploadAvatar(file: File): Promise<UserAccountDto> {
@@ -81,19 +84,14 @@ export async function uploadAvatar(file: File): Promise<UserAccountDto> {
 }
 
 export async function fetchAvatarBlob(): Promise<Blob | null> {
-  const { getTenantConfig } = await import("@/lib/tenant/config");
-  const { useAuthStore } = await import("@/stores/auth-store");
-  const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "") || "http://localhost:8090";
-  const token = useAuthStore.getState().accessToken;
-  if (!token) return null;
   try {
-    const response = await fetch(`${baseUrl}/api/v1/auth/me/avatar`, {
-      headers: { Authorization: `Bearer ${token}` },
+    return await apiRequest<Blob>("/api/v1/auth/me/avatar", {
+      method: "GET",
+      responseType: "blob",
     });
-    if (response.status === 404) return null;
-    if (!response.ok) return null;
-    return await response.blob();
-  } catch {
+  } catch (error) {
+    const { ApiError } = await import("@/types/api");
+    if (error instanceof ApiError && error.status === 404) return null;
     return null;
   }
 }
@@ -101,5 +99,6 @@ export async function fetchAvatarBlob(): Promise<Blob | null> {
 export async function deleteAvatar(): Promise<void> {
   await apiRequest<void>("/api/v1/auth/me/avatar", {
     method: "DELETE",
+    responseType: "void",
   });
 }
