@@ -30,9 +30,8 @@ export function ModulePlaceholder({ namespace, allowedRoles }: ModulePlaceholder
   const Icon = MODULE_ICONS[namespace];
 
   return (
-    <div className="space-y-6">
+    <div>
       <PageHeader
-        title={t("title")}
         description={
           role && allowed ? tRoles(`${role}.${namespace}Blurb`) : t("description")
         }

@@ -5,6 +5,8 @@
     "loading": "Chargement…",
     "save": "Enregistrer",
     "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
     "back": "Retour",
     "search": "Rechercher",
     "emptyTitle": "Rien à afficher",
@@ -25,7 +27,10 @@
     "schoolIdPlaceholder": "Identifiant école",
     "submit": "Se connecter",
     "submitting": "Connexion…",
+    "loginSuccess": "Session démo ouverte",
     "logout": "Déconnexion",
+    "logoutConfirmTitle": "Se déconnecter ?",
+    "logoutConfirmDescription": "Vous quitterez l’espace SMELS. Vous pourrez vous reconnecter à tout moment.",
     "changePasswordTitle": "Changer le mot de passe",
     "changePasswordSubtitle": "Vous devez définir un nouveau mot de passe avant de continuer.",
     "currentPassword": "Mot de passe actuel",
@@ -78,8 +83,16 @@
     "staff": "Personnel",
     "students": "Élèves",
     "academic": "Académique",
+    "notifications": "Notifications",
     "settings": "Réglages",
-    "main": "Navigation principale"
+    "main": "Navigation principale",
+    "collapseSidebar": "Réduire le menu",
+    "expandSidebar": "Agrandir le menu"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Alertes et messages liés à votre profil.",
+    "empty": "Aucune notification pour le moment."
   },
   "home": {
     "title": "Accueil",

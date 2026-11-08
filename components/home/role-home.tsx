@@ -2,6 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Badge } from "@/components/ui/badge";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { PageHeader } from "@/components/ui/page-header";
 import { Link } from "@/i18n/navigation";
@@ -13,6 +14,7 @@ export function RoleHome() {
   const t = useTranslations("home");
   const tNav = useTranslations("nav");
   const tRoles = useTranslations("roles");
+  const tCommon = useTranslations("common");
   const user = useAuthStore((s) => s.user);
   const isMock = useAuthStore((s) => s.isMock);
   const role = primaryRole(user);
@@ -23,17 +25,25 @@ export function RoleHome() {
   const blurb = role ? tRoles(`${role}.homeBlurb`) : t("description");
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t("greeting", { name: greetingName })}
-        description={blurb}
-      />
+    <div className="space-y-6 slide-up">
+      <div>
+        <p className="text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
+          {t("greeting", { name: greetingName })}
+        </p>
+        <PageHeader
+          description={blurb}
+          className="mb-0 mt-1 max-w-2xl text-[var(--text-subhead)] leading-relaxed text-[var(--ios-secondary-label)]"
+        />
+      </div>
 
       {role ? (
         <GroupedList header={t("profileSection")} footer={isMock ? t("demoFooter") : undefined}>
           <GroupedListItem>
-            <span className="text-[17px] text-[var(--ios-label)]">{t("roleLabel")}</span>
-            <span className="text-[17px] text-[var(--ios-secondary-label)]">{roleLabel}</span>
+            <span className="text-[var(--text-body)] text-[var(--ios-label)]">{t("roleLabel")}</span>
+            <Badge tone="blue">
+              {roleLabel}
+              {isMock ? ` · ${tCommon("demoBadge")}` : null}
+            </Badge>
           </GroupedListItem>
           <GroupedListItem>
             <span className="text-[17px] text-[var(--ios-label)]">{t("accountLabel")}</span>

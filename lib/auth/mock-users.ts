@@ -4,28 +4,33 @@ type MockPersona = {
   role: AppRole;
   username: string;
   displayName: string;
+  email: string;
 };
 
 const PERSONAS: Record<AppRole, MockPersona> = {
   teacher: {
     role: "teacher",
     username: "demo.enseignant",
-    displayName: "Enseignant démo",
+    displayName: "Amina Ngo",
+    email: "amina.ngo@elshammah.cm",
   },
   staff: {
     role: "staff",
     username: "demo.staff",
-    displayName: "Staff démo",
+    displayName: "Paul Mbarga",
+    email: "paul.mbarga@elshammah.cm",
   },
   super_admin: {
     role: "super_admin",
     username: "demo.admin",
-    displayName: "Super admin démo",
+    displayName: "Claire Fouda",
+    email: "claire.fouda@elshammah.cm",
   },
   guardian: {
     role: "guardian",
     username: "demo.parent",
-    displayName: "Parent / tuteur démo",
+    displayName: "Jean Owona",
+    email: "jean.owona@email.cm",
   },
 };
 
@@ -35,6 +40,7 @@ export function createMockLogin(role: AppRole): LoginResponse {
     id: `mock-${role}`,
     username: persona.username,
     displayName: persona.displayName,
+    email: persona.email,
     role,
     roles: [role],
   };

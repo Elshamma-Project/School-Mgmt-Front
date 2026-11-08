@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
-import { Toaster } from "sonner";
+import { AppToaster } from "@/components/ui/toaster";
 import { routing } from "@/i18n/routing";
 
 type LocaleLayoutProps = {
@@ -40,13 +40,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
       <body className="min-h-full font-sans">
         <NextIntlClientProvider messages={messages}>
           {children}
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              className:
-                "!rounded-[12px] !border-0 !bg-[var(--ios-card)] !text-[var(--ios-label)] !shadow-[0_8px_30px_rgba(0,0,0,0.12)]",
-            }}
-          />
+          <AppToaster />
         </NextIntlClientProvider>
       </body>
     </html>

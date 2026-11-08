@@ -1,19 +1,20 @@
 type PageHeaderProps = {
-  title: string;
+  /** Sous-titre / intro sous le header de page (le titre est dans AppHeader). */
   description?: string;
+  className?: string;
 };
 
-export function PageHeader({ title, description }: PageHeaderProps) {
+export function PageHeader({ description, className }: PageHeaderProps) {
+  if (!description) return null;
+
   return (
-    <header className="mb-6">
-      <h1 className="text-[28px] font-bold tracking-[-0.02em] text-[var(--ios-label)]">
-        {title}
-      </h1>
-      {description ? (
-        <p className="mt-1 max-w-2xl text-[15px] leading-relaxed text-[var(--ios-secondary-label)]">
-          {description}
-        </p>
-      ) : null}
-    </header>
+    <p
+      className={
+        className ??
+        "mb-6 max-w-2xl text-[15px] leading-relaxed text-[var(--ios-secondary-label)]"
+      }
+    >
+      {description}
+    </p>
   );
 }

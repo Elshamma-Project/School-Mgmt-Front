@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { PageHeader } from "@/components/ui/page-header";
 import { createMockLogin, listMockRoles } from "@/lib/auth/mock-users";
@@ -22,8 +24,9 @@ export default function SettingsPage() {
   const setSession = useAuthStore((s) => s.setSession);
   const clearSession = useAuthStore((s) => s.clearSession);
   const currentRole = primaryRole(user);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
-  function handleLogout() {
+  function performLogout() {
     clearSession();
     router.replace("/login");
   }
@@ -42,7 +45,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("title")} description={t("description")} />
+      <PageHeader description={t("description")} />
 
       <GroupedList header={t("languageSection")}>
         <GroupedListItem>
@@ -64,7 +67,7 @@ export default function SettingsPage() {
               </p>
             ) : null}
           </div>
-          <Button variant="destructive" size="sm" onClick={handleLogout}>
+          <Button variant="destructive" size="sm" onClick={() => setConfirmLogout(true)}>
             {tAuth("logout")}
           </Button>
         </GroupedListItem>
@@ -80,7 +83,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => switchRole(role)}
                   className={cn(
-                    "flex min-h-11 w-full items-center justify-between px-4 py-2.5 text-left",
+                    "flex min-h-11 w-full cursor-pointer items-center justify-between px-4 py-2.5 text-left",
                     active && "bg-[var(--ios-blue)]/5",
                   )}
                 >
@@ -103,6 +106,17 @@ export default function SettingsPage() {
           })}
         </GroupedList>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmLogout}
+        onOpenChange={setConfirmLogout}
+        title={tAuth("logoutConfirmTitle")}
+        description={tAuth("logoutConfirmDescription")}
+        confirmLabel={tAuth("logout")}
+        cancelLabel={tCommon("cancel")}
+        tone="destructive"
+        onConfirm={performLogout}
+      />
     </div>
   );
 }

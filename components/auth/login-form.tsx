@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { createMockLogin, listMockRoles } from "@/lib/auth/mock-users";
+import { notify } from "@/lib/ui/notify";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
@@ -33,28 +36,26 @@ export function LoginForm() {
       mustChangePassword: false,
       isMock: true,
     });
+    notify.success(t("loginSuccess"), {
+      description: tRoles(`${role}.label`),
+    });
     router.replace("/");
     setSubmitting(false);
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full flex-col gap-5" noValidate>
-      <label className="flex cursor-pointer items-start gap-3 rounded-[12px] bg-[var(--ios-fill)] px-3.5 py-3">
-        <input
-          type="checkbox"
+      <div className="rounded-[var(--radius-md)] bg-[var(--ios-fill)] px-3.5 py-3">
+        <Checkbox
+          id="demo-mode"
           checked={demoMode}
           onChange={(event) => setDemoMode(event.target.checked)}
-          className="mt-0.5 size-[18px] accent-[var(--ios-blue)]"
+          label={t("demoMode")}
         />
-        <span>
-          <span className="block text-[15px] font-semibold text-[var(--ios-label)]">
-            {t("demoMode")}
-          </span>
-          <span className="mt-0.5 block text-[13px] leading-snug text-[var(--ios-secondary-label)]">
-            {t("demoModeHint")}
-          </span>
-        </span>
-      </label>
+        <p className="mt-1.5 pl-7 text-[var(--text-footnote)] leading-snug text-[var(--ios-secondary-label)]">
+          {t("demoModeHint")}
+        </p>
+      </div>
 
       {demoMode ? (
         <fieldset>
@@ -62,7 +63,7 @@ export function LoginForm() {
           <div
             role="radiogroup"
             aria-labelledby="role-picker-label"
-            className="mt-2 overflow-hidden rounded-[12px] bg-[var(--ios-fill)]"
+            className="mt-2 overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-fill)]"
           >
             {listMockRoles().map((value, index) => {
               const selected = role === value;
@@ -74,22 +75,22 @@ export function LoginForm() {
                   aria-checked={selected}
                   onClick={() => setRole(value)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors",
+                    "pressable flex w-full cursor-pointer items-center justify-between gap-3 px-3.5 py-3 text-left",
                     index > 0 && "border-t border-[var(--ios-separator)]",
                     selected && "bg-[var(--ios-card)]",
                   )}
                 >
                   <span>
-                    <span className="block text-[17px] font-medium text-[var(--ios-label)]">
+                    <span className="block text-[var(--text-body)] font-medium text-[var(--ios-label)]">
                       {tRoles(`${value}.label`)}
                     </span>
-                    <span className="mt-0.5 block text-[13px] text-[var(--ios-secondary-label)]">
+                    <span className="mt-0.5 block text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
                       {tRoles(`${value}.hint`)}
                     </span>
                   </span>
                   <span
                     className={cn(
-                      "flex size-6 shrink-0 items-center justify-center rounded-full border",
+                      "flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors",
                       selected
                         ? "border-[var(--ios-blue)] bg-[var(--ios-blue)] text-white"
                         : "border-[var(--ios-fill-secondary)] bg-transparent text-transparent",
@@ -104,12 +105,16 @@ export function LoginForm() {
           </div>
         </fieldset>
       ) : (
-        <p className="rounded-[12px] bg-[var(--ios-fill)] px-3.5 py-3 text-[14px] leading-relaxed text-[var(--ios-secondary-label)]">
-          {t("apiDisabled")}
-        </p>
+        <Alert tone="warning" title={t("apiDisabled")} />
       )}
 
-      <Button type="submit" size="lg" className="w-full" disabled={!demoMode || submitting}>
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full"
+        disabled={!demoMode}
+        loading={submitting}
+      >
         {submitting ? t("submitting") : t("submit")}
       </Button>
     </form>

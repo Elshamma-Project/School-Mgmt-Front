@@ -11,6 +11,7 @@ export type AuthUser = {
   id: string;
   username: string;
   displayName?: string;
+  email?: string;
   /** Rôle principal de la session (mock ou API). */
   role: AppRole;
   roles: AppRole[];

@@ -12,15 +12,15 @@ export function GroupedList({ header, footer, children, className }: GroupedList
   return (
     <section className={cn("w-full", className)}>
       {header ? (
-        <h2 className="mb-2 px-4 text-[13px] font-normal uppercase tracking-[0.02em] text-[var(--ios-secondary-label)]">
+        <h2 className="mb-2 px-4 text-[var(--text-footnote)] font-normal uppercase tracking-[0.02em] text-[var(--ios-secondary-label)]">
           {header}
         </h2>
       ) : null}
-      <div className="overflow-hidden rounded-[12px] bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+      <div className="overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
         {children}
       </div>
       {footer ? (
-        <p className="mt-2 px-4 text-[13px] leading-snug text-[var(--ios-secondary-label)]">
+        <p className="mt-2 px-4 text-[var(--text-footnote)] leading-snug text-[var(--ios-secondary-label)]">
           {footer}
         </p>
       ) : null}

@@ -1,24 +1,78 @@
 @import "tailwindcss";
 
 :root {
+  /* ——— Couleurs système (iOS light) ——— */
   --ios-blue: #007aff;
+  --ios-blue-pressed: #0066d6;
   --ios-bg: #f2f2f7;
   --ios-card: #ffffff;
   --ios-grouped: #ffffff;
   --ios-fill: #e5e5ea;
   --ios-fill-secondary: #d1d1d6;
+  --ios-fill-tertiary: #c7c7cc;
   --ios-label: #000000;
   --ios-secondary-label: rgba(60, 60, 67, 0.6);
   --ios-tertiary-label: rgba(60, 60, 67, 0.3);
+  --ios-quaternary-label: rgba(60, 60, 67, 0.18);
   --ios-separator: rgba(60, 60, 67, 0.12);
+  --ios-opaque-separator: #c6c6c8;
   --ios-success: #34c759;
+  --ios-success-soft: color-mix(in srgb, var(--ios-success) 14%, white);
   --ios-warning: #ff9500;
+  --ios-warning-soft: color-mix(in srgb, var(--ios-warning) 14%, white);
   --ios-danger: #ff3b30;
-  --ios-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --ios-danger-soft: color-mix(in srgb, var(--ios-danger) 12%, white);
+  --ios-info: #007aff;
+  --ios-info-soft: color-mix(in srgb, var(--ios-blue) 12%, white);
+
+  /* ——— Élévation ——— */
   --ios-shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.06);
+  --ios-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --ios-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --ios-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.16);
+
+  /* ——— Rayons ——— */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ——— Espacements de panel ——— */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* ——— Typo ——— */
+  --text-caption: 11px;
+  --text-footnote: 13px;
+  --text-subhead: 15px;
+  --text-body: 17px;
+  --text-title3: 20px;
+  --text-title2: 22px;
+  --text-title1: 28px;
   --font-ios:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI",
     sans-serif;
+
+  /* ——— Motion ——— */
+  --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-slow: 280ms;
+
+  /* ——— Layout app ——— */
+  --app-topbar-height: 3.5rem;
+  --control-height-sm: 2.25rem;
+  --control-height-md: 2.75rem;
+  --control-height-lg: 3rem;
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--ios-blue) 32%, transparent);
 }
 
 @theme inline {
@@ -48,6 +102,8 @@ body {
   background: var(--ios-bg);
   color: var(--ios-label);
   font-family: var(--font-ios);
+  font-size: var(--text-body);
+  line-height: 1.35;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -55,8 +111,115 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+  cursor: pointer;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="radio"]:not([aria-disabled="true"]),
+[role="switch"]:not([aria-disabled="true"]),
+[role="menuitem"]:not([aria-disabled="true"]),
+[role="tab"]:not([aria-disabled="true"]),
+summary,
+label[for],
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+select:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"],
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
 }
 
 ::selection {
   background: color-mix(in srgb, var(--ios-blue) 22%, white);
+}
+
+:focus-visible {
+  outline: none;
+}
+
+/* ——— Utilitaires motion / interaction ——— */
+.pressable {
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    opacity var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    filter var(--duration-fast) var(--ease-standard);
+}
+
+.pressable:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.fade-in {
+  animation: smels-fade-in var(--duration-normal) var(--ease-emphasized) both;
+}
+
+.slide-up {
+  animation: smels-slide-up var(--duration-slow) var(--ease-emphasized) both;
+}
+
+@keyframes smels-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes smels-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes smels-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable,
+  .fade-in,
+  .slide-up {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .pressable:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* Toasts Sonner — look iOS */
+[data-sonner-toaster] [data-sonner-toast] {
+  --normal-bg: var(--ios-card);
+  --normal-text: var(--ios-label);
+  --normal-border: transparent;
+  font-family: var(--font-ios);
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--ios-shadow-md) !important;
+  border: none !important;
+  padding: 12px 14px !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="success"] {
+  background: var(--ios-card) !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="error"] {
+  background: var(--ios-card) !important;
 }
