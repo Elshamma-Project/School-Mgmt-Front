@@ -15,7 +15,7 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-30 h-[var(--app-topbar-height)] shrink-0 border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-bg)_88%,transparent)] backdrop-blur-xl">
-      <div className="flex h-full items-center gap-3 pl-4 pr-5 md:pl-8 md:pr-9">
+      <div className="flex h-full items-center gap-3 pl-5 pr-5 md:pl-10 md:pr-9">
         <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-[-0.01em] text-[var(--ios-label)] md:text-[20px] md:font-bold">
           {title}
         </h1>

@@ -9,13 +9,15 @@ type LocaleFlagProps = {
 /** Drapeaux SVG (fiables sous Windows, où les emoji 🇫🇷/🇬🇧 ne s’affichent souvent pas). */
 export function LocaleFlag({ locale, className }: LocaleFlagProps) {
   const common = cn(
-    "inline-block h-2.5 w-[15px] shrink-0 overflow-hidden rounded-[1.5px] shadow-[0_0_0_1px_rgba(0,0,0,0.08)]",
+    "inline-block h-[0.8125rem] w-[1.21875rem] shrink-0 overflow-hidden rounded-[1px] align-[-0.05em] shadow-[0_0_0_1px_rgba(0,0,0,0.08)]",
     className,
   );
 
   if (locale === "fr") {
     return (
       <svg
+        width={13}
+        height={9}
         viewBox="0 0 3 2"
         className={common}
         aria-hidden
@@ -30,6 +32,8 @@ export function LocaleFlag({ locale, className }: LocaleFlagProps) {
 
   return (
     <svg
+      width={13}
+      height={9}
       viewBox="0 0 60 30"
       className={common}
       aria-hidden

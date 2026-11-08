@@ -137,7 +137,7 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
                     selected && "bg-[var(--ios-blue)]/5",
                   )}
                 >
-                  <span className="flex items-center gap-2.5 text-[13px] font-medium leading-none text-[var(--ios-label)]">
+                  <span className="flex items-center gap-2 text-[13px] font-medium leading-none text-[var(--ios-label)]">
                     <LocaleFlag locale={code} />
                     {t(LOCALE_LABELS[code])}
                   </span>
