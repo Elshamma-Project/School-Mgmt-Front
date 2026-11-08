@@ -5,6 +5,7 @@ import type { AppRole } from "@/types/auth";
 const SHARED: Record<string, NavItemKey> = {
   "/notifications": "notifications",
   "/settings": "settings",
+  "/profile": "profile",
 };
 
 /** Titre header : d’abord match exact nav du rôle, sinon préfixe, sinon home. */

@@ -6,9 +6,9 @@ import { Toaster as SonnerToaster } from "sonner";
 export function AppToaster() {
   return (
     <SonnerToaster
-      position="top-right"
-      offset={16}
-      mobileOffset={{ top: 16, right: 16 }}
+      position="bottom-center"
+      offset={24}
+      mobileOffset={88}
       gap={8}
       duration={3200}
       closeButton

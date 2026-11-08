@@ -34,7 +34,8 @@ export type NavItemKey =
   | "schools"
   | "platform"
   | "notifications"
-  | "settings";
+  | "settings"
+  | "profile";
 
 export type NavHref = `/${string}`;
 

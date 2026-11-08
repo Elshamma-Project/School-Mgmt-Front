@@ -31,6 +31,7 @@
     "submitting": "Connexion…",
     "loginSuccess": "Session démo ouverte",
     "logout": "Déconnexion",
+    "openProfile": "Ouvrir mon profil",
     "logoutConfirmTitle": "Se déconnecter ?",
     "logoutConfirmDescription": "Vous quitterez l’espace SMELS. Vous pourrez vous reconnecter à tout moment.",
     "changePasswordTitle": "Changer le mot de passe",
@@ -119,6 +120,7 @@
     "platform": "Plateforme",
     "notifications": "Notifications",
     "settings": "Réglages",
+    "profile": "Profil",
     "main": "Navigation principale",
     "collapseSidebar": "Réduire le menu",
     "expandSidebar": "Agrandir le menu"
@@ -149,6 +151,26 @@
     "switchRoleSection": "Changer de rôle (démo)",
     "switchRoleFooter": "Bascule vers l’espace URL du rôle choisi.",
     "activeRole": "Actif"
+  },
+  "profile": {
+    "title": "Profil",
+    "description": "Mettez à jour vos informations de compte et votre mot de passe.",
+    "accountSection": "Informations du compte",
+    "accountSectionHint": "Ces informations apparaissent dans l’application et les communications.",
+    "username": "Identifiant",
+    "usernameHint": "L’identifiant ne peut pas être modifié ici.",
+    "displayName": "Nom affiché",
+    "email": "E-mail",
+    "role": "Rôle",
+    "passwordSection": "Mot de passe",
+    "passwordSectionHint": "Choisissez un mot de passe robuste et unique.",
+    "passwordHint": "Au moins 8 caractères.",
+    "invalidEmail": "Adresse e-mail invalide.",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "profileSaved": "Profil mis à jour",
+    "passwordSaved": "Mot de passe mis à jour",
+    "mockHint": "Enregistré en local (mode démo) — l’API réelle sera branchée plus tard."
   },
   "workspace": {
     "teacherClasses": {

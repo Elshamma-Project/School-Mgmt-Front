@@ -13,6 +13,7 @@ type AuthState = AuthSession & {
     mustChangePassword: boolean;
     isMock?: boolean;
   }) => void;
+  updateUser: (patch: Partial<Pick<AuthUser, "displayName" | "email">>) => void;
   clearSession: () => void;
   setMustChangePassword: (value: boolean) => void;
 };
@@ -44,6 +45,17 @@ export const useAuthStore = create<AuthState>()(
       }) => {
         syncAuthCookie(accessToken);
         set({ accessToken, refreshToken, user, mustChangePassword, isMock });
+      },
+      updateUser: (patch) => {
+        set((state) => {
+          if (!state.user) return state;
+          return {
+            user: {
+              ...state.user,
+              ...patch,
+            },
+          };
+        });
       },
       clearSession: () => {
         syncAuthCookie(null);

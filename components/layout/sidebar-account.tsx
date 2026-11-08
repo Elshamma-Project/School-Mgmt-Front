@@ -53,8 +53,9 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
           <button
             type="button"
             title={name}
-            aria-label={name}
-            className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]"
+            aria-label={t("openProfile")}
+            onClick={() => router.push("/profile")}
+            className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-[var(--ios-fill)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill-secondary)]"
           >
             <UserRound className="size-4 stroke-[1.75]" aria-hidden />
           </button>
@@ -76,7 +77,12 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
   return (
     <>
       <div className="mt-auto space-y-2 border-t border-[var(--ios-separator)] p-2.5">
-        <div className="flex items-start gap-2.5 rounded-[12px] bg-[var(--ios-fill)]/70 px-2.5 py-2.5">
+        <button
+          type="button"
+          onClick={() => router.push("/profile")}
+          aria-label={t("openProfile")}
+          className="flex w-full cursor-pointer items-start gap-2.5 rounded-[12px] bg-[var(--ios-fill)]/70 px-2.5 py-2.5 text-left transition-colors hover:bg-[var(--ios-fill)]"
+        >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--ios-card)] text-[var(--ios-blue)] shadow-[var(--ios-shadow-sm)]">
             <UserRound className="size-4 stroke-[1.75]" aria-hidden />
           </div>
@@ -90,7 +96,7 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
               </p>
             ) : null}
           </div>
-        </div>
+        </button>
 
         <button
           type="button"

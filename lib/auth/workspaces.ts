@@ -28,6 +28,8 @@ export function isSharedAppPath(pathname: string): boolean {
     pathname.startsWith("/settings/") ||
     pathname === "/notifications" ||
     pathname.startsWith("/notifications/") ||
+    pathname === "/profile" ||
+    pathname.startsWith("/profile/") ||
     pathname === "/"
   );
 }

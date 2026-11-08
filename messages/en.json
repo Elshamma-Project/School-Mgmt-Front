@@ -31,6 +31,7 @@
     "submitting": "Signing in…",
     "loginSuccess": "Demo session started",
     "logout": "Sign out",
+    "openProfile": "Open my profile",
     "logoutConfirmTitle": "Sign out?",
     "logoutConfirmDescription": "You will leave the SMELS workspace. You can sign back in anytime.",
     "changePasswordTitle": "Change password",
@@ -119,6 +120,7 @@
     "platform": "Platform",
     "notifications": "Notifications",
     "settings": "Settings",
+    "profile": "Profile",
     "main": "Main navigation",
     "collapseSidebar": "Collapse menu",
     "expandSidebar": "Expand menu"
@@ -149,6 +151,26 @@
     "switchRoleSection": "Switch role (demo)",
     "switchRoleFooter": "Jumps to the URL workspace for the selected role.",
     "activeRole": "Active"
+  },
+  "profile": {
+    "title": "Profile",
+    "description": "Update your account details and password.",
+    "accountSection": "Account information",
+    "accountSectionHint": "These details appear in the app and communications.",
+    "username": "Username",
+    "usernameHint": "Username cannot be changed here.",
+    "displayName": "Display name",
+    "email": "Email",
+    "role": "Role",
+    "passwordSection": "Password",
+    "passwordSectionHint": "Choose a strong, unique password.",
+    "passwordHint": "At least 8 characters.",
+    "invalidEmail": "Invalid email address.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "passwordMismatch": "Passwords do not match.",
+    "profileSaved": "Profile updated",
+    "passwordSaved": "Password updated",
+    "mockHint": "Saved locally (demo mode) — real API coming later."
   },
   "workspace": {
     "teacherClasses": {
