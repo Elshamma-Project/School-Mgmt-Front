@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { usePathname } from "@/i18n/navigation";
 import { getNavKeyFromPathname } from "@/lib/navigation/page-meta";
 import { useAuthStore } from "@/stores/auth-store";
+import { usePageHeadingStore } from "@/stores/page-heading-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { primaryRole } from "@/types/auth";
 
@@ -16,7 +17,8 @@ export function AppHeader() {
   const tNav = useTranslations("nav");
   const pathname = usePathname();
   const role = primaryRole(useAuthStore((s) => s.user));
-  const title = tNav(getNavKeyFromPathname(pathname, role));
+  const headingOverride = usePageHeadingStore((s) => s.override);
+  const title = headingOverride ?? tNav(getNavKeyFromPathname(pathname, role));
   const collapsed = useSidebarStore((s) => s.collapsed);
   const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
   const [ready, setReady] = useState(false);

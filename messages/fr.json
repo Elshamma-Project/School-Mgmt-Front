@@ -173,6 +173,74 @@
     "switchRoleFooter": "Bascule vers l’espace URL du rôle choisi.",
     "activeRole": "Actif"
   },
+  "staff": {
+    "add": "Ajouter",
+    "searchPlaceholder": "Nom, e-mail, matricule…",
+    "emptyTitle": "Aucun personnel",
+    "emptyDescription": "Ajoutez un enseignant ou un membre administratif pour commencer.",
+    "loadError": "Impossible de charger le personnel.",
+    "createError": "Création impossible.",
+    "created": "Membre ajouté",
+    "inactive": "Inactif",
+    "statusActive": "Actif",
+    "noContact": "Pas de contact renseigné",
+    "noStaffNumber": "Pas de matricule",
+    "neverLoggedIn": "Jamais connecté",
+    "actions": "Actions",
+    "actionEdit": "Ouvrir la fiche",
+    "actionDeactivate": "Désactiver",
+    "actionReactivate": "Réactiver",
+    "deactivated": "Membre désactivé",
+    "reactivated": "Membre réactivé",
+    "actionError": "Action impossible.",
+    "deactivateConfirmTitle": "Désactiver ce membre ?",
+    "deactivateConfirmDescription": "{name} ne pourra plus être affecté aux classes ni aux notes. La fiche est conservée (BR-42).",
+    "reactivateConfirmTitle": "Réactiver ce membre ?",
+    "reactivateConfirmDescription": "{name} redeviendra disponible dans le personnel actif.",
+    "backToList": "Retour à la liste",
+    "detailNotFoundTitle": "Fiche introuvable",
+    "detailNotFoundDescription": "Ce membre n’existe pas ou n’est plus accessible.",
+    "detailEditHint": "L’édition complète des fonctions et du contact arrivera sur cette fiche ; la désactivation est déjà disponible.",
+    "createTitle": "Nouveau membre",
+    "createDescription": "Une seule fiche Staff : enseignant et/ou fonctions admin.",
+    "createSubmit": "Créer",
+    "lastName": "Nom",
+    "firstName": "Prénom",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "lastNameRequired": "Le nom est obligatoire.",
+    "markAsTeacher": "Enseignant (fonction TEACHER)",
+    "stats": {
+      "total": "Total",
+      "teachers": "Enseignants",
+      "leadership": "Direction",
+      "support": "Admin. / soutien"
+    },
+    "columns": {
+      "name": "Nom",
+      "number": "Matricule",
+      "lastLogin": "Dernière connexion",
+      "functions": "Fonctions",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "tabs": {
+      "all": "Tous",
+      "teachers": "Enseignants",
+      "leadership": "Direction",
+      "support": "Admin. / soutien",
+      "other": "Autres"
+    },
+    "functions": {
+      "TEACHER": "Enseignant",
+      "HEAD_OF_SCHOOL": "Chef d’établissement",
+      "CENSOR": "Censeur",
+      "SECRETARY": "Secrétaire",
+      "SUPERVISOR": "Surveillant",
+      "ACCOUNTANT": "Comptable",
+      "OTHER": "Autre"
+    }
+  },
   "profile": {
     "title": "Profil",
     "description": "Compte de connexion, identité et mot de passe.",
@@ -192,7 +260,6 @@
     "lastName": "Nom",
     "firstName": "Prénom",
     "phone": "Téléphone",
-    "phoneHint": "Indicatif Cameroun (+237) — saisissez le numéro national.",
     "saveIdentity": "Enregistrer l’identité",
     "changeAvatar": "Changer la photo",
     "removeAvatar": "Supprimer la photo",
@@ -290,8 +357,8 @@
       "empty": "Module élèves — fondations prêtes."
     },
     "adminStaff": {
-      "description": "Personnel enseignant et administratif (hors comptes admin).",
-      "empty": "Module personnel — fondations prêtes."
+      "description": "Fiches personnel (enseignants, direction, admin.) — distinctes des comptes de connexion.",
+      "empty": "Aucun membre du personnel."
     },
     "adminAcademic": {
       "description": "Niveaux, classes, matières, coefficients.",

@@ -23,6 +23,8 @@ export type StaffResponse = {
   teachableSubjectIds: string[];
   hireDate: string | null;
   active: boolean;
+  /** Compte lié (user) — null si aucun compte ou jamais connecté. */
+  lastLoginAt: string | null;
 };
 
 export type PageResponse<T> = {

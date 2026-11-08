@@ -445,7 +445,7 @@ export function ProfileView() {
                 </GroupedListItem>
 
                 <GroupedListItem className="block py-3">
-                  <Field id="profile-phone" label={t("phone")} hint={t("phoneHint")}>
+                  <Field id="profile-phone" label={t("phone")}>
                     <IconInput
                       id="profile-phone"
                       type="tel"

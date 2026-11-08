@@ -1,7 +1,7 @@
-import { ModulePage } from "@/components/workspace/module-page";
+import { StaffListView } from "@/components/staff/staff-list-view";
 
 export const instant = false;
 
 export default function AdminStaffPage() {
-  return <ModulePage ns="adminStaff" />;
+  return <StaffListView descriptionKey="adminStaff" />;
 }

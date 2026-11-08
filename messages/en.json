@@ -173,6 +173,74 @@
     "switchRoleFooter": "Jumps to the URL workspace for the selected role.",
     "activeRole": "Active"
   },
+  "staff": {
+    "add": "Add",
+    "searchPlaceholder": "Name, email, staff number…",
+    "emptyTitle": "No staff yet",
+    "emptyDescription": "Add a teacher or admin staff member to get started.",
+    "loadError": "Could not load staff.",
+    "createError": "Could not create staff member.",
+    "created": "Staff member added",
+    "inactive": "Inactive",
+    "statusActive": "Active",
+    "noContact": "No contact on file",
+    "noStaffNumber": "No staff number",
+    "neverLoggedIn": "Never signed in",
+    "actions": "Actions",
+    "actionEdit": "Open profile",
+    "actionDeactivate": "Deactivate",
+    "actionReactivate": "Reactivate",
+    "deactivated": "Staff member deactivated",
+    "reactivated": "Staff member reactivated",
+    "actionError": "Could not complete this action.",
+    "deactivateConfirmTitle": "Deactivate this member?",
+    "deactivateConfirmDescription": "{name} will no longer be assignable to classes or grades. The record is kept (BR-42).",
+    "reactivateConfirmTitle": "Reactivate this member?",
+    "reactivateConfirmDescription": "{name} will be available again in active staff.",
+    "backToList": "Back to list",
+    "detailNotFoundTitle": "Profile not found",
+    "detailNotFoundDescription": "This staff member does not exist or is no longer accessible.",
+    "detailEditHint": "Full editing of functions and contact will land on this page; deactivation is already available.",
+    "createTitle": "New staff member",
+    "createDescription": "One Staff record: teaching and/or admin functions.",
+    "createSubmit": "Create",
+    "lastName": "Last name",
+    "firstName": "First name",
+    "email": "Email",
+    "phone": "Phone",
+    "lastNameRequired": "Last name is required.",
+    "markAsTeacher": "Teacher (TEACHER function)",
+    "stats": {
+      "total": "Total",
+      "teachers": "Teachers",
+      "leadership": "Leadership",
+      "support": "Admin / support"
+    },
+    "columns": {
+      "name": "Name",
+      "number": "Staff no.",
+      "lastLogin": "Last sign-in",
+      "functions": "Functions",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "tabs": {
+      "all": "All",
+      "teachers": "Teachers",
+      "leadership": "Leadership",
+      "support": "Admin / support",
+      "other": "Other"
+    },
+    "functions": {
+      "TEACHER": "Teacher",
+      "HEAD_OF_SCHOOL": "Head of school",
+      "CENSOR": "Censor",
+      "SECRETARY": "Secretary",
+      "SUPERVISOR": "Supervisor",
+      "ACCOUNTANT": "Accountant",
+      "OTHER": "Other"
+    }
+  },
   "profile": {
     "title": "Profile",
     "description": "Login account, identity and password.",
@@ -192,7 +260,6 @@
     "lastName": "Last name",
     "firstName": "First name",
     "phone": "Phone",
-    "phoneHint": "Cameroon dial code (+237) — enter the national number.",
     "saveIdentity": "Save identity",
     "changeAvatar": "Change photo",
     "removeAvatar": "Remove photo",
@@ -290,8 +357,8 @@
       "empty": "Students module — foundation ready."
     },
     "adminStaff": {
-      "description": "Teaching and admin staff (except admin accounts).",
-      "empty": "Staff module — foundation ready."
+      "description": "Staff records (teachers, leadership, admin) — separate from login accounts.",
+      "empty": "No staff members yet."
     },
     "adminAcademic": {
       "description": "Levels, classes, subjects, coefficients.",

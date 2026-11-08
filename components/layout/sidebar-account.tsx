@@ -111,9 +111,11 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
             <p className="truncate text-[11px] font-semibold text-[var(--ios-label)]">
               {name}
             </p>
-            <p className="mt-0.5 truncate text-[10px] text-[var(--ios-secondary-label)]">
-              {secondary}
-            </p>
+            {secondary ? (
+              <p className="mt-0.5 truncate text-[10px] text-[var(--ios-secondary-label)]">
+                {secondary}
+              </p>
+            ) : null}
             {roleLabel ? (
               <p className="mt-0.5 truncate text-[10px] font-medium text-[var(--ios-blue)]">
                 {roleLabel}
