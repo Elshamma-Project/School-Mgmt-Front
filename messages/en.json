@@ -18,6 +18,8 @@
     "french": "Français",
     "english": "English",
     "demoBadge": "Demo",
+    "themeToDark": "Switch to dark mode",
+    "themeToLight": "Switch to light mode",
     "copyright": "© {year} {school}. {app} — All rights reserved."
   },
   "auth": {

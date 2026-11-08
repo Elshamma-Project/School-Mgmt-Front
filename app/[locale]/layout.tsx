@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
+import { ThemeScript } from "@/components/layout/theme-script";
 import { AppToaster } from "@/components/ui/toaster";
 import { routing } from "@/i18n/routing";
 
@@ -36,8 +37,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className="h-full antialiased">
+    <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full font-sans">
+        <ThemeScript />
         <NextIntlClientProvider messages={messages}>
           {children}
           <AppToaster />

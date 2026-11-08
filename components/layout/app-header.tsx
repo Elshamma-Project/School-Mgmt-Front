@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { usePathname } from "@/i18n/navigation";
 import { getNavKeyFromPathname } from "@/lib/navigation/page-meta";
 import { useAuthStore } from "@/stores/auth-store";
@@ -19,7 +20,10 @@ export function AppHeader() {
         <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-[-0.01em] text-[var(--ios-label)] md:text-[20px] md:font-bold">
           {title}
         </h1>
-        <LocaleToggle />
+        <div className="flex shrink-0 items-center gap-2">
+          <ThemeToggle />
+          <LocaleToggle />
+        </div>
       </div>
     </header>
   );

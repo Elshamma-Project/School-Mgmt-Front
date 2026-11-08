@@ -9,6 +9,7 @@ export { Dialog } from "./dialog";
 export { EmptyState } from "./empty-state";
 export { Field } from "./field";
 export { GroupedList, GroupedListItem } from "./grouped-list";
+export { IconInput } from "./icon-input";
 export { Input } from "./input";
 export { Label } from "./label";
 export { PageHeader } from "./page-header";

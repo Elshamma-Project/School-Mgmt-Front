@@ -1,12 +1,21 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import {
+  AtSign,
+  IdCard,
+  KeyRound,
+  LockKeyhole,
+  Mail,
+  Shield,
+  UserRound,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { PageHeader } from "@/components/ui/page-header";
+import { IconInput } from "@/components/ui/icon-input";
 import { notify } from "@/lib/ui/notify";
+import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
 
@@ -21,7 +30,66 @@ type PasswordErrors = {
   confirmPassword?: string;
 };
 
-/** Profil compte : infos personnelles + changement de mot de passe (mock jusqu’à l’API). */
+type FieldBlockProps = {
+  id: string;
+  label: string;
+  hint?: string;
+  error?: string;
+  children: ReactNode;
+};
+
+function FieldBlock({ id, label, hint, error, children }: FieldBlockProps) {
+  return (
+    <div className="space-y-1.5">
+      <label
+        htmlFor={id}
+        className="block text-[var(--text-footnote)] font-medium text-[var(--ios-secondary-label)]"
+      >
+        {label}
+      </label>
+      {children}
+      {error ? (
+        <p className="text-[var(--text-footnote)] text-[var(--ios-danger)]" role="alert">
+          {error}
+        </p>
+      ) : hint ? (
+        <p className="text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">{hint}</p>
+      ) : null}
+    </div>
+  );
+}
+
+type ProfilePanelProps = {
+  title: string;
+  description: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  className?: string;
+};
+
+function ProfilePanel({ title, description, children, footer, className }: ProfilePanelProps) {
+  return (
+    <section
+      className={cn(
+        "rounded-[var(--radius-xl)] bg-[var(--ios-card)] p-5 shadow-[var(--ios-shadow)] ring-1 ring-[var(--ios-separator)]/70",
+        className,
+      )}
+    >
+      <div className="mb-5">
+        <h2 className="text-[var(--text-title3)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
+          {title}
+        </h2>
+        <p className="mt-1 max-w-md text-[var(--text-footnote)] leading-relaxed text-[var(--ios-secondary-label)]">
+          {description}
+        </p>
+      </div>
+      <div className="space-y-4">{children}</div>
+      {footer ? <div className="mt-5 flex justify-end">{footer}</div> : null}
+    </section>
+  );
+}
+
+/** Profil compte — panels modernes, icônes dans les champs. */
 export function ProfileView() {
   const t = useTranslations("profile");
   const tAuth = useTranslations("auth");
@@ -47,6 +115,13 @@ export function ProfileView() {
     setDisplayName(user?.displayName ?? "");
     setEmail(user?.email ?? "");
   }, [user?.displayName, user?.email]);
+
+  const profileDirty =
+    displayName.trim() !== (user?.displayName ?? "").trim() ||
+    email.trim() !== (user?.email ?? "").trim();
+
+  const passwordDirty =
+    currentPassword.length > 0 || newPassword.length > 0 || confirmPassword.length > 0;
 
   function validateProfile(): ProfileErrors {
     const next: ProfileErrors = {};
@@ -107,137 +182,149 @@ export function ProfileView() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-8">
-      <PageHeader description={t("description")} />
-
-      <form
-        onSubmit={onSaveProfile}
-        className="space-y-4 rounded-[var(--radius-lg)] bg-[var(--ios-card)] p-5 shadow-[var(--ios-shadow-sm)]"
-      >
-        <div>
-          <h2 className="text-[17px] font-semibold text-[var(--ios-label)]">
-            {t("accountSection")}
-          </h2>
-          <p className="mt-1 text-[13px] text-[var(--ios-secondary-label)]">
-            {t("accountSectionHint")}
-          </p>
-        </div>
-
-        <Field id="profile-username" label={t("username")} hint={t("usernameHint")}>
-          <Input
-            id="profile-username"
-            value={user?.username ?? ""}
-            readOnly
-            disabled
-            autoComplete="username"
-          />
-        </Field>
-
-        <Field
-          id="profile-display-name"
-          label={t("displayName")}
-          error={profileErrors.displayName}
+    <div className="mx-auto max-w-[560px] space-y-6">
+      <section className="flex flex-col items-center rounded-[var(--radius-xl)] bg-[var(--ios-card)] px-5 py-7 text-center shadow-[var(--ios-shadow)] ring-1 ring-[var(--ios-separator)]/70">
+        <div
+          className="flex size-20 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
+          aria-hidden
         >
-          <Input
-            id="profile-display-name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            invalid={Boolean(profileErrors.displayName)}
-            autoComplete="name"
-          />
-        </Field>
-
-        <Field id="profile-email" label={t("email")} error={profileErrors.email}>
-          <Input
-            id="profile-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            invalid={Boolean(profileErrors.email)}
-            autoComplete="email"
-          />
-        </Field>
-
-        <Field id="profile-role" label={t("role")}>
-          <Input
-            id="profile-role"
-            value={role ? tRoles(`${role}.label`) : "—"}
-            readOnly
-            disabled
-          />
-        </Field>
-
-        <div className="flex justify-end pt-1">
-          <Button type="submit" loading={savingProfile}>
-            {tCommon("save")}
-          </Button>
+          <UserRound className="size-9 stroke-[1.5]" />
         </div>
+        <h2 className="mt-4 text-[var(--text-title2)] font-bold tracking-[-0.02em] text-[var(--ios-label)]">
+          {displayName.trim() || user?.username || "—"}
+        </h2>
+        <p className="mt-1 text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
+          {email.trim() || user?.email || "—"}
+        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          {role ? <Badge tone="blue">{tRoles(`${role}.label`)}</Badge> : null}
+          {isMock ? <Badge tone="neutral">{tCommon("demoBadge")}</Badge> : null}
+        </div>
+      </section>
+
+      <form onSubmit={onSaveProfile}>
+        <ProfilePanel
+          title={t("accountSection")}
+          description={t("accountSectionHint")}
+          footer={
+            <Button type="submit" loading={savingProfile} disabled={!profileDirty && !savingProfile}>
+              {tCommon("save")}
+            </Button>
+          }
+        >
+          <FieldBlock id="profile-username" label={t("username")} hint={t("usernameHint")}>
+            <IconInput
+              id="profile-username"
+              icon={<AtSign className="size-4 stroke-[1.75]" />}
+              value={user?.username ?? ""}
+              readOnly
+              disabled
+              autoComplete="username"
+            />
+          </FieldBlock>
+
+          <FieldBlock
+            id="profile-display-name"
+            label={t("displayName")}
+            error={profileErrors.displayName}
+          >
+            <IconInput
+              id="profile-display-name"
+              icon={<IdCard className="size-4 stroke-[1.75]" />}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              invalid={Boolean(profileErrors.displayName)}
+              autoComplete="name"
+            />
+          </FieldBlock>
+
+          <FieldBlock id="profile-email" label={t("email")} error={profileErrors.email}>
+            <IconInput
+              id="profile-email"
+              type="email"
+              icon={<Mail className="size-4 stroke-[1.75]" />}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              invalid={Boolean(profileErrors.email)}
+              autoComplete="email"
+            />
+          </FieldBlock>
+
+          <FieldBlock id="profile-role" label={t("role")}>
+            <IconInput
+              id="profile-role"
+              icon={<Shield className="size-4 stroke-[1.75]" />}
+              value={role ? tRoles(`${role}.label`) : "—"}
+              readOnly
+              disabled
+            />
+          </FieldBlock>
+        </ProfilePanel>
       </form>
 
-      <form
-        onSubmit={onChangePassword}
-        className="space-y-4 rounded-[var(--radius-lg)] bg-[var(--ios-card)] p-5 shadow-[var(--ios-shadow-sm)]"
-      >
-        <div>
-          <h2 className="text-[17px] font-semibold text-[var(--ios-label)]">
-            {t("passwordSection")}
-          </h2>
-          <p className="mt-1 text-[13px] text-[var(--ios-secondary-label)]">
-            {t("passwordSectionHint")}
-          </p>
-        </div>
-
-        <Field
-          id="profile-current-password"
-          label={tAuth("currentPassword")}
-          error={passwordErrors.currentPassword}
+      <form onSubmit={onChangePassword}>
+        <ProfilePanel
+          title={t("passwordSection")}
+          description={t("passwordSectionHint")}
+          footer={
+            <Button
+              type="submit"
+              loading={savingPassword}
+              disabled={!passwordDirty && !savingPassword}
+            >
+              {tAuth("changePasswordSubmit")}
+            </Button>
+          }
         >
-          <Input
+          <FieldBlock
             id="profile-current-password"
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            invalid={Boolean(passwordErrors.currentPassword)}
-            autoComplete="current-password"
-          />
-        </Field>
+            label={tAuth("currentPassword")}
+            error={passwordErrors.currentPassword}
+          >
+            <IconInput
+              id="profile-current-password"
+              type="password"
+              icon={<LockKeyhole className="size-4 stroke-[1.75]" />}
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              invalid={Boolean(passwordErrors.currentPassword)}
+              autoComplete="current-password"
+            />
+          </FieldBlock>
 
-        <Field
-          id="profile-new-password"
-          label={tAuth("newPassword")}
-          error={passwordErrors.newPassword}
-          hint={t("passwordHint")}
-        >
-          <Input
+          <FieldBlock
             id="profile-new-password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            invalid={Boolean(passwordErrors.newPassword)}
-            autoComplete="new-password"
-          />
-        </Field>
+            label={tAuth("newPassword")}
+            hint={t("passwordHint")}
+            error={passwordErrors.newPassword}
+          >
+            <IconInput
+              id="profile-new-password"
+              type="password"
+              icon={<KeyRound className="size-4 stroke-[1.75]" />}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              invalid={Boolean(passwordErrors.newPassword)}
+              autoComplete="new-password"
+            />
+          </FieldBlock>
 
-        <Field
-          id="profile-confirm-password"
-          label={tAuth("confirmPassword")}
-          error={passwordErrors.confirmPassword}
-        >
-          <Input
+          <FieldBlock
             id="profile-confirm-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            invalid={Boolean(passwordErrors.confirmPassword)}
-            autoComplete="new-password"
-          />
-        </Field>
-
-        <div className="flex justify-end pt-1">
-          <Button type="submit" loading={savingPassword}>
-            {tAuth("changePasswordSubmit")}
-          </Button>
-        </div>
+            label={tAuth("confirmPassword")}
+            error={passwordErrors.confirmPassword}
+          >
+            <IconInput
+              id="profile-confirm-password"
+              type="password"
+              icon={<KeyRound className="size-4 stroke-[1.75]" />}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              invalid={Boolean(passwordErrors.confirmPassword)}
+              autoComplete="new-password"
+            />
+          </FieldBlock>
+        </ProfilePanel>
       </form>
     </div>
   );
