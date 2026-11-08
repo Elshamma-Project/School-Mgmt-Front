@@ -1,8 +1,7 @@
-import { CalendarDays } from "lucide-react";
 import { ModulePage } from "@/components/workspace/module-page";
 
 export const instant = false;
 
 export default function DirectorTimetablePage() {
-  return <ModulePage ns="directorTimetable" icon={CalendarDays} />;
+  return <ModulePage ns="directorTimetable" />;
 }

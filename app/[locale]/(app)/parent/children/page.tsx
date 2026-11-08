@@ -1,8 +1,7 @@
-import { Users } from "lucide-react";
 import { ModulePage } from "@/components/workspace/module-page";
 
 export const instant = false;
 
 export default function ParentChildrenPage() {
-  return <ModulePage ns="parentChildren" icon={Users} />;
+  return <ModulePage ns="parentChildren" />;
 }
