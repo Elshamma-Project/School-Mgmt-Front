@@ -6,9 +6,9 @@ import { Toaster as SonnerToaster } from "sonner";
 export function AppToaster() {
   return (
     <SonnerToaster
-      position="bottom-center"
-      offset={24}
-      mobileOffset={88}
+      position="top-right"
+      offset={16}
+      mobileOffset={{ top: 16, right: 16 }}
       gap={8}
       duration={3200}
       closeButton
@@ -22,7 +22,7 @@ export function AppToaster() {
           error: "!text-[var(--ios-danger)]",
           warning: "!text-[var(--ios-warning)]",
           closeButton:
-            "!bg-[var(--ios-fill)] !border-0 !text-[var(--ios-secondary-label)] hover:!bg-[var(--ios-fill-secondary)]",
+            "!left-auto !right-0 !translate-x-[35%] !-translate-y-[35%] !bg-[var(--ios-fill)] !border-0 !text-[var(--ios-secondary-label)] hover:!bg-[var(--ios-fill-secondary)]",
         },
       }}
     />
