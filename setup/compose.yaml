@@ -1,11 +1,17 @@
 # Front SMELS — build depuis la racine du repo (package.json parent).
+# Variables lues depuis setup/.env (env_file + interpolation ${…}).
+
 services:
   server:
     build:
       context: ..
       dockerfile: setup/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://host.docker.internal:8090}
+    env_file:
+      - .env
     environment:
-      NODE_ENV: production
+      NODE_ENV: ${NODE_ENV:-production}
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://host.docker.internal:8090}
     ports:
-      - 3000:3000
+      - "3000:3000"

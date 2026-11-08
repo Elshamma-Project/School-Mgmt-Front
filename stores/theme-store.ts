@@ -2,7 +2,11 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { THEME_STORAGE_KEY, type AppTheme } from "@/lib/theme/constants";
+import {
+  THEME_COOKIE_NAME,
+  THEME_STORAGE_KEY,
+  type AppTheme,
+} from "@/lib/theme/constants";
 
 type ThemeState = {
   theme: AppTheme;
@@ -10,10 +14,16 @@ type ThemeState = {
   toggleTheme: () => void;
 };
 
+function syncThemeCookie(theme: AppTheme) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${THEME_COOKIE_NAME}=${theme}; path=/; Max-Age=31536000; SameSite=Lax`;
+}
+
 function applyThemeClass(theme: AppTheme) {
   if (typeof document === "undefined") return;
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.style.colorScheme = theme;
+  syncThemeCookie(theme);
 }
 
 export const useThemeStore = create<ThemeState>()(

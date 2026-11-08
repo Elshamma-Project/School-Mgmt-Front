@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
-import { ThemeScript } from "@/components/layout/theme-script";
 import { AppToaster } from "@/components/ui/toaster";
+import { THEME_COOKIE_NAME, isAppTheme } from "@/lib/theme/constants";
 import { routing } from "@/i18n/routing";
+import { cn } from "@/lib/utils/cn";
 
 type LocaleLayoutProps = {
   children: React.ReactNode;
@@ -35,11 +37,17 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   setRequestLocale(locale);
   const messages = await getMessages();
+  const themeCookie = (await cookies()).get(THEME_COOKIE_NAME)?.value;
+  const theme = isAppTheme(themeCookie) ? themeCookie : "light";
 
   return (
-    <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={cn("h-full antialiased", theme === "dark" && "dark")}
+      style={{ colorScheme: theme }}
+      suppressHydrationWarning
+    >
       <body className="min-h-full font-sans">
-        <ThemeScript />
         <NextIntlClientProvider messages={messages}>
           {children}
           <AppToaster />

@@ -1,12 +1,14 @@
-import { getTranslations } from "next-intl/server";
+"use client";
+
+import { useTranslations } from "next-intl";
 
 type AppFooterProps = {
   className?: string;
 };
 
-/** Pied de page léger — copyright école / SMELS. */
-export async function AppFooter({ className }: AppFooterProps) {
-  const t = await getTranslations("common");
+/** Pied de page léger — copyright école / SMELS (année côté client). */
+export function AppFooter({ className }: AppFooterProps) {
+  const t = useTranslations("common");
   const year = new Date().getFullYear();
 
   return (
