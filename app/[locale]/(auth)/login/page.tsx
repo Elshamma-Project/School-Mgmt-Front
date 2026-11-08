@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
 import { AppFooter } from "@/components/layout/app-footer";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { getTenantConfig } from "@/lib/tenant/config";
 
 /** Traductions next-intl = runtime locale → hors shell Instant pour l’instant. */
 export const instant = false;
@@ -9,8 +10,8 @@ export const instant = false;
 export default async function LoginPage() {
   const t = await getTranslations("auth");
   const tCommon = await getTranslations("common");
-  // Lu côté serveur depuis .env (fiable) puis passé au formulaire client.
-  const schoolId = process.env.NEXT_PUBLIC_DEFAULT_SCHOOL_ID?.trim() ?? "";
+  // Lu côté serveur via refs statiques NEXT_PUBLIC_* (.env), passé au formulaire client.
+  const schoolId = getTenantConfig().schoolId;
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-[var(--ios-bg)]">

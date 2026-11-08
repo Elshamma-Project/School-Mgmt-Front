@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
+import { StoreHydration } from "@/components/providers/store-hydration";
 import { AppToaster } from "@/components/ui/toaster";
 import { THEME_COOKIE_NAME, isAppTheme } from "@/lib/theme/constants";
 import { routing } from "@/i18n/routing";
@@ -49,6 +50,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     >
       <body className="min-h-full font-sans">
         <NextIntlClientProvider messages={messages}>
+          <StoreHydration />
           {children}
           <AppToaster />
         </NextIntlClientProvider>

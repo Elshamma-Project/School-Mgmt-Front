@@ -18,6 +18,6 @@ export const useSidebarStore = create<SidebarState>()(
       setCollapsed: (collapsed) => set({ collapsed }),
       toggleCollapsed: () => set({ collapsed: !get().collapsed }),
     }),
-    { name: STORAGE_KEY },
+    { name: STORAGE_KEY, skipHydration: true },
   ),
 );

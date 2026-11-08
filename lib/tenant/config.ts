@@ -6,6 +6,13 @@
  * Un accès dynamique `process.env[name]` renvoie toujours `undefined` côté navigateur.
  */
 
+/** Références statiques — Next les inline au build / `next dev`. */
+const ENV_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const ENV_DEFAULT_SCHOOL_ID = process.env.NEXT_PUBLIC_DEFAULT_SCHOOL_ID;
+const ENV_SCHOOL_DISPLAY_NAME = process.env.NEXT_PUBLIC_SCHOOL_DISPLAY_NAME;
+const ENV_APP_DISPLAY_NAME = process.env.NEXT_PUBLIC_APP_DISPLAY_NAME;
+const ENV_ENABLE_DEMO_LOGIN = process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN;
+
 function trimEnv(value: string | undefined, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;
 }
@@ -39,14 +46,15 @@ function browserHostname(): string {
 
 /**
  * schoolId effectif :
- * 1. NEXT_PUBLIC_DEFAULT_SCHOOL_ID (.env)
- * 2. sinon le nom de domaine (hors localhost / IP)
+ * 1. override (ex. prop serveur depuis LoginPage)
+ * 2. NEXT_PUBLIC_DEFAULT_SCHOOL_ID (.env)
+ * 3. sinon le nom de domaine (hors localhost / IP)
  */
 export function resolveSchoolId(override?: string | null): string {
   const fromOverride = override?.trim();
   if (fromOverride) return fromOverride;
 
-  const fromEnv = trimEnv(process.env.NEXT_PUBLIC_DEFAULT_SCHOOL_ID);
+  const fromEnv = trimEnv(ENV_DEFAULT_SCHOOL_ID);
   if (fromEnv) return fromEnv;
 
   const host = browserHostname();
@@ -58,10 +66,10 @@ export function resolveSchoolId(override?: string | null): string {
 
 export function getTenantConfig(schoolIdOverride?: string | null): TenantPublicConfig {
   return {
-    apiBaseUrl: trimEnv(process.env.NEXT_PUBLIC_API_BASE_URL, "http://localhost:8090"),
+    apiBaseUrl: trimEnv(ENV_API_BASE_URL, "http://localhost:8090"),
     schoolId: resolveSchoolId(schoolIdOverride),
-    schoolDisplayName: trimEnv(process.env.NEXT_PUBLIC_SCHOOL_DISPLAY_NAME, "School"),
-    appDisplayName: trimEnv(process.env.NEXT_PUBLIC_APP_DISPLAY_NAME, "SMELS"),
-    enableDemoLogin: readBool(process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN, false),
+    schoolDisplayName: trimEnv(ENV_SCHOOL_DISPLAY_NAME, "School"),
+    appDisplayName: trimEnv(ENV_APP_DISPLAY_NAME, "SMELS"),
+    enableDemoLogin: readBool(ENV_ENABLE_DEMO_LOGIN, false),
   };
 }

@@ -42,6 +42,7 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: THEME_STORAGE_KEY,
+      skipHydration: true,
       partialize: (state) => ({ theme: state.theme }),
       onRehydrateStorage: () => (state) => {
         if (state?.theme) applyThemeClass(state.theme);
