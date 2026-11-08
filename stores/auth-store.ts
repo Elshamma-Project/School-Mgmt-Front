@@ -11,6 +11,7 @@ type AuthState = AuthSession & {
     refreshToken: string;
     user: AuthUser;
     mustChangePassword: boolean;
+    isMock?: boolean;
   }) => void;
   clearSession: () => void;
   setMustChangePassword: (value: boolean) => void;
@@ -33,9 +34,16 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       user: null,
       mustChangePassword: false,
-      setSession: ({ accessToken, refreshToken, user, mustChangePassword }) => {
+      isMock: true,
+      setSession: ({
+        accessToken,
+        refreshToken,
+        user,
+        mustChangePassword,
+        isMock = true,
+      }) => {
         syncAuthCookie(accessToken);
-        set({ accessToken, refreshToken, user, mustChangePassword });
+        set({ accessToken, refreshToken, user, mustChangePassword, isMock });
       },
       clearSession: () => {
         syncAuthCookie(null);
@@ -44,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           user: null,
           mustChangePassword: false,
+          isMock: true,
         });
       },
       setMustChangePassword: (mustChangePassword) => set({ mustChangePassword }),
@@ -55,6 +64,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         user: state.user,
         mustChangePassword: state.mustChangePassword,
+        isMock: state.isMock,
       }),
       onRehydrateStorage: () => (state) => {
         if (state?.accessToken) {

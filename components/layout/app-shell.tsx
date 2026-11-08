@@ -2,8 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
-import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
-import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { MobileTabBar, SidebarNav } from "@/components/layout/app-nav";
+import { useAuthStore } from "@/stores/auth-store";
+import { primaryRole } from "@/types/auth";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -11,6 +12,10 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const t = useTranslations("common");
+  const tRoles = useTranslations("roles");
+  const user = useAuthStore((s) => s.user);
+  const isMock = useAuthStore((s) => s.isMock);
+  const role = primaryRole(user);
 
   return (
     <div className="min-h-dvh bg-[var(--ios-bg)] text-[var(--ios-label)]">
@@ -21,6 +26,12 @@ export function AppShell({ children }: AppShellProps) {
               {t("schoolName")}
             </p>
             <p className="mt-0.5 text-[20px] font-bold tracking-[-0.02em]">{t("appName")}</p>
+            {role ? (
+              <p className="mt-2 text-[13px] text-[var(--ios-blue)]">
+                {tRoles(`${role}.label`)}
+                {isMock ? ` · ${t("demoBadge")}` : null}
+              </p>
+            ) : null}
           </div>
           <SidebarNav />
           <div className="mt-auto border-t border-[var(--ios-separator)] p-3">
@@ -35,6 +46,12 @@ export function AppShell({ children }: AppShellProps) {
                 {t("schoolName")}
               </p>
               <p className="text-[17px] font-bold tracking-[-0.01em]">{t("appName")}</p>
+              {role ? (
+                <p className="text-[12px] text-[var(--ios-blue)]">
+                  {tRoles(`${role}.label`)}
+                  {isMock ? ` · ${t("demoBadge")}` : null}
+                </p>
+              ) : null}
             </div>
             <LocaleSwitcher />
           </header>

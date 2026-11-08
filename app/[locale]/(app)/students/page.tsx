@@ -1,22 +1,14 @@
 import { GraduationCap } from "lucide-react";
-import { getTranslations } from "next-intl/server";
-import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
+import { ModulePlaceholder } from "@/components/modules/module-placeholder";
 
 export const instant = false;
 
-export default async function StudentsPage() {
-  const t = await getTranslations("students");
-  const tCommon = await getTranslations("common");
-
+export default function StudentsPage() {
   return (
-    <div>
-      <PageHeader title={t("title")} description={t("description")} />
-      <EmptyState
-        title={tCommon("emptyTitle")}
-        description={tCommon("emptyDescription")}
-        icon={<GraduationCap className="size-10 stroke-[1.5]" aria-hidden />}
-      />
-    </div>
+    <ModulePlaceholder
+      namespace="students"
+      icon={GraduationCap}
+      allowedRoles={["super_admin", "staff", "teacher", "guardian"]}
+    />
   );
 }

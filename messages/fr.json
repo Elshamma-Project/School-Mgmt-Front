@@ -9,9 +9,12 @@
     "search": "Rechercher",
     "emptyTitle": "Rien à afficher",
     "emptyDescription": "Ce module sera bientôt disponible.",
+    "accessDeniedTitle": "Accès limité",
+    "accessDeniedDescription": "Ce module n’est pas disponible pour votre profil.",
     "language": "Langue",
     "french": "Français",
-    "english": "English"
+    "english": "English",
+    "demoBadge": "Démo"
   },
   "auth": {
     "loginTitle": "Connexion",
@@ -30,7 +33,45 @@
     "confirmPassword": "Confirmer le mot de passe",
     "changePasswordSubmit": "Mettre à jour",
     "requiredField": "Ce champ est requis",
-    "invalidCredentials": "Identifiant ou mot de passe incorrect."
+    "invalidCredentials": "Identifiant ou mot de passe incorrect.",
+    "demoMode": "Mode démo (sans API)",
+    "demoModeHint": "Connexion fictive pour explorer les interfaces par rôle. L’auth réelle sera branchée plus tard.",
+    "chooseRole": "Profil à simuler",
+    "apiDisabled": "L’authentification API n’est pas encore activée. Recochez le mode démo pour continuer."
+  },
+  "roles": {
+    "teacher": {
+      "label": "Enseignant",
+      "hint": "Classes, notes, suivi pédagogique",
+      "homeBlurb": "Espace enseignant — vos classes et le suivi scolaire.",
+      "studentsBlurb": "Élèves de vos classes (vue enseignant).",
+      "academicBlurb": "Notes, matières et bulletins de vos classes.",
+      "staffBlurb": "Le personnel n’est pas géré depuis ce profil."
+    },
+    "staff": {
+      "label": "Staff",
+      "hint": "Administration scolaire au quotidien",
+      "homeBlurb": "Espace staff — opérations et dossiers de l’école.",
+      "studentsBlurb": "Dossiers élèves (accès staff).",
+      "academicBlurb": "Organisation académique et suivi.",
+      "staffBlurb": "Gestion du personnel enseignant et administratif."
+    },
+    "super_admin": {
+      "label": "Super admin",
+      "hint": "Configuration complète de l’école",
+      "homeBlurb": "Espace super admin — vue d’ensemble et paramétrage.",
+      "studentsBlurb": "Tous les dossiers élèves (administration).",
+      "academicBlurb": "Pilotage académique complet.",
+      "staffBlurb": "Administration complète du personnel."
+    },
+    "guardian": {
+      "label": "Parent / tuteur",
+      "hint": "Suivi des enfants scolarisés",
+      "homeBlurb": "Espace famille — suivi de vos enfants.",
+      "studentsBlurb": "Enfants liés à votre compte (sans données d’autres élèves).",
+      "academicBlurb": "Notes et bulletins de vos enfants.",
+      "staffBlurb": "Le personnel n’est pas visible pour ce profil."
+    }
   },
   "nav": {
     "home": "Accueil",
@@ -42,7 +83,13 @@
   },
   "home": {
     "title": "Accueil",
-    "description": "Tableau de bord SMELS — fondations prêtes pour les modules métier."
+    "description": "Tableau de bord SMELS.",
+    "greeting": "Bonjour, {name}",
+    "profileSection": "Session",
+    "roleLabel": "Profil",
+    "accountLabel": "Compte",
+    "modulesSection": "Modules",
+    "demoFooter": "Session fictive — aucune donnée réelle d’élève n’est chargée."
   },
   "staff": {
     "title": "Personnel",
@@ -60,7 +107,10 @@
     "title": "Réglages",
     "description": "Préférences de l’application et de la session.",
     "languageSection": "Langue de l’interface",
-    "sessionSection": "Session"
+    "sessionSection": "Session",
+    "switchRoleSection": "Changer de profil (démo)",
+    "switchRoleFooter": "Temporaire : bascule rapide entre les interfaces sans se déconnecter.",
+    "activeRole": "Actif"
   },
   "errors": {
     "generic": "Une erreur est survenue.",

@@ -9,9 +9,12 @@
     "search": "Search",
     "emptyTitle": "Nothing to show",
     "emptyDescription": "This module will be available soon.",
+    "accessDeniedTitle": "Limited access",
+    "accessDeniedDescription": "This module is not available for your profile.",
     "language": "Language",
     "french": "Français",
-    "english": "English"
+    "english": "English",
+    "demoBadge": "Demo"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -30,7 +33,45 @@
     "confirmPassword": "Confirm password",
     "changePasswordSubmit": "Update",
     "requiredField": "This field is required",
-    "invalidCredentials": "Invalid username or password."
+    "invalidCredentials": "Invalid username or password.",
+    "demoMode": "Demo mode (no API)",
+    "demoModeHint": "Fictional sign-in to explore role-based interfaces. Real auth comes later.",
+    "chooseRole": "Profile to simulate",
+    "apiDisabled": "API authentication is not enabled yet. Re-check demo mode to continue."
+  },
+  "roles": {
+    "teacher": {
+      "label": "Teacher",
+      "hint": "Classes, grades, academic follow-up",
+      "homeBlurb": "Teacher workspace — your classes and academic follow-up.",
+      "studentsBlurb": "Students in your classes (teacher view).",
+      "academicBlurb": "Grades, subjects and report cards for your classes.",
+      "staffBlurb": "Staff management is not available for this profile."
+    },
+    "staff": {
+      "label": "Staff",
+      "hint": "Day-to-day school administration",
+      "homeBlurb": "Staff workspace — school operations and records.",
+      "studentsBlurb": "Student records (staff access).",
+      "academicBlurb": "Academic organisation and follow-up.",
+      "staffBlurb": "Teaching and administrative staff management."
+    },
+    "super_admin": {
+      "label": "Super admin",
+      "hint": "Full school configuration",
+      "homeBlurb": "Super admin workspace — overview and configuration.",
+      "studentsBlurb": "All student records (administration).",
+      "academicBlurb": "Full academic oversight.",
+      "staffBlurb": "Full staff administration."
+    },
+    "guardian": {
+      "label": "Parent / guardian",
+      "hint": "Follow your children’s schooling",
+      "homeBlurb": "Family workspace — follow your children.",
+      "studentsBlurb": "Children linked to your account (no other students).",
+      "academicBlurb": "Grades and report cards for your children.",
+      "staffBlurb": "Staff is not visible for this profile."
+    }
   },
   "nav": {
     "home": "Home",
@@ -42,7 +83,13 @@
   },
   "home": {
     "title": "Home",
-    "description": "SMELS dashboard — foundation ready for business modules."
+    "description": "SMELS dashboard.",
+    "greeting": "Hello, {name}",
+    "profileSection": "Session",
+    "roleLabel": "Profile",
+    "accountLabel": "Account",
+    "modulesSection": "Modules",
+    "demoFooter": "Demo session — no real student data is loaded."
   },
   "staff": {
     "title": "Staff",
@@ -60,7 +107,10 @@
     "title": "Settings",
     "description": "Application and session preferences.",
     "languageSection": "Interface language",
-    "sessionSection": "Session"
+    "sessionSection": "Session",
+    "switchRoleSection": "Switch profile (demo)",
+    "switchRoleFooter": "Temporary: quickly switch interfaces without signing out.",
+    "activeRole": "Active"
   },
   "errors": {
     "generic": "Something went wrong.",
