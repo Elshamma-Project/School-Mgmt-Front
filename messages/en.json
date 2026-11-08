@@ -27,14 +27,16 @@
     "loginSubtitle": "Enter the workspace tailored to your role.",
     "username": "Username",
     "password": "Password",
-    "schoolId": "School (optional)",
-    "schoolIdPlaceholder": "School ID",
+    "schoolIdMissing": "School not configured (NEXT_PUBLIC_DEFAULT_SCHOOL_ID or domain name).",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "submit": "Sign in",
     "submitting": "Signing in…",
     "loginPreparing": "Opening your session",
     "loginPreparingHint": "Preparing your workspace…",
     "loginPreparingRole": "{role} workspace",
-    "loginSuccess": "Demo session started",
+    "loginSuccess": "Signed in",
+    "loginSuccessDemo": "Demo session started",
     "logout": "Sign out",
     "openProfile": "Open my profile",
     "logoutConfirmTitle": "Sign out?",
@@ -47,11 +49,14 @@
     "changePasswordSubmit": "Update",
     "requiredField": "This field is required",
     "invalidCredentials": "Invalid username or password.",
+    "accountLocked": "Account temporarily locked after too many failed attempts.",
+    "networkError": "Cannot reach the server. Check the API and your network.",
     "demoMode": "Demo mode (no API)",
-    "demoModeHint": "Fictional sign-in to explore each role workspace. Real auth comes later.",
+    "demoModeHint": "Fictional sign-in for UI exploration. Off when NEXT_PUBLIC_ENABLE_DEMO_LOGIN=false.",
+    "demoDisabled": "Demo mode is disabled for this deployment.",
     "chooseRole": "Role to simulate",
     "rolePreview": "preview",
-    "apiDisabled": "API authentication is not enabled yet. Re-check demo mode to continue."
+    "apiDisabled": "API authentication is not enabled yet."
   },
   "roles": {
     "STUDENT": {
@@ -80,6 +85,11 @@
       "label": "Director",
       "hint": "Head of school",
       "homeBlurb": "Director workspace — full oversight, including sequence reopen and admin accounts."
+    },
+    "SURVEILLANT_GENERAL": {
+      "label": "Chief supervisor",
+      "hint": "Report sheet visa",
+      "homeBlurb": "Supervision workspace — report sheet visas and discipline follow-up."
     },
     "SUPER_ADMIN": {
       "label": "Super admin",
@@ -159,23 +169,29 @@
   },
   "profile": {
     "title": "Profile",
-    "description": "Update your account details and password.",
-    "accountSection": "Account information",
-    "accountSectionHint": "These details appear in the app and communications.",
+    "description": "Login account, school and password.",
+    "accountSection": "Account",
+    "accountSectionHint": "User module data (JWT). Staff / Student / Guardian profiles come next.",
     "username": "Username",
     "usernameHint": "Username cannot be changed here.",
+    "schoolId": "School (schoolId)",
+    "platformAccount": "Platform account",
     "displayName": "Display name",
     "email": "Email",
-    "role": "Role",
+    "role": "Role(s)",
+    "profileType": "Linked profile",
+    "profileTypeHint": "Type + profile id (staffId / studentId / guardianId).",
+    "syncAccount": "Refresh from API",
+    "accountSynced": "Account synced",
     "passwordSection": "Password",
-    "passwordSectionHint": "Choose a strong, unique password.",
+    "passwordSectionHint": "At least 8 characters. Applied immediately on the server.",
     "passwordHint": "At least 8 characters.",
     "invalidEmail": "Invalid email address.",
     "passwordTooShort": "Password must be at least 8 characters.",
     "passwordMismatch": "Passwords do not match.",
     "profileSaved": "Profile updated",
     "passwordSaved": "Password updated",
-    "mockHint": "Saved locally (demo mode) — real API coming later."
+    "mockHint": "Saved locally (demo mode)."
   },
   "workspace": {
     "teacherClasses": {

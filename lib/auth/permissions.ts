@@ -28,6 +28,11 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
   STUDENT: ["viewOwnProfile", "viewOwnGrades", "downloadAnnualReport"],
   PARENT: ["viewOwnChildren", "viewOwnGrades", "downloadAnnualReport"],
   TEACHER: ["viewTeacherClasses", "editOpenSequenceGrades", "viewOwnProfile"],
+  SURVEILLANT_GENERAL: [
+    "manageReportCards",
+    "viewAuditJournal",
+    "viewOwnProfile",
+  ],
   ADMINISTRATION: [
     "manageSchoolStructure",
     "manageStaff",

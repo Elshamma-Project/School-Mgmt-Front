@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { ChangePasswordStub } from "@/components/auth/change-password-stub";
+import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { AppFooter } from "@/components/layout/app-footer";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 
@@ -30,7 +30,7 @@ export default async function ChangePasswordPage() {
         </div>
 
         <div className="w-full max-w-[380px] rounded-[var(--radius-xl)] bg-[var(--ios-card)] p-6 shadow-[var(--ios-shadow)]">
-          <ChangePasswordStub />
+          <ChangePasswordForm />
         </div>
 
         <div className="mt-8">

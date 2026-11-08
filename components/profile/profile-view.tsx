@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
   AtSign,
+  Building2,
   IdCard,
   KeyRound,
   LockKeyhole,
-  Mail,
+  RefreshCw,
   Shield,
   UserRound,
 } from "lucide-react";
@@ -16,14 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { IconInput } from "@/components/ui/icon-input";
+import { changePassword, fetchMe } from "@/lib/api/auth";
 import { notify } from "@/lib/ui/notify";
 import { useAuthStore } from "@/stores/auth-store";
+import { ApiError } from "@/types/api";
 import { primaryRole } from "@/types/auth";
-
-type ProfileErrors = {
-  displayName?: string;
-  email?: string;
-};
 
 type PasswordErrors = {
   currentPassword?: string;
@@ -31,7 +29,11 @@ type PasswordErrors = {
   confirmPassword?: string;
 };
 
-/** Profil compte — GroupedList + Field + IconInput. */
+/**
+ * Profil compte (module user).
+ * displayName / e-mail métier viennent des fiches Staff/Student/Guardian — étape suivante.
+ * Ici : synchronisation `/me` + changement de mot de passe API.
+ */
 export function ProfileView() {
   const t = useTranslations("profile");
   const tAuth = useTranslations("auth");
@@ -39,41 +41,49 @@ export function ProfileView() {
   const tRoles = useTranslations("roles");
   const user = useAuthStore((s) => s.user);
   const isMock = useAuthStore((s) => s.isMock);
-  const updateUser = useAuthStore((s) => s.updateUser);
+  const syncFromAccount = useAuthStore((s) => s.syncFromAccount);
+  const setMustChangePassword = useAuthStore((s) => s.setMustChangePassword);
   const role = primaryRole(user);
 
-  const [displayName, setDisplayName] = useState(user?.displayName ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
-  const [profileErrors, setProfileErrors] = useState<ProfileErrors>({});
-  const [savingProfile, setSavingProfile] = useState(false);
-
+  const [refreshing, setRefreshing] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
   const [savingPassword, setSavingPassword] = useState(false);
 
-  useEffect(() => {
-    setDisplayName(user?.displayName ?? "");
-    setEmail(user?.email ?? "");
-  }, [user?.displayName, user?.email]);
+  const refreshAccount = useCallback(async () => {
+    if (isMock || !user) return;
+    setRefreshing(true);
+    try {
+      const account = await fetchMe();
+      syncFromAccount(account);
+      notify.success(t("accountSynced"));
+    } catch (error) {
+      if (error instanceof ApiError) {
+        notify.error(error.message);
+      } else {
+        notify.error(tAuth("networkError"));
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [isMock, syncFromAccount, t, tAuth, user]);
 
-  const profileDirty =
-    displayName.trim() !== (user?.displayName ?? "").trim() ||
-    email.trim() !== (user?.email ?? "").trim();
+  useEffect(() => {
+    if (!isMock && user) {
+      void fetchMe()
+        .then((account) => syncFromAccount(account))
+        .catch(() => {
+          /* session invalide gérée par le client HTTP */
+        });
+    }
+    // Sync initiale une fois à l’ouverture du profil
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const passwordDirty =
     currentPassword.length > 0 || newPassword.length > 0 || confirmPassword.length > 0;
-
-  function validateProfile(): ProfileErrors {
-    const next: ProfileErrors = {};
-    if (!displayName.trim()) next.displayName = tAuth("requiredField");
-    if (!email.trim()) next.email = tAuth("requiredField");
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      next.email = t("invalidEmail");
-    }
-    return next;
-  }
 
   function validatePassword(): PasswordErrors {
     const next: PasswordErrors = {};
@@ -87,24 +97,6 @@ export function ProfileView() {
     return next;
   }
 
-  async function onSaveProfile(event: FormEvent) {
-    event.preventDefault();
-    const errors = validateProfile();
-    setProfileErrors(errors);
-    if (Object.keys(errors).length > 0) return;
-
-    setSavingProfile(true);
-    await new Promise((resolve) => setTimeout(resolve, 280));
-    updateUser({
-      displayName: displayName.trim(),
-      email: email.trim(),
-    });
-    setSavingProfile(false);
-    notify.success(t("profileSaved"), {
-      description: isMock ? t("mockHint") : undefined,
-    });
-  }
-
   async function onChangePassword(event: FormEvent) {
     event.preventDefault();
     const errors = validatePassword();
@@ -112,16 +104,37 @@ export function ProfileView() {
     if (Object.keys(errors).length > 0) return;
 
     setSavingPassword(true);
-    await new Promise((resolve) => setTimeout(resolve, 280));
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setPasswordErrors({});
-    setSavingPassword(false);
-    notify.success(t("passwordSaved"), {
-      description: isMock ? t("mockHint") : undefined,
-    });
+    try {
+      if (isMock) {
+        setMustChangePassword(false);
+        notify.success(t("passwordSaved"), { description: t("mockHint") });
+      } else {
+        const account = await changePassword({
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        });
+        syncFromAccount(account);
+        setMustChangePassword(false);
+        notify.success(t("passwordSaved"));
+      }
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordErrors({});
+    } catch (error) {
+      if (error instanceof ApiError) {
+        notify.error(error.message);
+      } else {
+        notify.error(tAuth("networkError"));
+      }
+    } finally {
+      setSavingPassword(false);
+    }
   }
+
+  const title = user?.displayName?.trim() || user?.username || "—";
+  const schoolLabel = user?.schoolId ?? t("platformAccount");
 
   return (
     <div className="mx-auto max-w-[560px] space-y-6 slide-up">
@@ -133,82 +146,88 @@ export function ProfileView() {
           <UserRound className="size-9 stroke-[1.5]" />
         </div>
         <h2 className="mt-4 text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
-          {displayName.trim() || user?.username || "—"}
+          {title}
         </h2>
         <p className="mt-1 text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
-          {email.trim() || user?.email || "—"}
+          {schoolLabel}
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           {role ? <Badge tone="blue">{tRoles(`${role}.label`)}</Badge> : null}
           {isMock ? <Badge tone="neutral">{tCommon("demoBadge")}</Badge> : null}
+          {user?.status ? <Badge tone="neutral">{user.status}</Badge> : null}
         </div>
       </section>
 
-      <form onSubmit={onSaveProfile} className="space-y-3">
-        <GroupedList header={t("accountSection")} footer={t("accountSectionHint")}>
-          <GroupedListItem className="block py-3">
-            <Field id="profile-username" label={t("username")} hint={t("usernameHint")}>
-              <IconInput
-                id="profile-username"
-                icon={<AtSign className="size-4 stroke-[1.75]" />}
-                value={user?.username ?? ""}
-                readOnly
-                disabled
-                autoComplete="username"
-              />
-            </Field>
-          </GroupedListItem>
+      <GroupedList header={t("accountSection")} footer={t("accountSectionHint")}>
+        <GroupedListItem className="block py-3">
+          <Field id="profile-username" label={t("username")} hint={t("usernameHint")}>
+            <IconInput
+              id="profile-username"
+              icon={<AtSign className="size-4 stroke-[1.75]" />}
+              value={user?.username ?? ""}
+              readOnly
+              disabled
+              autoComplete="username"
+            />
+          </Field>
+        </GroupedListItem>
 
-          <GroupedListItem className="block py-3">
-            <Field
-              id="profile-display-name"
-              label={t("displayName")}
-              error={profileErrors.displayName}
-            >
-              <IconInput
-                id="profile-display-name"
-                icon={<IdCard className="size-4 stroke-[1.75]" />}
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                invalid={Boolean(profileErrors.displayName)}
-                autoComplete="name"
-              />
-            </Field>
-          </GroupedListItem>
+        <GroupedListItem className="block py-3">
+          <Field id="profile-school" label={t("schoolId")}>
+            <IconInput
+              id="profile-school"
+              icon={<Building2 className="size-4 stroke-[1.75]" />}
+              value={user?.schoolId ?? "—"}
+              readOnly
+              disabled
+            />
+          </Field>
+        </GroupedListItem>
 
-          <GroupedListItem className="block py-3">
-            <Field id="profile-email" label={t("email")} error={profileErrors.email}>
-              <IconInput
-                id="profile-email"
-                type="email"
-                icon={<Mail className="size-4 stroke-[1.75]" />}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                invalid={Boolean(profileErrors.email)}
-                autoComplete="email"
-              />
-            </Field>
-          </GroupedListItem>
+        <GroupedListItem className="block py-3">
+          <Field id="profile-role" label={t("role")}>
+            <IconInput
+              id="profile-role"
+              icon={<Shield className="size-4 stroke-[1.75]" />}
+              value={
+                user?.roles?.length
+                  ? user.roles.map((r) => tRoles(`${r}.label`)).join(", ")
+                  : role
+                    ? tRoles(`${role}.label`)
+                    : "—"
+              }
+              readOnly
+              disabled
+            />
+          </Field>
+        </GroupedListItem>
 
-          <GroupedListItem className="block py-3">
-            <Field id="profile-role" label={t("role")}>
-              <IconInput
-                id="profile-role"
-                icon={<Shield className="size-4 stroke-[1.75]" />}
-                value={role ? tRoles(`${role}.label`) : "—"}
-                readOnly
-                disabled
-              />
-            </Field>
-          </GroupedListItem>
-        </GroupedList>
+        <GroupedListItem className="block py-3">
+          <Field id="profile-type" label={t("profileType")} hint={t("profileTypeHint")}>
+            <IconInput
+              id="profile-type"
+              icon={<IdCard className="size-4 stroke-[1.75]" />}
+              value={`${user?.profileType ?? "—"} · ${user?.profileId ?? "—"}`}
+              readOnly
+              disabled
+            />
+          </Field>
+        </GroupedListItem>
+      </GroupedList>
 
+      {!isMock ? (
         <div className="flex justify-end px-1">
-          <Button type="submit" loading={savingProfile} disabled={!profileDirty && !savingProfile}>
-            {tCommon("save")}
+          <Button
+            type="button"
+            variant="secondary"
+            loading={refreshing}
+            onClick={() => void refreshAccount()}
+          >
+            <RefreshCw className="size-4 stroke-[1.75]" aria-hidden />
+            {t("syncAccount")}
           </Button>
         </div>
-      </form>
+      ) : null}
 
       <form onSubmit={onChangePassword} className="space-y-3">
         <GroupedList header={t("passwordSection")} footer={t("passwordSectionHint")}>

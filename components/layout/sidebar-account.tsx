@@ -4,6 +4,7 @@ import { useState } from "react";
 import { LogOut, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { logout as apiLogout } from "@/lib/api/auth";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
@@ -24,13 +25,21 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
   const role = primaryRole(user);
   const [confirmLogout, setConfirmLogout] = useState(false);
 
-  function performLogout() {
+  async function performLogout() {
+    const { isMock: mock } = useAuthStore.getState();
+    if (!mock) {
+      try {
+        await apiLogout();
+      } catch {
+        /* purge locale même si le serveur est injoignable */
+      }
+    }
     clearSession();
     router.replace("/login");
   }
 
   const name = user?.displayName ?? user?.username ?? "—";
-  const email = user?.email ?? user?.username ?? "";
+  const secondary = user?.schoolId ?? user?.username ?? "";
   const roleLabel = role ? tRoles(`${role}.label`) : "";
 
   const logoutDialog = (
@@ -91,7 +100,7 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
               {name}
             </p>
             <p className="mt-0.5 truncate text-[10px] text-[var(--ios-secondary-label)]">
-              {email}
+              {secondary}
             </p>
             {roleLabel ? (
               <p className="mt-0.5 truncate text-[10px] font-medium text-[var(--ios-blue)]">

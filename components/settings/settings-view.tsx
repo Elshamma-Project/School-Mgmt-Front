@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { PageHeader } from "@/components/ui/page-header";
+import { logout as apiLogout } from "@/lib/api/auth";
 import { createMockLogin, listMockRoles } from "@/lib/auth/mock-users";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { useRouter } from "@/i18n/navigation";
@@ -29,7 +30,14 @@ export function SettingsView() {
   const currentRole = primaryRole(user);
   const [confirmLogout, setConfirmLogout] = useState(false);
 
-  function performLogout() {
+  async function performLogout() {
+    if (!isMock) {
+      try {
+        await apiLogout();
+      } catch {
+        /* purge locale même si l’API est down */
+      }
+    }
     clearSession();
     router.replace("/login");
   }
@@ -39,6 +47,7 @@ export function SettingsView() {
     setSession({
       accessToken: response.accessToken,
       refreshToken: response.refreshToken,
+      sessionId: response.sessionId,
       user: response.user,
       mustChangePassword: false,
       isMock: true,

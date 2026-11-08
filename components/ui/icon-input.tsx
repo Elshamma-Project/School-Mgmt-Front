@@ -6,12 +6,17 @@ import { cn } from "@/lib/utils/cn";
 
 export type IconInputProps = InputHTMLAttributes<HTMLInputElement> & {
   icon: ReactNode;
+  /** Action à droite (ex. afficher / masquer le mot de passe). */
+  trailing?: ReactNode;
   invalid?: boolean;
 };
 
 /** Champ de saisie avec icône intégrée à gauche. */
 export const IconInput = forwardRef<HTMLInputElement, IconInputProps>(
-  function IconInput({ className, type = "text", icon, invalid, disabled, ...props }, ref) {
+  function IconInput(
+    { className, type = "text", icon, trailing, invalid, disabled, ...props },
+    ref,
+  ) {
     return (
       <div
         className={cn(
@@ -37,12 +42,16 @@ export const IconInput = forwardRef<HTMLInputElement, IconInputProps>(
           disabled={disabled}
           aria-invalid={invalid || undefined}
           className={cn(
-            "h-full w-full bg-transparent py-0 pl-11 pr-3.5 text-[var(--text-body)] text-[var(--ios-label)] outline-none placeholder:text-[var(--ios-tertiary-label)] focus-visible:outline-none",
+            "h-full w-full bg-transparent py-0 pl-11 text-[var(--text-body)] text-[var(--ios-label)] outline-none placeholder:text-[var(--ios-tertiary-label)] focus-visible:outline-none",
+            trailing ? "pr-11" : "pr-3.5",
             controlDisabled,
             className,
           )}
           {...props}
         />
+        {trailing ? (
+          <div className="absolute right-2 inline-flex items-center">{trailing}</div>
+        ) : null}
       </div>
     );
   },

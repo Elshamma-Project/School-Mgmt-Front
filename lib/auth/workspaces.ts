@@ -5,6 +5,8 @@ export const ROLE_WORKSPACE: Record<AppRole, `/${string}`> = {
   STUDENT: "/student",
   PARENT: "/parent",
   TEACHER: "/teacher",
+  /** Espace admin partagé tant qu’un workspace SG dédié n’existe pas (Q-38). */
+  SURVEILLANT_GENERAL: "/administration",
   ADMINISTRATION: "/administration",
   DIRECTOR: "/director",
   SUPER_ADMIN: "/super-admin",
@@ -36,7 +38,6 @@ export function isSharedAppPath(pathname: string): boolean {
 
 export function canRoleAccessPath(role: AppRole, pathname: string): boolean {
   if (isSharedAppPath(pathname)) return true;
-  const workspace = getWorkspaceRoleFromPath(pathname);
-  if (!workspace) return false;
-  return workspace === role;
+  const prefix = ROLE_WORKSPACE[role];
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }

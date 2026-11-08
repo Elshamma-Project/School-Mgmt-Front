@@ -3,16 +3,20 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AUTH_COOKIE_NAME, AUTH_STORAGE_KEY } from "@/lib/auth/constants";
-import type { AuthSession, AuthUser } from "@/types/auth";
+import type { AuthSession, AuthUser, LoginResponse } from "@/types/auth";
+import { mapUserAccountDto, type UserAccountDto } from "@/types/auth";
 
 type AuthState = AuthSession & {
   setSession: (session: {
     accessToken: string;
     refreshToken: string;
+    sessionId: string;
     user: AuthUser;
     mustChangePassword: boolean;
     isMock?: boolean;
   }) => void;
+  applyTokens: (tokens: LoginResponse) => void;
+  syncFromAccount: (dto: UserAccountDto) => void;
   updateUser: (patch: Partial<Pick<AuthUser, "displayName" | "email">>) => void;
   clearSession: () => void;
   setMustChangePassword: (value: boolean) => void;
@@ -22,7 +26,12 @@ function syncAuthCookie(accessToken: string | null) {
   if (typeof document === "undefined") return;
 
   if (accessToken) {
-    document.cookie = `${AUTH_COOKIE_NAME}=${encodeURIComponent(accessToken)}; path=/; SameSite=Lax`;
+    // SameSite=Lax : CSRF basique ; Secure uniquement en HTTPS (prod).
+    const secure =
+      typeof window !== "undefined" && window.location.protocol === "https:"
+        ? "; Secure"
+        : "";
+    document.cookie = `${AUTH_COOKIE_NAME}=${encodeURIComponent(accessToken)}; path=/; SameSite=Lax${secure}`;
   } else {
     document.cookie = `${AUTH_COOKIE_NAME}=; path=/; Max-Age=0; SameSite=Lax`;
   }
@@ -30,21 +39,49 @@ function syncAuthCookie(accessToken: string | null) {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       accessToken: null,
       refreshToken: null,
+      sessionId: null,
       user: null,
       mustChangePassword: false,
-      isMock: true,
+      isMock: false,
       setSession: ({
         accessToken,
         refreshToken,
+        sessionId,
         user,
         mustChangePassword,
-        isMock = true,
+        isMock = false,
       }) => {
         syncAuthCookie(accessToken);
-        set({ accessToken, refreshToken, user, mustChangePassword, isMock });
+        set({ accessToken, refreshToken, sessionId, user, mustChangePassword, isMock });
+      },
+      applyTokens: (tokens) => {
+        const previous = get().user;
+        syncAuthCookie(tokens.accessToken);
+        set({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          sessionId: tokens.sessionId,
+          user: {
+            ...tokens.user,
+            displayName: previous?.displayName ?? tokens.user.displayName,
+            email: previous?.email ?? tokens.user.email,
+          },
+          mustChangePassword: tokens.mustChangePassword,
+          isMock: false,
+        });
+      },
+      syncFromAccount: (dto) => {
+        const previous = get().user;
+        set({
+          user: mapUserAccountDto(dto, {
+            displayName: previous?.displayName,
+            email: previous?.email,
+          }),
+          mustChangePassword: dto.mustChangePassword,
+        });
       },
       updateUser: (patch) => {
         set((state) => {
@@ -62,9 +99,10 @@ export const useAuthStore = create<AuthState>()(
         set({
           accessToken: null,
           refreshToken: null,
+          sessionId: null,
           user: null,
           mustChangePassword: false,
-          isMock: true,
+          isMock: false,
         });
       },
       setMustChangePassword: (mustChangePassword) => set({ mustChangePassword }),
@@ -74,6 +112,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
+        sessionId: state.sessionId,
         user: state.user,
         mustChangePassword: state.mustChangePassword,
         isMock: state.isMock,

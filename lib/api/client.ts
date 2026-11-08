@@ -1,16 +1,15 @@
 import { ApiError, type ProblemDetails } from "@/types/api";
+import { getTenantConfig } from "@/lib/tenant/config";
 import { useAuthStore } from "@/stores/auth-store";
-
-const DEFAULT_BASE_URL = "http://localhost:8090";
-
-function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_BASE_URL;
-}
 
 type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
   auth?: boolean;
+  /** Évite une boucle infinie lors du refresh. */
+  skipRefresh?: boolean;
 };
+
+let refreshInFlight: Promise<boolean> | null = null;
 
 async function parseProblem(response: Response): Promise<ProblemDetails | null> {
   const contentType = response.headers.get("content-type") ?? "";
@@ -25,16 +24,43 @@ async function parseProblem(response: Response): Promise<ProblemDetails | null> 
   }
 }
 
+async function tryRefreshAccessToken(): Promise<boolean> {
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    const { refreshToken, isMock, applyTokens, clearSession } = useAuthStore.getState();
+    if (isMock || !refreshToken) {
+      clearSession();
+      return false;
+    }
+
+    try {
+      const { refresh } = await import("@/lib/api/auth");
+      const tokens = await refresh(refreshToken);
+      applyTokens(tokens);
+      return true;
+    } catch {
+      clearSession();
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+}
+
 /**
- * Client HTTP minimal vers l’API SMELS.
+ * Client HTTP vers l’API SMELS.
  * Ne journalise jamais d’identifiants élèves côté client.
  */
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, auth = true, headers, ...rest } = options;
+  const { body, auth = true, headers, skipRefresh = false, ...rest } = options;
   const requestHeaders = new Headers(headers);
+  const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "");
 
   if (body !== undefined && !requestHeaders.has("Content-Type")) {
     requestHeaders.set("Content-Type", "application/json");
@@ -49,13 +75,20 @@ export async function apiRequest<T>(
 
   let response: Response;
   try {
-    response = await fetch(`${getBaseUrl()}${path}`, {
+    response = await fetch(`${baseUrl}${path}`, {
       ...rest,
       headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
     throw new ApiError(0, "network");
+  }
+
+  if (response.status === 401 && auth && !skipRefresh) {
+    const refreshed = await tryRefreshAccessToken();
+    if (refreshed) {
+      return apiRequest<T>(path, { ...options, skipRefresh: true });
+    }
   }
 
   if (response.status === 204) {

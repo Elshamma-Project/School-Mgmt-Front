@@ -1,76 +1,77 @@
+import { getTenantConfig } from "@/lib/tenant/config";
 import { DEMO_LOGIN_ROLES, type AppRole, type AuthUser, type LoginResponse } from "@/types/auth";
 
 type MockPersona = {
   role: AppRole;
   username: string;
   displayName: string;
-  email: string;
-  schoolId: string;
-  /** Élève : démo seulement, prod plus tard. */
   comingSoon?: boolean;
 };
 
+/**
+ * Personas UI uniquement (NEXT_PUBLIC_ENABLE_DEMO_LOGIN).
+ * schoolId vient de la config tenant — jamais hardcodé ici.
+ */
 const PERSONAS: Record<AppRole, MockPersona> = {
   TEACHER: {
     role: "TEACHER",
     username: "demo.enseignant",
-    displayName: "Amina Ngo",
-    email: "amina.ngo@elshammah.cm",
-    schoolId: "school-el-shammah",
+    displayName: "Demo Teacher",
   },
   PARENT: {
     role: "PARENT",
     username: "demo.parent",
-    displayName: "Jean Owona",
-    email: "jean.owona@email.cm",
-    schoolId: "school-el-shammah",
+    displayName: "Demo Parent",
   },
   ADMINISTRATION: {
     role: "ADMINISTRATION",
     username: "demo.administration",
-    displayName: "Paul Mbarga",
-    email: "paul.mbarga@elshammah.cm",
-    schoolId: "school-el-shammah",
+    displayName: "Demo Administration",
+  },
+  SURVEILLANT_GENERAL: {
+    role: "SURVEILLANT_GENERAL",
+    username: "demo.surveillant",
+    displayName: "Demo Surveillant",
   },
   DIRECTOR: {
     role: "DIRECTOR",
     username: "demo.directeur",
-    displayName: "Claire Fouda",
-    email: "claire.fouda@elshammah.cm",
-    schoolId: "school-el-shammah",
+    displayName: "Demo Director",
   },
   SUPER_ADMIN: {
     role: "SUPER_ADMIN",
     username: "demo.super",
-    displayName: "Support KOBE",
-    email: "support@kobe.cm",
-    schoolId: "platform",
+    displayName: "Demo Platform",
   },
   STUDENT: {
     role: "STUDENT",
-    username: "ELSH-2026-0001",
-    displayName: "Élève démo",
-    email: "eleve.demo@elshammah.cm",
-    schoolId: "school-el-shammah",
+    username: "demo.student",
+    displayName: "Demo Student",
     comingSoon: true,
   },
 };
 
 export function createMockLogin(role: AppRole): LoginResponse {
   const persona = PERSONAS[role];
+  const { schoolId: tenantSchoolId } = getTenantConfig();
+  const schoolId = role === "SUPER_ADMIN" ? null : tenantSchoolId || null;
   const user: AuthUser = {
     id: `mock-${role}`,
     username: persona.username,
     displayName: persona.displayName,
-    email: persona.email,
     role,
     roles: [role],
-    schoolId: persona.schoolId,
+    schoolId,
+    profileType: role === "STUDENT" ? "STUDENT" : role === "PARENT" ? "GUARDIAN" : role === "SUPER_ADMIN" ? "NONE" : "STAFF",
+    profileId: null,
+    status: "ACTIVE",
   };
 
   return {
     accessToken: `mock-access-${role}`,
     refreshToken: `mock-refresh-${role}`,
+    sessionId: `mock-session-${role}`,
+    expiresInMs: 900_000,
     mustChangePassword: false,
     user,
   };

@@ -27,14 +27,16 @@
     "loginSubtitle": "Accédez à l’espace adapté à votre rôle.",
     "username": "Identifiant",
     "password": "Mot de passe",
-    "schoolId": "École (optionnel)",
-    "schoolIdPlaceholder": "Identifiant école",
+    "schoolIdMissing": "Établissement non configuré (NEXT_PUBLIC_DEFAULT_SCHOOL_ID ou nom de domaine).",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
     "submit": "Se connecter",
     "submitting": "Connexion…",
     "loginPreparing": "Ouverture de la session",
     "loginPreparingHint": "Préparation de votre espace…",
     "loginPreparingRole": "Espace {role}",
-    "loginSuccess": "Session démo ouverte",
+    "loginSuccess": "Connexion réussie",
+    "loginSuccessDemo": "Session démo ouverte",
     "logout": "Déconnexion",
     "openProfile": "Ouvrir mon profil",
     "logoutConfirmTitle": "Se déconnecter ?",
@@ -47,11 +49,14 @@
     "changePasswordSubmit": "Mettre à jour",
     "requiredField": "Ce champ est requis",
     "invalidCredentials": "Identifiant ou mot de passe incorrect.",
+    "accountLocked": "Compte temporairement verrouillé après trop d’échecs.",
+    "networkError": "Impossible de joindre le serveur. Vérifiez l’API et votre réseau.",
     "demoMode": "Mode démo (sans API)",
-    "demoModeHint": "Connexion fictive pour explorer chaque espace de rôle. L’auth réelle sera branchée plus tard.",
+    "demoModeHint": "Connexion fictive pour explorer l’UI. Désactivé dès que NEXT_PUBLIC_ENABLE_DEMO_LOGIN=false.",
+    "demoDisabled": "Le mode démo est désactivé sur ce déploiement.",
     "chooseRole": "Rôle à simuler",
     "rolePreview": "aperçu",
-    "apiDisabled": "L’authentification API n’est pas encore activée. Recochez le mode démo pour continuer."
+    "apiDisabled": "L’authentification API n’est pas encore activée."
   },
   "roles": {
     "STUDENT": {
@@ -80,6 +85,11 @@
       "label": "Directeur",
       "hint": "Chef d’établissement",
       "homeBlurb": "Espace direction — pilotage complet, y compris réouverture de séquence et comptes admin."
+    },
+    "SURVEILLANT_GENERAL": {
+      "label": "Surveillant général",
+      "hint": "Visa fiches de report",
+      "homeBlurb": "Espace surveillance — visa des fiches de report et suivi disciplinaire."
     },
     "SUPER_ADMIN": {
       "label": "Super admin",
@@ -159,23 +169,29 @@
   },
   "profile": {
     "title": "Profil",
-    "description": "Mettez à jour vos informations de compte et votre mot de passe.",
-    "accountSection": "Informations du compte",
-    "accountSectionHint": "Ces informations apparaissent dans l’application et les communications.",
+    "description": "Compte de connexion, établissement et mot de passe.",
+    "accountSection": "Compte",
+    "accountSectionHint": "Données du module user (JWT). Les fiches Staff / Élève / Tuteur seront branchées ensuite.",
     "username": "Identifiant",
     "usernameHint": "L’identifiant ne peut pas être modifié ici.",
+    "schoolId": "Établissement (schoolId)",
+    "platformAccount": "Compte plateforme",
     "displayName": "Nom affiché",
     "email": "E-mail",
-    "role": "Rôle",
+    "role": "Rôle(s)",
+    "profileType": "Profil lié",
+    "profileTypeHint": "Type + identifiant de fiche (staffId / studentId / guardianId).",
+    "syncAccount": "Actualiser depuis l’API",
+    "accountSynced": "Compte synchronisé",
     "passwordSection": "Mot de passe",
-    "passwordSectionHint": "Choisissez un mot de passe robuste et unique.",
+    "passwordSectionHint": "Au moins 8 caractères. Appliqué immédiatement côté serveur.",
     "passwordHint": "Au moins 8 caractères.",
     "invalidEmail": "Adresse e-mail invalide.",
     "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "profileSaved": "Profil mis à jour",
     "passwordSaved": "Mot de passe mis à jour",
-    "mockHint": "Enregistré en local (mode démo) — l’API réelle sera branchée plus tard."
+    "mockHint": "Enregistré en local (mode démo)."
   },
   "workspace": {
     "teacherClasses": {
