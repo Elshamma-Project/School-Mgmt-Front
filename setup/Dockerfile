@@ -1,38 +1,30 @@
 # syntax=docker/dockerfile:1
 
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
-
-# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
-
 ARG NODE_VERSION=24.18.0
 
-FROM node:${NODE_VERSION}-alpine
-
-# Use production node environment by default.
-ENV NODE_ENV production
-
-
+FROM node:${NODE_VERSION}-alpine AS deps
 WORKDIR /usr/src/app
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.npm to speed up subsequent builds.
-# Leverage a bind mounts to package.json and package-lock.json to avoid having to copy them into
-# into this layer.
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
-
-# Run the application as a non-root user.
-USER node
-
-# Copy the rest of the source files into the image.
+FROM node:${NODE_VERSION}-alpine AS builder
+WORKDIR /usr/src/app
+COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
 
-# Expose the port that the application listens on.
+FROM node:${NODE_VERSION}-alpine AS runner
+WORKDIR /usr/src/app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=builder /usr/src/app/package.json ./
+COPY --from=builder /usr/src/app/package-lock.json ./
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/public ./public
+COPY --from=builder /usr/src/app/.next ./.next
+COPY --from=builder /usr/src/app/messages ./messages
+COPY --from=builder /usr/src/app/next.config.ts ./next.config.ts
+USER node
 EXPOSE 3000
-
-# Run the application.
-CMD npm run dev
+CMD ["npm", "run", "start"]

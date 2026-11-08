@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ios-blue: #007aff;
+  --ios-bg: #f2f2f7;
+  --ios-card: #ffffff;
+  --ios-grouped: #ffffff;
+  --ios-fill: #e5e5ea;
+  --ios-fill-secondary: #d1d1d6;
+  --ios-label: #000000;
+  --ios-secondary-label: rgba(60, 60, 67, 0.6);
+  --ios-tertiary-label: rgba(60, 60, 67, 0.3);
+  --ios-separator: rgba(60, 60, 67, 0.12);
+  --ios-success: #34c759;
+  --ios-warning: #ff9500;
+  --ios-danger: #ff3b30;
+  --ios-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --ios-shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.06);
+  --font-ios:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI",
+    sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ios-blue: var(--ios-blue);
+  --color-ios-bg: var(--ios-bg);
+  --color-ios-card: var(--ios-card);
+  --color-ios-label: var(--ios-label);
+  --color-ios-secondary-label: var(--ios-secondary-label);
+  --color-ios-separator: var(--ios-separator);
+  --color-ios-success: var(--ios-success);
+  --color-ios-warning: var(--ios-warning);
+  --color-ios-danger: var(--ios-danger);
+  --font-sans: var(--font-ios);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  margin: 0;
+  background: var(--ios-bg);
+  color: var(--ios-label);
+  font-family: var(--font-ios);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--ios-blue) 22%, white);
 }

@@ -1,0 +1,73 @@
+{
+  "common": {
+    "appName": "SMELS",
+    "schoolName": "El Shammah",
+    "loading": "Chargement…",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "back": "Retour",
+    "search": "Rechercher",
+    "emptyTitle": "Rien à afficher",
+    "emptyDescription": "Ce module sera bientôt disponible.",
+    "language": "Langue",
+    "french": "Français",
+    "english": "English"
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "loginSubtitle": "Accédez à l’espace de gestion de l’école.",
+    "username": "Identifiant",
+    "password": "Mot de passe",
+    "schoolId": "École (optionnel)",
+    "schoolIdPlaceholder": "Identifiant école",
+    "submit": "Se connecter",
+    "submitting": "Connexion…",
+    "logout": "Déconnexion",
+    "changePasswordTitle": "Changer le mot de passe",
+    "changePasswordSubtitle": "Vous devez définir un nouveau mot de passe avant de continuer.",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "changePasswordSubmit": "Mettre à jour",
+    "requiredField": "Ce champ est requis",
+    "invalidCredentials": "Identifiant ou mot de passe incorrect."
+  },
+  "nav": {
+    "home": "Accueil",
+    "staff": "Personnel",
+    "students": "Élèves",
+    "academic": "Académique",
+    "settings": "Réglages",
+    "main": "Navigation principale"
+  },
+  "home": {
+    "title": "Accueil",
+    "description": "Tableau de bord SMELS — fondations prêtes pour les modules métier."
+  },
+  "staff": {
+    "title": "Personnel",
+    "description": "Gestion du personnel enseignant et administratif."
+  },
+  "students": {
+    "title": "Élèves",
+    "description": "Dossiers élèves (données protégées — aucun détail en journalisation client)."
+  },
+  "academic": {
+    "title": "Académique",
+    "description": "Classes, matières, notes et bulletins."
+  },
+  "settings": {
+    "title": "Réglages",
+    "description": "Préférences de l’application et de la session.",
+    "languageSection": "Langue de l’interface",
+    "sessionSection": "Session"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue.",
+    "network": "Impossible de joindre le serveur.",
+    "unauthorized": "Session expirée. Veuillez vous reconnecter.",
+    "forbidden": "Accès non autorisé.",
+    "notFound": "Ressource introuvable.",
+    "validation": "Veuillez vérifier les informations saisies."
+  }
+}

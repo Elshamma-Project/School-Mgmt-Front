@@ -1,0 +1,73 @@
+{
+  "common": {
+    "appName": "SMELS",
+    "schoolName": "El Shammah",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "search": "Search",
+    "emptyTitle": "Nothing to show",
+    "emptyDescription": "This module will be available soon.",
+    "language": "Language",
+    "french": "Français",
+    "english": "English"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "loginSubtitle": "Access the school management workspace.",
+    "username": "Username",
+    "password": "Password",
+    "schoolId": "School (optional)",
+    "schoolIdPlaceholder": "School ID",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "logout": "Sign out",
+    "changePasswordTitle": "Change password",
+    "changePasswordSubtitle": "You must set a new password before continuing.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "changePasswordSubmit": "Update",
+    "requiredField": "This field is required",
+    "invalidCredentials": "Invalid username or password."
+  },
+  "nav": {
+    "home": "Home",
+    "staff": "Staff",
+    "students": "Students",
+    "academic": "Academic",
+    "settings": "Settings",
+    "main": "Main navigation"
+  },
+  "home": {
+    "title": "Home",
+    "description": "SMELS dashboard — foundation ready for business modules."
+  },
+  "staff": {
+    "title": "Staff",
+    "description": "Teaching and administrative staff management."
+  },
+  "students": {
+    "title": "Students",
+    "description": "Student records (protected data — no student identifiers in client logs)."
+  },
+  "academic": {
+    "title": "Academic",
+    "description": "Classes, subjects, grades and report cards."
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Application and session preferences.",
+    "languageSection": "Interface language",
+    "sessionSection": "Session"
+  },
+  "errors": {
+    "generic": "Something went wrong.",
+    "network": "Unable to reach the server.",
+    "unauthorized": "Session expired. Please sign in again.",
+    "forbidden": "Access denied.",
+    "notFound": "Resource not found.",
+    "validation": "Please check the information you entered."
+  }
+}
