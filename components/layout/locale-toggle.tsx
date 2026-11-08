@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type AppLocale } from "@/i18n/routing";
 import { cn } from "@/lib/utils/cn";
+import { LocaleFlag } from "@/components/layout/locale-flag";
 
 type LocaleToggleProps = {
   className?: string;
@@ -15,11 +16,6 @@ type LocaleToggleProps = {
 const LOCALE_LABELS: Record<AppLocale, "french" | "english"> = {
   fr: "french",
   en: "english",
-};
-
-const LOCALE_FLAGS: Record<AppLocale, string> = {
-  fr: "🇫🇷",
-  en: "🇬🇧",
 };
 
 /** Sélecteur de langue : globe + flèche animée, menu FR / EN. */
@@ -118,7 +114,7 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
                 : { opacity: 0, y: -4, scale: 0.97 }
             }
             transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-            className="absolute right-0 z-50 mt-1.5 min-w-[160px] origin-top-right overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] py-1 shadow-[var(--ios-shadow-md)] ring-1 ring-[var(--ios-separator)]"
+            className="absolute right-1 z-50 mt-1.5 min-w-[160px] origin-top-right overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] py-1 shadow-[var(--ios-shadow-md)] ring-1 ring-[var(--ios-separator)]"
           >
             {routing.locales.map((code, index) => {
               const selected = code === locale;
@@ -142,9 +138,7 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
                   )}
                 >
                   <span className="flex items-center gap-2.5 text-[13px] font-medium leading-none text-[var(--ios-label)]">
-                    <span className="text-[15px] leading-none" aria-hidden>
-                      {LOCALE_FLAGS[code]}
-                    </span>
+                    <LocaleFlag locale={code} />
                     {t(LOCALE_LABELS[code])}
                   </span>
                   <AnimatePresence initial={false}>
