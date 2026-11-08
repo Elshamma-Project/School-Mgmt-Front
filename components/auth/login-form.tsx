@@ -20,7 +20,7 @@ import {
 } from "@/lib/auth/remember";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { getTenantConfig } from "@/lib/tenant/config";
-import { notify } from "@/lib/ui/notify";
+import { queuePostLoginFlash } from "@/lib/ui/post-login-flash";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
@@ -98,11 +98,12 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
         isMock: true,
       });
       await waitMin(started);
-      notify.success(t("loginSuccessDemo"), {
-        description: tRoles(`${role}.label`),
+      queuePostLoginFlash({
+        kind: "loginSuccessDemo",
+        roleLabel: tRoles(`${role}.label`),
       });
       router.replace(getRoleHomePath(role));
-      setSubmitting(false);
+      // Garder le loader jusqu’à la navigation (démontage) — pas de toast ici.
       return;
     }
 
@@ -141,16 +142,17 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
       });
       await waitMin(started);
       const homeRole = primaryRole(response.user) ?? response.user.role;
-      notify.success(t("loginSuccess"));
       if (response.mustChangePassword) {
         router.replace("/change-password");
       } else {
+        queuePostLoginFlash({ kind: "loginSuccess" });
         router.replace(getRoleHomePath(homeRole));
       }
+      // Succès : loader jusqu’à la navigation. Échec : finally ci-dessous.
+      return;
     } catch (error) {
       await waitMin(started);
       setFormError(mapLoginError(error, t));
-    } finally {
       setSubmitting(false);
     }
   }
