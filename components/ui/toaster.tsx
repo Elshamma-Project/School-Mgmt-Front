@@ -2,13 +2,13 @@
 
 import { Toaster as SonnerToaster } from "sonner";
 
-/** Toaster global SMELS — style iOS, texte centré. */
+/** Toaster global SMELS — bas droite, style iOS. */
 export function AppToaster() {
   return (
     <SonnerToaster
-      position="bottom-center"
+      position="bottom-right"
       offset={24}
-      mobileOffset={88}
+      mobileOffset={{ bottom: 24, right: 16 }}
       gap={8}
       duration={3200}
       closeButton

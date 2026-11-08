@@ -142,7 +142,9 @@
     "profile": "Profil",
     "main": "Navigation principale",
     "collapseSidebar": "Réduire le menu",
-    "expandSidebar": "Agrandir le menu"
+    "expandSidebar": "Agrandir le menu",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu"
   },
   "notifications": {
     "title": "Notifications",
@@ -216,7 +218,40 @@
       "PENDING": "En attente",
       "LOCKED": "Verrouillé",
       "DISABLED": "Désactivé"
-    }
+    },
+    "securitySection": "Sécurité",
+    "securitySessionsHint": "Jusqu’à 2 sessions actives par compte. La plus ancienne est révoquée automatiquement si une 3ᵉ connexion réussit.",
+    "lastLogin": "Dernière connexion",
+    "lastLoginUnknown": "Non renseignée",
+    "accountStatusLabel": "État du compte",
+    "activeSessions": "Sessions actives",
+    "activeSessionsCount": "{count, plural, =0 {Aucune} one {# session} other {# sessions}}",
+    "sessionCurrent": "Cet appareil",
+    "sessionOther": "Autre appareil",
+    "sessionCreated": "Ouverte le",
+    "sessionLastSeen": "Dernière activité",
+    "sessionExpires": "Expire le",
+    "sessionIp": "Adresse IP",
+    "sessionUa": "Navigateur",
+    "sessionUnknownDevice": "Appareil inconnu",
+    "sessionUnknownIp": "IP non disponible",
+    "deviceKind": {
+      "MOBILE": "Mobile",
+      "TABLET": "Tablette",
+      "DESKTOP": "Ordinateur",
+      "UNKNOWN": "Appareil"
+    },
+    "revokeSession": "Révoquer",
+    "revokeSessionConfirmTitle": "Révoquer cette session ?",
+    "revokeSessionConfirmDescription": "L’appareil concerné devra se reconnecter. Votre session actuelle n’est pas affectée.",
+    "revokeSessionSuccess": "Session révoquée",
+    "sessionsLoadError": "Impossible de charger les sessions.",
+    "sessionsEmpty": "Aucune session active à afficher.",
+    "logoutAllDevices": "Déconnecter les autres appareils",
+    "logoutAllConfirmTitle": "Déconnecter les autres sessions ?",
+    "logoutAllConfirmDescription": "Tous vos autres appareils devront se reconnecter. La session actuelle reste ouverte.",
+    "logoutAllSuccess": "Autres sessions révoquées",
+    "logoutAllSuccessDetail": "{count, plural, =0 {Aucune autre session.} one {# session révoquée.} other {# sessions révoquées.}}"
   },
   "workspace": {
     "teacherClasses": {

@@ -1,5 +1,6 @@
 import { ApiError, type ProblemDetails } from "@/types/api";
 import { getTenantConfig } from "@/lib/tenant/config";
+import { openSecret } from "@/lib/auth/token-vault";
 import { useAuthStore } from "@/stores/auth-store";
 
 type RequestOptions = Omit<RequestInit, "body"> & {
@@ -7,6 +8,11 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   auth?: boolean;
   /** Évite une boucle infinie lors du refresh. */
   skipRefresh?: boolean;
+  /**
+   * Si false : un 401 / refresh raté ne déconnecte pas (ex. avatar optionnel).
+   * Défaut true pour les appels métier.
+   */
+  clearSessionOnFailure?: boolean;
   /** Réponse binaire (avatar). */
   responseType?: "json" | "blob" | "void";
 };
@@ -36,23 +42,33 @@ async function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
   return locks.request(REFRESH_LOCK, { mode: "exclusive" }, () => fn());
 }
 
-async function tryRefreshAccessToken(): Promise<boolean> {
+function resolveToken(raw: string | null | undefined): string | null {
+  return openSecret(raw);
+}
+
+async function tryRefreshAccessToken(clearOnFailure: boolean): Promise<boolean> {
   if (refreshInFlight) return refreshInFlight;
 
   refreshInFlight = withRefreshLock(async () => {
     const { refreshToken, isMock, applyTokens, clearSession } = useAuthStore.getState();
-    if (isMock || !refreshToken) {
-      clearSession();
+    const openedRefresh = resolveToken(refreshToken);
+
+    if (isMock || !openedRefresh) {
+      if (clearOnFailure) clearSession();
       return false;
     }
 
     try {
       const { refresh } = await import("@/lib/api/auth");
-      const tokens = await refresh(refreshToken);
+      const tokens = await refresh(openedRefresh);
       applyTokens(tokens);
       return true;
-    } catch {
-      clearSession();
+    } catch (error) {
+      // Réseau / 5xx : ne pas jeter la session. Auth définitive (401/400) : oui.
+      const status = error instanceof ApiError ? error.status : 0;
+      if (clearOnFailure && (status === 401 || status === 400 || status === 403)) {
+        clearSession();
+      }
       return false;
     }
   }).finally(() => {
@@ -75,6 +91,7 @@ export async function apiRequest<T>(
     auth = true,
     headers,
     skipRefresh = false,
+    clearSessionOnFailure = true,
     responseType = "json",
     ...rest
   } = options;
@@ -87,7 +104,7 @@ export async function apiRequest<T>(
   }
 
   if (auth) {
-    const token = useAuthStore.getState().accessToken;
+    const token = resolveToken(useAuthStore.getState().accessToken);
     if (token) {
       requestHeaders.set("Authorization", `Bearer ${token}`);
     }
@@ -110,9 +127,13 @@ export async function apiRequest<T>(
   }
 
   if (response.status === 401 && auth && !skipRefresh) {
-    const refreshed = await tryRefreshAccessToken();
+    const refreshed = await tryRefreshAccessToken(clearSessionOnFailure);
     if (refreshed) {
       return apiRequest<T>(path, { ...options, skipRefresh: true });
+    }
+    if (clearSessionOnFailure && useAuthStore.getState().accessToken) {
+      // Refresh raté pour cause auth : session déjà nettoyée dans tryRefresh si 401.
+      // Si refresh a échoué sans clear (réseau), on laisse la session.
     }
   }
 

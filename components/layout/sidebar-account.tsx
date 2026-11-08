@@ -42,7 +42,7 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
   }
 
   const name = user?.displayName ?? user?.username ?? "—";
-  const secondary = user?.schoolId ?? user?.username ?? "";
+  const secondary = user?.username ?? "";
   const roleLabel = role ? tRoles(`${role}.label`) : "";
 
   const logoutDialog = (

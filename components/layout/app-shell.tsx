@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/app-header";
-import { MobileTabBar } from "@/components/layout/app-nav";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { usePathname } from "@/i18n/navigation";
@@ -37,14 +36,13 @@ export function AppShell({ children }: AppShellProps) {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <AppHeader />
-          <main className="fade-in flex-1 px-5 pb-24 pt-5 md:px-8 md:pb-8 md:pt-6">
+          <main className="fade-in flex-1 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 md:px-8 md:pb-8 md:pt-6">
             {showSkeleton ? (
               <PageSkeleton variant={skeletonVariantForPath(pathname)} />
             ) : (
               children
             )}
           </main>
-          <MobileTabBar />
         </div>
       </div>
     </div>

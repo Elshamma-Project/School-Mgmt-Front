@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
 import { SessionRestorer } from "@/components/auth/session-restorer";
 import { AppFooter } from "@/components/layout/app-footer";
+import { BrandMark } from "@/components/layout/brand-mark";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { getTenantConfig } from "@/lib/tenant/config";
 
@@ -23,16 +24,14 @@ export default async function LoginPage() {
       />
 
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 py-10">
-        <div className="mb-8 w-full max-w-[380px] text-center">
+        <div className="mb-8 flex w-full max-w-[380px] flex-col items-center text-center">
+          <BrandMark size="lg" alt={tCommon("schoolName")} className="mb-4" />
           <p className="text-[var(--text-footnote)] font-semibold uppercase tracking-[0.12em] text-[var(--ios-secondary-label)]">
             {tCommon("schoolName")}
           </p>
           <h1 className="mt-2 text-[var(--text-title1)] font-bold tracking-[-0.03em] text-[var(--ios-label)]">
             {tCommon("appName")}
           </h1>
-          <p className="mt-3 text-[var(--text-body)] leading-relaxed text-[var(--ios-secondary-label)]">
-            {t("loginSubtitle")}
-          </p>
         </div>
 
         <div className="w-full max-w-[380px] rounded-[var(--radius-xl)] bg-[var(--ios-card)] p-6 shadow-[var(--ios-shadow)]">

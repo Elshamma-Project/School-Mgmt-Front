@@ -10,7 +10,7 @@ import {
   AUTH_STORAGE_KEY,
 } from "@/lib/auth/constants";
 import { createAuthPersistStorage } from "@/lib/auth/remember";
-import { openSecret, sealSecret } from "@/lib/auth/token-vault";
+import { openSecret } from "@/lib/auth/token-vault";
 import type { AuthSession, AuthUser, LoginResponse } from "@/types/auth";
 import { mapUserAccountDto, type UserAccountDto } from "@/types/auth";
 
@@ -55,7 +55,11 @@ export function syncAuthCookie(hasSession: boolean) {
   }
 }
 
-function sealedStorage(): StateStorage {
+/**
+ * Storage : jetons en clair après migration (openSecret à la lecture).
+ * Plus de re-scellage à l’écriture — évite corruption / Bearer invalide → déconnexion profil.
+ */
+function authStorage(): StateStorage {
   const base = createAuthPersistStorage();
   return {
     getItem: (name) => {
@@ -65,12 +69,14 @@ function sealedStorage(): StateStorage {
         const parsed = JSON.parse(raw) as { state?: PersistedAuth; version?: number };
         if (!parsed.state) return raw;
         const state = parsed.state;
+        const accessToken = openSecret(state.accessToken);
+        const refreshToken = openSecret(state.refreshToken);
         return JSON.stringify({
           ...parsed,
           state: {
             ...state,
-            accessToken: openSecret(state.accessToken),
-            refreshToken: openSecret(state.refreshToken),
+            accessToken,
+            refreshToken,
           },
         });
       } catch {
@@ -78,33 +84,15 @@ function sealedStorage(): StateStorage {
       }
     },
     setItem: (name, value) => {
-      try {
-        const parsed = JSON.parse(value) as { state?: PersistedAuth; version?: number };
-        if (!parsed.state) {
-          base.setItem(name, value);
-          return;
-        }
-        const state = parsed.state;
-        const sealed = JSON.stringify({
-          ...parsed,
-          state: {
-            ...state,
-            accessToken: state.accessToken ? sealSecret(state.accessToken) : null,
-            refreshToken: state.refreshToken ? sealSecret(state.refreshToken) : null,
-          },
-        });
-        base.setItem(name, sealed);
-      } catch {
-        base.setItem(name, value);
-      }
+      // Persiste tel quel (jetons déjà ouverts en mémoire).
+      base.setItem(name, value);
     },
     removeItem: (name) => base.removeItem(name),
   };
 }
 
 /**
- * État initial toujours vide (SSR = 1er rendu client) pour éviter mismatch hydration.
- * Les jetons arrivent via `persist.rehydrate()` après montage.
+ * État initial vide (SSR = 1er rendu client). Réhydratation après montage.
  */
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -124,14 +112,21 @@ export const useAuthStore = create<AuthState>()(
         isMock = false,
       }) => {
         syncAuthCookie(true);
-        set({ accessToken, refreshToken, sessionId, user, mustChangePassword, isMock });
+        set({
+          accessToken: openSecret(accessToken) ?? accessToken,
+          refreshToken: openSecret(refreshToken) ?? refreshToken,
+          sessionId,
+          user,
+          mustChangePassword,
+          isMock,
+        });
       },
       applyTokens: (tokens) => {
         const previous = get().user;
         syncAuthCookie(true);
         set({
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
+          accessToken: openSecret(tokens.accessToken) ?? tokens.accessToken,
+          refreshToken: openSecret(tokens.refreshToken) ?? tokens.refreshToken,
           sessionId: tokens.sessionId,
           user: {
             ...tokens.user,
@@ -180,7 +175,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: AUTH_STORAGE_KEY,
       skipHydration: true,
-      storage: createJSONStorage(() => sealedStorage()),
+      storage: createJSONStorage(() => authStorage()),
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
@@ -195,6 +190,15 @@ export const useAuthStore = create<AuthState>()(
           return;
         }
         if (state?.accessToken) {
+          // Normalise d’éventuels jetons encore scellés.
+          const access = openSecret(state.accessToken);
+          const refresh = openSecret(state.refreshToken);
+          if (access !== state.accessToken || refresh !== state.refreshToken) {
+            useAuthStore.setState({
+              accessToken: access,
+              refreshToken: refresh,
+            });
+          }
           syncAuthCookie(true);
         }
       },

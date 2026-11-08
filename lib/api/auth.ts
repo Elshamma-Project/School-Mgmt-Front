@@ -61,6 +61,35 @@ export async function logoutAll(): Promise<{ revokedSessions: number }> {
   });
 }
 
+export type SessionDeviceKind = "MOBILE" | "TABLET" | "DESKTOP" | "UNKNOWN";
+
+export type SessionDto = {
+  id: string;
+  deviceLabel: string | null;
+  userAgent: string | null;
+  ipAddress: string | null;
+  createdAt: string;
+  lastSeenAt: string;
+  expiresAt: string;
+  current: boolean;
+  status?: string;
+  deviceKind?: SessionDeviceKind | string;
+};
+
+export async function fetchSessions(): Promise<SessionDto[]> {
+  const raw = await apiRequest<SessionDto[] | SessionDto | null>("/api/v1/auth/sessions");
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object") return [raw];
+  return [];
+}
+
+export async function revokeSession(sessionId: string): Promise<void> {
+  await apiRequest<void>(`/api/v1/auth/sessions/${encodeURIComponent(sessionId)}`, {
+    method: "DELETE",
+    responseType: "void",
+  });
+}
+
 export async function fetchMe(): Promise<UserAccountDto> {
   return apiRequest<UserAccountDto>("/api/v1/auth/me");
 }
@@ -88,6 +117,8 @@ export async function fetchAvatarBlob(): Promise<Blob | null> {
     return await apiRequest<Blob>("/api/v1/auth/me/avatar", {
       method: "GET",
       responseType: "blob",
+      // Photo optionnelle : un 401/refresh raté ne doit jamais déconnecter.
+      clearSessionOnFailure: false,
     });
   } catch (error) {
     const { ApiError } = await import("@/types/api");

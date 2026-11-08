@@ -287,7 +287,14 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
                 onChange={(event) => setRememberMe(event.target.checked)}
                 label={t("rememberMe")}
               />
-              <p className="mt-1.5 pl-7 text-[var(--text-footnote)] leading-snug text-[var(--ios-secondary-label)]">
+              <p
+                className={
+                  rememberMe
+                    ? "mt-1.5 pl-7 text-[var(--text-footnote)] leading-snug text-[var(--ios-secondary-label)]"
+                    : "mt-1.5 truncate pl-7 text-[var(--text-footnote)] leading-snug text-[var(--ios-secondary-label)]"
+                }
+                title={rememberMe ? undefined : t("rememberMeHint")}
+              >
                 {t("rememberMeHint")}
               </p>
             </div>
