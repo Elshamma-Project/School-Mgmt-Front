@@ -41,8 +41,12 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
     router.replace("/login");
   }
 
-  const name = user?.displayName ?? user?.username ?? "—";
-  const secondary = user?.username ?? "";
+  const name = user?.displayName?.trim() || user?.username || "—";
+  // E-mail sous le nom seulement s’il diffère (évite schoolId + doublon).
+  const secondary =
+    user?.displayName?.trim() && user.username && user.username !== user.displayName.trim()
+      ? user.username
+      : "";
   const roleLabel = role ? tRoles(`${role}.label`) : "";
 
   const logoutDialog = (
