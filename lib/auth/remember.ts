@@ -1,7 +1,7 @@
 /**
  * « Se souvenir de moi » — ne stocke JAMAIS le mot de passe.
  * - E-mail rappelé (localStorage)
- * - Session : localStorage si coché, sessionStorage sinon (fermée à la fin du navigateur)
+ * - Jetons auth : toujours localStorage (survivent à F5) — remember ne change plus le storage
  */
 
 export const REMEMBER_ME_KEY = "smels-remember-me";
@@ -32,7 +32,10 @@ export function writeRememberedEmail(email: string | null): void {
   window.localStorage.setItem(REMEMBER_EMAIL_KEY, value);
 }
 
-/** Storage zustand : local vs session selon le choix « se souvenir ». */
+/**
+ * Storage zustand auth : localStorage en priorité (F5).
+ * Lit aussi sessionStorage pour migrer d’anciennes sessions « sans se souvenir ».
+ */
 export function createAuthPersistStorage(): {
   getItem: (name: string) => string | null;
   setItem: (name: string, value: string) => void;
@@ -41,20 +44,15 @@ export function createAuthPersistStorage(): {
   return {
     getItem: (name) => {
       if (typeof window === "undefined") return null;
-      if (readRememberMe()) {
-        return window.localStorage.getItem(name) ?? window.sessionStorage.getItem(name);
-      }
-      return window.sessionStorage.getItem(name) ?? window.localStorage.getItem(name);
+      return (
+        window.localStorage.getItem(name) ?? window.sessionStorage.getItem(name)
+      );
     },
     setItem: (name, value) => {
       if (typeof window === "undefined") return;
-      if (readRememberMe()) {
-        window.localStorage.setItem(name, value);
-        window.sessionStorage.removeItem(name);
-      } else {
-        window.sessionStorage.setItem(name, value);
-        window.localStorage.removeItem(name);
-      }
+      window.localStorage.setItem(name, value);
+      // Migre hors sessionStorage pour éviter une 2e source désynchronisée.
+      window.sessionStorage.removeItem(name);
     },
     removeItem: (name) => {
       if (typeof window === "undefined") return;

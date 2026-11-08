@@ -16,12 +16,22 @@ export function ChangePasswordGuard({ children }: ChangePasswordGuardProps) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const finish = () => setHydrated(true);
+    let cancelled = false;
+    const finish = () => {
+      if (!cancelled) setHydrated(true);
+    };
     if (useAuthStore.persist.hasHydrated()) {
       finish();
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
-    return useAuthStore.persist.onFinishHydration(finish);
+    const unsub = useAuthStore.persist.onFinishHydration(finish);
+    void useAuthStore.persist.rehydrate().then(finish);
+    return () => {
+      cancelled = true;
+      unsub();
+    };
   }, []);
 
   useEffect(() => {

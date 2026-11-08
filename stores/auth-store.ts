@@ -3,11 +3,13 @@
 import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import {
+  AUTH_COOKIE_LEGACY_NAME,
+  AUTH_COOKIE_MAX_AGE_SEC,
   AUTH_COOKIE_NAME,
   AUTH_COOKIE_PRESENT,
   AUTH_STORAGE_KEY,
 } from "@/lib/auth/constants";
-import { createAuthPersistStorage, readRememberMe } from "@/lib/auth/remember";
+import { createAuthPersistStorage } from "@/lib/auth/remember";
 import { openSecret, sealSecret } from "@/lib/auth/token-vault";
 import type { AuthSession, AuthUser, LoginResponse } from "@/types/auth";
 import { mapUserAccountDto, type UserAccountDto } from "@/types/auth";
@@ -37,15 +39,17 @@ type PersistedAuth = {
   isMock: boolean;
 };
 
-function syncAuthCookie(hasSession: boolean) {
+export function syncAuthCookie(hasSession: boolean) {
   if (typeof document === "undefined") return;
   const secure =
     typeof window !== "undefined" && window.location.protocol === "https:"
       ? "; Secure"
       : "";
+
+  document.cookie = `${AUTH_COOKIE_LEGACY_NAME}=; path=/; Max-Age=0; SameSite=Lax`;
+
   if (hasSession) {
-    const maxAge = readRememberMe() ? "; Max-Age=2592000" : "";
-    document.cookie = `${AUTH_COOKIE_NAME}=${AUTH_COOKIE_PRESENT}; path=/; SameSite=Lax${secure}${maxAge}`;
+    document.cookie = `${AUTH_COOKIE_NAME}=${AUTH_COOKIE_PRESENT}; path=/; Max-Age=${AUTH_COOKIE_MAX_AGE_SEC}; SameSite=Lax${secure}`;
   } else {
     document.cookie = `${AUTH_COOKIE_NAME}=; path=/; Max-Age=0; SameSite=Lax`;
   }
@@ -98,6 +102,10 @@ function sealedStorage(): StateStorage {
   };
 }
 
+/**
+ * État initial toujours vide (SSR = 1er rendu client) pour éviter mismatch hydration.
+ * Les jetons arrivent via `persist.rehydrate()` après montage.
+ */
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -181,7 +189,11 @@ export const useAuthStore = create<AuthState>()(
         mustChangePassword: state.mustChangePassword,
         isMock: state.isMock,
       }),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.warn("[smels-auth] rehydrate failed", error);
+          return;
+        }
         if (state?.accessToken) {
           syncAuthCookie(true);
         }

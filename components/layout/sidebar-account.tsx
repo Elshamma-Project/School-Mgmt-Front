@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, UserRound } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { logout as apiLogout } from "@/lib/api/auth";
 import { useRouter } from "@/i18n/navigation";
+import { clearAvatarCache } from "@/lib/profile/avatar-cache";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
@@ -26,7 +28,7 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   async function performLogout() {
-    const { isMock: mock } = useAuthStore.getState();
+    const { isMock: mock, user: current } = useAuthStore.getState();
     if (!mock) {
       try {
         await apiLogout();
@@ -34,6 +36,7 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
         /* purge locale même si le serveur est injoignable */
       }
     }
+    clearAvatarCache(current?.id);
     clearSession();
     router.replace("/login");
   }
@@ -64,9 +67,12 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
             title={name}
             aria-label={t("openProfile")}
             onClick={() => router.push("/profile")}
-            className="pressable flex size-9 cursor-pointer items-center justify-center rounded-full bg-[var(--ios-fill)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]"
+            className="pressable flex size-9 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[var(--ios-fill)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]"
           >
-            <UserRound className="size-4 stroke-[1.75]" aria-hidden />
+            <UserAvatar
+              size="md"
+              className="size-9 bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]"
+            />
           </button>
           <button
             type="button"
@@ -92,9 +98,11 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
           aria-label={t("openProfile")}
           className="pressable flex w-full cursor-pointer items-start gap-2 rounded-[var(--radius-md)] bg-[var(--ios-fill)]/70 px-2 py-2 text-left transition-colors hover:bg-[var(--ios-fill)] focus-visible:shadow-[var(--focus-ring)]"
         >
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--ios-card)] text-[var(--ios-blue)] shadow-[var(--ios-shadow-sm)]">
-            <UserRound className="size-3.5 stroke-[1.75]" aria-hidden />
-          </div>
+          <UserAvatar
+            size="sm"
+            className="bg-[var(--ios-card)] text-[var(--ios-blue)] shadow-[var(--ios-shadow-sm)]"
+            iconClassName="text-[var(--ios-blue)]"
+          />
           <div className="min-w-0 flex-1 leading-tight">
             <p className="truncate text-[11px] font-semibold text-[var(--ios-label)]">
               {name}

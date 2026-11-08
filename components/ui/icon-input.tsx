@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils/cn";
 
 export type IconInputProps = InputHTMLAttributes<HTMLInputElement> & {
   icon: ReactNode;
+  /** Préfixe fixe après l’icône (ex. indicatif +237). */
+  leadingAddon?: string;
   /** Action à droite (ex. afficher / masquer le mot de passe). */
   trailing?: ReactNode;
   invalid?: boolean;
@@ -14,7 +16,16 @@ export type IconInputProps = InputHTMLAttributes<HTMLInputElement> & {
 /** Champ de saisie avec icône intégrée à gauche. */
 export const IconInput = forwardRef<HTMLInputElement, IconInputProps>(
   function IconInput(
-    { className, type = "text", icon, trailing, invalid, disabled, ...props },
+    {
+      className,
+      type = "text",
+      icon,
+      leadingAddon,
+      trailing,
+      invalid,
+      disabled,
+      ...props
+    },
     ref,
   ) {
     return (
@@ -36,13 +47,22 @@ export const IconInput = forwardRef<HTMLInputElement, IconInputProps>(
         >
           {icon}
         </span>
+        {leadingAddon ? (
+          <span
+            className="pointer-events-none absolute left-11 z-[1] text-[var(--text-body)] font-medium tabular-nums text-[var(--ios-secondary-label)]"
+            aria-hidden
+          >
+            {leadingAddon}
+          </span>
+        ) : null}
         <input
           ref={ref}
           type={type}
           disabled={disabled}
           aria-invalid={invalid || undefined}
           className={cn(
-            "h-full w-full bg-transparent py-0 pl-11 text-[var(--text-body)] text-[var(--ios-label)] outline-none placeholder:text-[var(--ios-tertiary-label)] focus-visible:outline-none",
+            "h-full w-full bg-transparent py-0 text-[var(--text-body)] text-[var(--ios-label)] outline-none placeholder:text-[var(--ios-tertiary-label)] focus-visible:outline-none",
+            leadingAddon ? "pl-[5.75rem]" : "pl-11",
             trailing ? "pr-11" : "pr-3.5",
             controlDisabled,
             className,

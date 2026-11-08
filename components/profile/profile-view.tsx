@@ -38,6 +38,25 @@ type IdentityErrors = {
   firstName?: string;
 };
 
+/** Indicatif Cameroun — affiché fixe ; stocké avec le numéro à l’enregistrement. */
+const CM_DIAL = "+237";
+
+function toNationalPhone(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const digits = trimmed.replace(/[^\d+]/g, "");
+  if (digits.startsWith("+237")) return digits.slice(4).replace(/\D/g, "");
+  if (digits.startsWith("237") && digits.length > 9) return digits.slice(3).replace(/\D/g, "");
+  if (digits.startsWith("00237")) return digits.slice(5).replace(/\D/g, "");
+  return digits.replace(/\D/g, "");
+}
+
+function toE164Cm(national: string): string | null {
+  const digits = national.replace(/\D/g, "");
+  if (!digits) return null;
+  return `${CM_DIAL}${digits}`;
+}
+
 /**
  * Profil compte (module user) + identité fiche liée (Staff pour le personnel).
  */
@@ -78,7 +97,7 @@ export function ProfileView() {
       setStaff(member);
       setLastName(member.lastName);
       setFirstName(member.firstName);
-      setPhone(member.contact.phones[0] ?? "");
+      setPhone(toNationalPhone(member.contact.phones[0] ?? ""));
       updateUser({ displayName: member.fullName });
     },
     [updateUser],
@@ -141,7 +160,7 @@ export function ProfileView() {
     staff != null
       ? lastName.trim() !== staff.lastName ||
         firstName.trim() !== staff.firstName ||
-        phone.trim() !== (staff.contact.phones[0] ?? "")
+        toNationalPhone(phone) !== toNationalPhone(staff.contact.phones[0] ?? "")
       : lastName.trim().length > 0 || firstName.trim().length > 0;
 
   function validatePassword(): PasswordErrors {
@@ -177,8 +196,9 @@ export function ProfileView() {
           description: isMock ? t("mockHint") : t("identityLocalOnlyHint"),
         });
       } else {
+        const primary = toE164Cm(phone);
         const phones = [
-          phone.trim(),
+          ...(primary ? [primary] : []),
           ...(staff?.contact.phones.slice(1) ?? []),
         ].filter(Boolean);
         const member = await updateStaffIdentity(
@@ -254,20 +274,55 @@ export function ProfileView() {
     "—";
   const schoolLabel = user?.schoolId ?? t("platformAccount");
 
+  const statusTone =
+    user?.status === "ACTIVE"
+      ? "success"
+      : user?.status === "PENDING"
+        ? "warning"
+        : user?.status === "LOCKED" || user?.status === "DISABLED"
+          ? "danger"
+          : "neutral";
+
+  const statusLabel =
+    user?.status &&
+    (["ACTIVE", "PENDING", "LOCKED", "DISABLED"] as const).includes(
+      user.status as "ACTIVE" | "PENDING" | "LOCKED" | "DISABLED",
+    )
+      ? t(`accountStatus.${user.status as "ACTIVE" | "PENDING" | "LOCKED" | "DISABLED"}`)
+      : user?.status;
+
   return (
     <div className="mx-auto max-w-[560px] space-y-6 slide-up">
       <section className="flex flex-col items-center text-center">
         <ProfileAvatar />
-        <h2 className="mt-4 text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
-          {title}
-        </h2>
-        <p className="mt-1 text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
-          {schoolLabel}
-        </p>
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-          {role ? <Badge tone="blue">{tRoles(`${role}.label`)}</Badge> : null}
-          {isMock ? <Badge tone="neutral">{tCommon("demoBadge")}</Badge> : null}
-          {user?.status ? <Badge tone="neutral">{user.status}</Badge> : null}
+        <div className="mt-4 w-full overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+          <div className="px-5 pb-3 pt-5">
+            <h2 className="text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
+              {title}
+            </h2>
+            <p className="mt-1.5 truncate text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
+              {schoolLabel}
+            </p>
+          </div>
+          <div className="mx-5 border-t border-[var(--ios-separator)]" />
+          <div className="flex flex-wrap items-center justify-center gap-2 px-5 py-3.5">
+            {role ? (
+              <Badge tone="blue" className="gap-1.5 pl-1.5">
+                <Shield className="size-3 stroke-[2]" aria-hidden />
+                {tRoles(`${role}.label`)}
+              </Badge>
+            ) : null}
+            {statusLabel ? (
+              <Badge tone={statusTone} className="gap-1.5 pl-1.5">
+                <span
+                  className="size-1.5 shrink-0 rounded-full bg-current opacity-90"
+                  aria-hidden
+                />
+                {statusLabel}
+              </Badge>
+            ) : null}
+            {isMock ? <Badge tone="neutral">{tCommon("demoBadge")}</Badge> : null}
+          </div>
         </div>
       </section>
 
@@ -376,14 +431,17 @@ export function ProfileView() {
             </GroupedListItem>
 
             <GroupedListItem className="block py-3">
-              <Field id="profile-phone" label={t("phone")}>
+              <Field id="profile-phone" label={t("phone")} hint={t("phoneHint")}>
                 <IconInput
                   id="profile-phone"
                   type="tel"
+                  inputMode="tel"
                   icon={<Phone className="size-4 stroke-[1.75]" />}
+                  leadingAddon={CM_DIAL}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  autoComplete="tel"
+                  onChange={(e) => setPhone(toNationalPhone(e.target.value))}
+                  placeholder="6XX XXX XXX"
+                  autoComplete="tel-national"
                   disabled={savingIdentity || identityLoading}
                 />
               </Field>
@@ -416,6 +474,7 @@ export function ProfileView() {
             <Field
               id="profile-current-password"
               label={tAuth("currentPassword")}
+              hint={t("currentPasswordHint")}
               error={passwordErrors.currentPassword}
             >
               <IconInput
@@ -424,6 +483,7 @@ export function ProfileView() {
                 icon={<LockKeyhole className="size-4 stroke-[1.75]" />}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="••••••••"
                 invalid={Boolean(passwordErrors.currentPassword)}
                 autoComplete="current-password"
               />

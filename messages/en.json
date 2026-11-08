@@ -190,6 +190,7 @@
     "lastName": "Last name",
     "firstName": "First name",
     "phone": "Phone",
+    "phoneHint": "Cameroon dial code (+237) — enter the national number.",
     "saveIdentity": "Save identity",
     "changeAvatar": "Change photo",
     "removeAvatar": "Remove photo",
@@ -202,13 +203,20 @@
     "accountSynced": "Account synced",
     "passwordSection": "Password",
     "passwordSectionHint": "At least 8 characters. Applied immediately on the server.",
+    "currentPasswordHint": "A password is already set (••••••••). Enter it to choose a new one — it is never shown in clear text.",
     "passwordHint": "At least 8 characters.",
     "invalidEmail": "Invalid email address.",
     "passwordTooShort": "Password must be at least 8 characters.",
     "passwordMismatch": "Passwords do not match.",
     "profileSaved": "Profile updated",
     "passwordSaved": "Password updated",
-    "mockHint": "Saved locally (demo mode)."
+    "mockHint": "Saved locally (demo mode).",
+    "accountStatus": {
+      "ACTIVE": "Active",
+      "PENDING": "Pending",
+      "LOCKED": "Locked",
+      "DISABLED": "Disabled"
+    }
   },
   "workspace": {
     "teacherClasses": {

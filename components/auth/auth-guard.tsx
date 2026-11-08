@@ -4,13 +4,17 @@ import { useEffect, useState } from "react";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
-import { useAuthStore } from "@/stores/auth-store";
+import { syncAuthCookie, useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
 
 type AuthGuardProps = {
   children: React.ReactNode;
 };
 
+/**
+ * Toujours le même HTML au 1er rendu (SSR + client) → skeleton.
+ * Réhydratation uniquement après montage (évite mismatch hydration).
+ */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -21,18 +25,38 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const finish = () => setHydrated(true);
+    let cancelled = false;
+    const finish = () => {
+      if (!cancelled) setHydrated(true);
+    };
+
     if (useAuthStore.persist.hasHydrated()) {
       finish();
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
-    return useAuthStore.persist.onFinishHydration(finish);
+
+    const unsub = useAuthStore.persist.onFinishHydration(finish);
+    void useAuthStore.persist.rehydrate().then(finish);
+    return () => {
+      cancelled = true;
+      unsub();
+    };
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
 
-    if (!accessToken || !role) {
+    if (!accessToken) {
+      syncAuthCookie(false);
+      router.replace("/login");
+      return;
+    }
+
+    syncAuthCookie(true);
+
+    if (!role) {
       router.replace("/login");
       return;
     }

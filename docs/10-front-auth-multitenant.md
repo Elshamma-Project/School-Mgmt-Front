@@ -13,7 +13,7 @@
 | Élément | Comportement |
 |---|---|
 | Access / refresh | Scellés au repos (`token-vault`, pas JWT en clair dans le storage) |
-| Cookie `smels_session` | Opaque (`1`) pour le proxy — **plus** le JWT |
+| Cookie `smels_session` | Opaque (`1`) pour le proxy — **plus** le JWT ; `Max-Age` 30 j (survit à F5). Ancien `smels_access_token` encore accepté. |
 | Se souvenir de moi | E-mail mémorisé + session `localStorage` ; sinon `sessionStorage` |
 | Évolution | Cookies HttpOnly via BFF |
 

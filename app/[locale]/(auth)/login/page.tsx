@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
+import { SessionRestorer } from "@/components/auth/session-restorer";
 import { AppFooter } from "@/components/layout/app-footer";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { getTenantConfig } from "@/lib/tenant/config";
@@ -15,6 +16,7 @@ export default async function LoginPage() {
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-[var(--ios-bg)]">
+      <SessionRestorer />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_color-mix(in_srgb,var(--ios-blue)_12%,transparent),_transparent_55%)]"

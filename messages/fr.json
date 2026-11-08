@@ -190,6 +190,7 @@
     "lastName": "Nom",
     "firstName": "Prénom",
     "phone": "Téléphone",
+    "phoneHint": "Indicatif Cameroun (+237) — saisissez le numéro national.",
     "saveIdentity": "Enregistrer l’identité",
     "changeAvatar": "Changer la photo",
     "removeAvatar": "Supprimer la photo",
@@ -202,13 +203,20 @@
     "accountSynced": "Compte synchronisé",
     "passwordSection": "Mot de passe",
     "passwordSectionHint": "Au moins 8 caractères. Appliqué immédiatement côté serveur.",
+    "currentPasswordHint": "Un mot de passe est déjà défini (••••••••). Saisissez-le pour en choisir un nouveau — il n’est jamais affiché en clair.",
     "passwordHint": "Au moins 8 caractères.",
     "invalidEmail": "Adresse e-mail invalide.",
     "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "profileSaved": "Profil mis à jour",
     "passwordSaved": "Mot de passe mis à jour",
-    "mockHint": "Enregistré en local (mode démo)."
+    "mockHint": "Enregistré en local (mode démo).",
+    "accountStatus": {
+      "ACTIVE": "Actif",
+      "PENDING": "En attente",
+      "LOCKED": "Verrouillé",
+      "DISABLED": "Désactivé"
+    }
   },
   "workspace": {
     "teacherClasses": {
