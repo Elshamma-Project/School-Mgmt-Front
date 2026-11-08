@@ -31,7 +31,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] bg-[var(--ios-fill)] text-[var(--ios-label)] transition-[background-color,box-shadow,color] duration-[var(--duration-fast)] hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]",
+        "pressable inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] bg-[var(--ios-fill)] text-[var(--ios-label)] transition-[background-color,box-shadow,color] duration-[var(--duration-fast)] hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]",
         className,
       )}
     >

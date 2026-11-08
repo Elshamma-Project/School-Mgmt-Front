@@ -24,7 +24,9 @@ export function EmptyState({
       )}
     >
       {icon ? (
-        <div className="mb-4 text-[var(--ios-tertiary-label)]">{icon}</div>
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]">
+          {icon}
+        </div>
       ) : null}
       <h2 className="text-[var(--text-body)] font-semibold text-[var(--ios-label)]">
         {title}

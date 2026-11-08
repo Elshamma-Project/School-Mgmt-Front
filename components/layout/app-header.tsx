@@ -15,9 +15,9 @@ export function AppHeader() {
   const title = tNav(getNavKeyFromPathname(pathname, role));
 
   return (
-    <header className="sticky top-0 z-30 h-[var(--app-topbar-height)] shrink-0 border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-bg)_88%,transparent)] backdrop-blur-xl">
-      <div className="flex h-full items-center gap-3 px-6 md:px-12">
-        <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-[-0.01em] text-[var(--ios-label)] md:text-[20px] md:font-bold">
+    <header className="sticky top-0 z-30 h-[var(--app-topbar-height)] shrink-0 border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-bg)_85%,transparent)] pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+      <div className="flex h-full items-center gap-3 px-5 md:px-8">
+        <h1 className="min-w-0 flex-1 truncate text-[var(--text-body)] font-semibold tracking-[-0.01em] text-[var(--ios-label)] md:text-[var(--text-title3)]">
           {title}
         </h1>
         <div className="flex shrink-0 items-center gap-2">

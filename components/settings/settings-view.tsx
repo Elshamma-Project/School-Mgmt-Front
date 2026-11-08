@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
@@ -45,7 +47,7 @@ export function SettingsView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 slide-up">
       <PageHeader description={t("description")} />
 
       <GroupedList header={t("languageSection")}>
@@ -64,10 +66,10 @@ export function SettingsView() {
               {user?.displayName ?? user?.username ?? "—"}
             </p>
             {currentRole ? (
-              <p className="text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
-                {tRoles(`${currentRole}.label`)}
-                {isMock ? ` · ${tCommon("demoBadge")}` : null}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <Badge tone="blue">{tRoles(`${currentRole}.label`)}</Badge>
+                {isMock ? <Badge tone="neutral">{tCommon("demoBadge")}</Badge> : null}
+              </div>
             ) : null}
           </div>
           <Button variant="destructive" size="sm" onClick={() => setConfirmLogout(true)}>
@@ -86,8 +88,8 @@ export function SettingsView() {
                   type="button"
                   onClick={() => switchRole(role)}
                   className={cn(
-                    "flex min-h-11 w-full cursor-pointer items-center justify-between px-4 py-2.5 text-left",
-                    active && "bg-[var(--ios-blue)]/5",
+                    "pressable flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 px-4 py-2.5 text-left focus-visible:shadow-[var(--focus-ring)]",
+                    active && "bg-[var(--ios-blue)]/10",
                   )}
                 >
                   <span>
@@ -98,11 +100,17 @@ export function SettingsView() {
                       {tRoles(`${role}.hint`)}
                     </span>
                   </span>
-                  {active ? (
-                    <span className="text-[var(--text-footnote)] font-semibold text-[var(--ios-blue)]">
-                      {t("activeRole")}
-                    </span>
-                  ) : null}
+                  <span
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors",
+                      active
+                        ? "border-[var(--ios-blue)] bg-[var(--ios-blue)] text-white"
+                        : "border-[var(--ios-fill-secondary)] bg-transparent text-transparent",
+                    )}
+                    aria-hidden
+                  >
+                    <Check className="size-3.5 stroke-[2.5]" />
+                  </span>
                 </button>
               </GroupedListItem>
             );

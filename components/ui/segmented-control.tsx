@@ -41,7 +41,7 @@ export function SegmentedControl<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "pressable min-w-10 flex-1 rounded-[6px] px-2.5 py-1.5 text-[var(--text-footnote)] font-semibold transition-colors",
+              "pressable min-w-10 flex-1 rounded-[var(--radius-xs)] px-2.5 py-1.5 text-[var(--text-footnote)] font-semibold transition-colors focus-visible:shadow-[var(--focus-ring)]",
               active
                 ? "bg-[var(--ios-card)] text-[var(--ios-label)] shadow-[var(--ios-shadow-sm)]"
                 : "text-[var(--ios-secondary-label)]",

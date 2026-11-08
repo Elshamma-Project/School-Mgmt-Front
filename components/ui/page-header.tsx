@@ -11,7 +11,7 @@ export function PageHeader({ description, className }: PageHeaderProps) {
     <p
       className={
         className ??
-        "mb-6 max-w-2xl text-[15px] leading-relaxed text-[var(--ios-secondary-label)]"
+        "max-w-2xl text-[var(--text-subhead)] leading-relaxed text-[var(--ios-secondary-label)]"
       }
     >
       {description}

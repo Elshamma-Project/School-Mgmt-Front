@@ -39,7 +39,7 @@ export function RoleHome() {
         </p>
         <PageHeader
           description={tRoles(`${role}.homeBlurb`)}
-          className="mb-0 mt-1 max-w-2xl text-[var(--text-subhead)] leading-relaxed text-[var(--ios-secondary-label)]"
+          className="mt-1 max-w-2xl text-[var(--text-subhead)] leading-relaxed text-[var(--ios-secondary-label)]"
         />
       </div>
 
@@ -50,10 +50,10 @@ export function RoleHome() {
       <GroupedList header={t("profileSection")} footer={isMock ? t("demoFooter") : undefined}>
         <GroupedListItem>
           <span className="text-[var(--text-body)] text-[var(--ios-label)]">{t("roleLabel")}</span>
-          <Badge tone="blue">
-            {tRoles(`${role}.label`)}
-            {isMock ? ` · ${tCommon("demoBadge")}` : null}
-          </Badge>
+          <span className="flex flex-wrap items-center justify-end gap-2">
+            <Badge tone="blue">{tRoles(`${role}.label`)}</Badge>
+            {isMock ? <Badge tone="neutral">{tCommon("demoBadge")}</Badge> : null}
+          </span>
         </GroupedListItem>
         <GroupedListItem>
           <span className="text-[var(--text-body)] text-[var(--ios-label)]">{t("accountLabel")}</span>
@@ -84,7 +84,7 @@ export function RoleHome() {
           <GroupedListItem key={href} className="p-0">
             <Link
               href={href}
-              className="flex min-h-11 w-full cursor-pointer items-center gap-3 px-4 py-2.5 active:bg-[var(--ios-fill)]"
+              className="pressable flex min-h-11 w-full cursor-pointer items-center gap-3 px-4 py-2.5 active:bg-[var(--ios-fill)] focus-visible:shadow-[var(--focus-ring)]"
             >
               <span className="flex size-8 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--ios-blue)]/10 text-[var(--ios-blue)]">
                 <Icon className="size-4 stroke-[1.75]" aria-hidden />

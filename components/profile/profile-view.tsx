@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   AtSign,
   IdCard,
@@ -13,9 +13,10 @@ import {
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { IconInput } from "@/components/ui/icon-input";
 import { notify } from "@/lib/ui/notify";
-import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
 
@@ -30,66 +31,7 @@ type PasswordErrors = {
   confirmPassword?: string;
 };
 
-type FieldBlockProps = {
-  id: string;
-  label: string;
-  hint?: string;
-  error?: string;
-  children: ReactNode;
-};
-
-function FieldBlock({ id, label, hint, error, children }: FieldBlockProps) {
-  return (
-    <div className="space-y-1.5">
-      <label
-        htmlFor={id}
-        className="block text-[var(--text-footnote)] font-medium text-[var(--ios-secondary-label)]"
-      >
-        {label}
-      </label>
-      {children}
-      {error ? (
-        <p className="text-[var(--text-footnote)] text-[var(--ios-danger)]" role="alert">
-          {error}
-        </p>
-      ) : hint ? (
-        <p className="text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">{hint}</p>
-      ) : null}
-    </div>
-  );
-}
-
-type ProfilePanelProps = {
-  title: string;
-  description: string;
-  children: ReactNode;
-  footer?: ReactNode;
-  className?: string;
-};
-
-function ProfilePanel({ title, description, children, footer, className }: ProfilePanelProps) {
-  return (
-    <section
-      className={cn(
-        "rounded-[var(--radius-xl)] bg-[var(--ios-card)] p-5 shadow-[var(--ios-shadow)] ring-1 ring-[var(--ios-separator)]/70",
-        className,
-      )}
-    >
-      <div className="mb-5">
-        <h2 className="text-[var(--text-title3)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
-          {title}
-        </h2>
-        <p className="mt-1 max-w-md text-[var(--text-footnote)] leading-relaxed text-[var(--ios-secondary-label)]">
-          {description}
-        </p>
-      </div>
-      <div className="space-y-4">{children}</div>
-      {footer ? <div className="mt-5 flex justify-end">{footer}</div> : null}
-    </section>
-  );
-}
-
-/** Profil compte — panels modernes, icônes dans les champs. */
+/** Profil compte — GroupedList + Field + IconInput. */
 export function ProfileView() {
   const t = useTranslations("profile");
   const tAuth = useTranslations("auth");
@@ -182,15 +124,15 @@ export function ProfileView() {
   }
 
   return (
-    <div className="mx-auto max-w-[560px] space-y-6">
-      <section className="flex flex-col items-center rounded-[var(--radius-xl)] bg-[var(--ios-card)] px-5 py-7 text-center shadow-[var(--ios-shadow)] ring-1 ring-[var(--ios-separator)]/70">
+    <div className="mx-auto max-w-[560px] space-y-6 slide-up">
+      <section className="flex flex-col items-center text-center">
         <div
           className="flex size-20 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
           aria-hidden
         >
           <UserRound className="size-9 stroke-[1.5]" />
         </div>
-        <h2 className="mt-4 text-[var(--text-title2)] font-bold tracking-[-0.02em] text-[var(--ios-label)]">
+        <h2 className="mt-4 text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
           {displayName.trim() || user?.username || "—"}
         </h2>
         <p className="mt-1 text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
@@ -202,129 +144,139 @@ export function ProfileView() {
         </div>
       </section>
 
-      <form onSubmit={onSaveProfile}>
-        <ProfilePanel
-          title={t("accountSection")}
-          description={t("accountSectionHint")}
-          footer={
-            <Button type="submit" loading={savingProfile} disabled={!profileDirty && !savingProfile}>
-              {tCommon("save")}
-            </Button>
-          }
-        >
-          <FieldBlock id="profile-username" label={t("username")} hint={t("usernameHint")}>
-            <IconInput
-              id="profile-username"
-              icon={<AtSign className="size-4 stroke-[1.75]" />}
-              value={user?.username ?? ""}
-              readOnly
-              disabled
-              autoComplete="username"
-            />
-          </FieldBlock>
+      <form onSubmit={onSaveProfile} className="space-y-3">
+        <GroupedList header={t("accountSection")} footer={t("accountSectionHint")}>
+          <GroupedListItem className="block py-3">
+            <Field id="profile-username" label={t("username")} hint={t("usernameHint")}>
+              <IconInput
+                id="profile-username"
+                icon={<AtSign className="size-4 stroke-[1.75]" />}
+                value={user?.username ?? ""}
+                readOnly
+                disabled
+                autoComplete="username"
+              />
+            </Field>
+          </GroupedListItem>
 
-          <FieldBlock
-            id="profile-display-name"
-            label={t("displayName")}
-            error={profileErrors.displayName}
-          >
-            <IconInput
+          <GroupedListItem className="block py-3">
+            <Field
               id="profile-display-name"
-              icon={<IdCard className="size-4 stroke-[1.75]" />}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              invalid={Boolean(profileErrors.displayName)}
-              autoComplete="name"
-            />
-          </FieldBlock>
+              label={t("displayName")}
+              error={profileErrors.displayName}
+            >
+              <IconInput
+                id="profile-display-name"
+                icon={<IdCard className="size-4 stroke-[1.75]" />}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                invalid={Boolean(profileErrors.displayName)}
+                autoComplete="name"
+              />
+            </Field>
+          </GroupedListItem>
 
-          <FieldBlock id="profile-email" label={t("email")} error={profileErrors.email}>
-            <IconInput
-              id="profile-email"
-              type="email"
-              icon={<Mail className="size-4 stroke-[1.75]" />}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              invalid={Boolean(profileErrors.email)}
-              autoComplete="email"
-            />
-          </FieldBlock>
+          <GroupedListItem className="block py-3">
+            <Field id="profile-email" label={t("email")} error={profileErrors.email}>
+              <IconInput
+                id="profile-email"
+                type="email"
+                icon={<Mail className="size-4 stroke-[1.75]" />}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                invalid={Boolean(profileErrors.email)}
+                autoComplete="email"
+              />
+            </Field>
+          </GroupedListItem>
 
-          <FieldBlock id="profile-role" label={t("role")}>
-            <IconInput
-              id="profile-role"
-              icon={<Shield className="size-4 stroke-[1.75]" />}
-              value={role ? tRoles(`${role}.label`) : "—"}
-              readOnly
-              disabled
-            />
-          </FieldBlock>
-        </ProfilePanel>
+          <GroupedListItem className="block py-3">
+            <Field id="profile-role" label={t("role")}>
+              <IconInput
+                id="profile-role"
+                icon={<Shield className="size-4 stroke-[1.75]" />}
+                value={role ? tRoles(`${role}.label`) : "—"}
+                readOnly
+                disabled
+              />
+            </Field>
+          </GroupedListItem>
+        </GroupedList>
+
+        <div className="flex justify-end px-1">
+          <Button type="submit" loading={savingProfile} disabled={!profileDirty && !savingProfile}>
+            {tCommon("save")}
+          </Button>
+        </div>
       </form>
 
-      <form onSubmit={onChangePassword}>
-        <ProfilePanel
-          title={t("passwordSection")}
-          description={t("passwordSectionHint")}
-          footer={
-            <Button
-              type="submit"
-              loading={savingPassword}
-              disabled={!passwordDirty && !savingPassword}
-            >
-              {tAuth("changePasswordSubmit")}
-            </Button>
-          }
-        >
-          <FieldBlock
-            id="profile-current-password"
-            label={tAuth("currentPassword")}
-            error={passwordErrors.currentPassword}
-          >
-            <IconInput
+      <form onSubmit={onChangePassword} className="space-y-3">
+        <GroupedList header={t("passwordSection")} footer={t("passwordSectionHint")}>
+          <GroupedListItem className="block py-3">
+            <Field
               id="profile-current-password"
-              type="password"
-              icon={<LockKeyhole className="size-4 stroke-[1.75]" />}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              invalid={Boolean(passwordErrors.currentPassword)}
-              autoComplete="current-password"
-            />
-          </FieldBlock>
+              label={tAuth("currentPassword")}
+              error={passwordErrors.currentPassword}
+            >
+              <IconInput
+                id="profile-current-password"
+                type="password"
+                icon={<LockKeyhole className="size-4 stroke-[1.75]" />}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                invalid={Boolean(passwordErrors.currentPassword)}
+                autoComplete="current-password"
+              />
+            </Field>
+          </GroupedListItem>
 
-          <FieldBlock
-            id="profile-new-password"
-            label={tAuth("newPassword")}
-            hint={t("passwordHint")}
-            error={passwordErrors.newPassword}
-          >
-            <IconInput
+          <GroupedListItem className="block py-3">
+            <Field
               id="profile-new-password"
-              type="password"
-              icon={<KeyRound className="size-4 stroke-[1.75]" />}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              invalid={Boolean(passwordErrors.newPassword)}
-              autoComplete="new-password"
-            />
-          </FieldBlock>
+              label={tAuth("newPassword")}
+              hint={t("passwordHint")}
+              error={passwordErrors.newPassword}
+            >
+              <IconInput
+                id="profile-new-password"
+                type="password"
+                icon={<KeyRound className="size-4 stroke-[1.75]" />}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                invalid={Boolean(passwordErrors.newPassword)}
+                autoComplete="new-password"
+              />
+            </Field>
+          </GroupedListItem>
 
-          <FieldBlock
-            id="profile-confirm-password"
-            label={tAuth("confirmPassword")}
-            error={passwordErrors.confirmPassword}
-          >
-            <IconInput
+          <GroupedListItem className="block py-3">
+            <Field
               id="profile-confirm-password"
-              type="password"
-              icon={<KeyRound className="size-4 stroke-[1.75]" />}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              invalid={Boolean(passwordErrors.confirmPassword)}
-              autoComplete="new-password"
-            />
-          </FieldBlock>
-        </ProfilePanel>
+              label={tAuth("confirmPassword")}
+              error={passwordErrors.confirmPassword}
+            >
+              <IconInput
+                id="profile-confirm-password"
+                type="password"
+                icon={<KeyRound className="size-4 stroke-[1.75]" />}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                invalid={Boolean(passwordErrors.confirmPassword)}
+                autoComplete="new-password"
+              />
+            </Field>
+          </GroupedListItem>
+        </GroupedList>
+
+        <div className="flex justify-end px-1">
+          <Button
+            type="submit"
+            loading={savingPassword}
+            disabled={!passwordDirty && !savingPassword}
+          >
+            {tAuth("changePasswordSubmit")}
+          </Button>
+        </div>
       </form>
     </div>
   );

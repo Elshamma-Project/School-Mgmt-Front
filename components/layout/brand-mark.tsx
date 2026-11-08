@@ -11,8 +11,10 @@ export function BrandMark({ className, size = "md" }: BrandMarkProps) {
     <div
       aria-hidden
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-[12px] bg-[var(--ios-blue)] font-bold tracking-[-0.04em] text-white shadow-[var(--ios-shadow-sm)]",
-        size === "md" ? "size-10 text-[13px]" : "size-8 text-[11px]",
+        "flex shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--ios-blue)] font-bold tracking-[-0.04em] text-white shadow-[var(--ios-shadow-sm)]",
+        size === "md"
+          ? "size-10 text-[var(--text-footnote)]"
+          : "size-8 text-[var(--text-caption)]",
         className,
       )}
     >

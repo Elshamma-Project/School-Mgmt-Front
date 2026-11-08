@@ -10,12 +10,12 @@ export function NotificationsView() {
   const tCommon = useTranslations("common");
 
   return (
-    <div>
+    <div className="space-y-6 slide-up">
       <PageHeader description={t("description")} />
       <EmptyState
         title={tCommon("emptyTitle")}
         description={t("empty")}
-        icon={<Bell className="size-10 stroke-[1.5]" aria-hidden />}
+        icon={<Bell className="size-9 stroke-[1.5]" aria-hidden />}
       />
     </div>
   );

@@ -34,7 +34,7 @@ export function AppSidebar() {
     <aside
       className={cn(
         "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-[var(--ios-separator)]",
-        "bg-[color-mix(in_srgb,var(--ios-card)_78%,transparent)] backdrop-blur-xl transition-[width] duration-200 ease-out md:flex",
+        "bg-[color-mix(in_srgb,var(--ios-card)_85%,transparent)] backdrop-blur-xl transition-[width] duration-[var(--duration-normal)] ease-[var(--ease-emphasized)] md:flex",
         collapsed ? "w-[72px]" : "w-[220px]",
         !ready && "opacity-0",
       )}
@@ -52,19 +52,19 @@ export function AppSidebar() {
             aria-pressed
             aria-label={tNav("expandSidebar")}
             title={tNav("expandSidebar")}
-            className="flex cursor-pointer items-center justify-center gap-0.5 rounded-[10px] p-1 text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)]"
+            className="pressable flex size-9 cursor-pointer items-center justify-center gap-0.5 rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)] focus-visible:shadow-[var(--focus-ring)]"
           >
             <BrandMark size="sm" />
-            <PanelLeftOpen className="size-3.5 shrink-0 stroke-[1.75]" aria-hidden />
+            <PanelLeftOpen className="size-4 shrink-0 stroke-[1.75]" aria-hidden />
           </button>
         ) : (
           <>
             <BrandMark size="sm" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--ios-secondary-label)]">
+              <p className="truncate text-[var(--text-caption)] font-semibold uppercase tracking-[0.1em] text-[var(--ios-secondary-label)]">
                 {t("schoolName")}
               </p>
-              <p className="truncate text-[15px] font-bold tracking-[-0.02em] text-[var(--ios-label)]">
+              <p className="truncate text-[var(--text-subhead)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
                 {t("appName")}
               </p>
             </div>
@@ -74,7 +74,7 @@ export function AppSidebar() {
               aria-pressed={false}
               aria-label={tNav("collapseSidebar")}
               title={tNav("collapseSidebar")}
-              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)]"
+              className="pressable flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)] focus-visible:shadow-[var(--focus-ring)]"
             >
               <PanelLeftClose className="size-4 stroke-[1.75]" aria-hidden />
             </button>

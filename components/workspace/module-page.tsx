@@ -58,13 +58,13 @@ export function ModulePage({ ns }: ModulePageProps) {
   const Icon = MODULE_ICONS[ns];
 
   return (
-    <div className="space-y-4 slide-up">
+    <div className="space-y-6 slide-up">
       <PageHeader description={t("description")} />
       {hint ? <Alert tone="info" title={hint} /> : null}
       <EmptyState
         title={tCommon("emptyTitle")}
         description={t("empty")}
-        icon={<Icon className="size-10 stroke-[1.5]" aria-hidden />}
+        icon={<Icon className="size-9 stroke-[1.5]" aria-hidden />}
       />
     </div>
   );

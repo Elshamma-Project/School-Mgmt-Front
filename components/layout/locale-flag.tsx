@@ -9,7 +9,7 @@ type LocaleFlagProps = {
 /** Drapeaux SVG (fiables sous Windows, où les emoji 🇫🇷/🇬🇧 ne s’affichent souvent pas). */
 export function LocaleFlag({ locale, className }: LocaleFlagProps) {
   const common = cn(
-    "inline-block h-[0.8125rem] w-[1.21875rem] shrink-0 overflow-hidden rounded-[1px] align-[-0.05em] shadow-[0_0_0_1px_rgba(0,0,0,0.08)]",
+    "inline-block h-[0.8125rem] w-[1.21875rem] shrink-0 overflow-hidden rounded-[1px] align-[-0.05em] shadow-[0_0_0_1px_var(--ios-separator)]",
     className,
   );
 

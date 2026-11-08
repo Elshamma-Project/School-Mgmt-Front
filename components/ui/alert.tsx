@@ -45,7 +45,7 @@ export function Alert({
         className,
       )}
     >
-      <Icon className="mt-0.5 size-[18px] shrink-0 stroke-[1.75]" aria-hidden />
+      <Icon className="mt-0.5 size-4 shrink-0 stroke-[1.75]" aria-hidden />
       <div className="min-w-0 flex-1">
         <p className="text-[var(--text-subhead)] font-semibold text-[var(--ios-label)]">
           {title}

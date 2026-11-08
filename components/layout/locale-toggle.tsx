@@ -67,7 +67,7 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
         title={t("language")}
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          "inline-flex h-9 cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--ios-fill)] px-2.5 text-[var(--ios-label)] transition-[background-color,box-shadow] duration-[var(--duration-fast)] hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]",
+          "pressable inline-flex h-9 cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--ios-fill)] px-2.5 text-[var(--ios-label)] transition-[background-color,box-shadow] duration-[var(--duration-fast)] hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]",
           open && "bg-[var(--ios-fill-secondary)] shadow-[var(--ios-shadow-sm)]",
         )}
       >
@@ -77,7 +77,7 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
           initial={reduceMotion ? false : { opacity: 0, y: 3 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-          className="min-w-[1.25rem] text-center text-[12px] font-semibold uppercase tracking-[0.06em]"
+          className="min-w-[1.25rem] text-center text-[var(--text-caption)] font-semibold uppercase tracking-[0.06em]"
         >
           {locale}
         </motion.span>
@@ -90,7 +90,7 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
           className="inline-flex"
         >
           <ChevronDown
-            className="size-3.5 stroke-[2] text-[var(--ios-secondary-label)]"
+            className="size-4 stroke-[1.75] text-[var(--ios-secondary-label)]"
             aria-hidden
           />
         </motion.span>
@@ -133,11 +133,11 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
                   }}
                   onClick={() => selectLocale(code)}
                   className={cn(
-                    "flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-[var(--ios-fill)]",
-                    selected && "bg-[var(--ios-blue)]/5",
+                    "pressable flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-[var(--ios-fill)] focus-visible:shadow-[var(--focus-ring)]",
+                    selected && "bg-[var(--ios-blue)]/10",
                   )}
                 >
-                  <span className="flex items-center gap-2 text-[13px] font-medium leading-none text-[var(--ios-label)]">
+                  <span className="flex items-center gap-2 text-[var(--text-footnote)] font-medium leading-none text-[var(--ios-label)]">
                     <LocaleFlag locale={code} />
                     {t(LOCALE_LABELS[code])}
                   </span>
@@ -152,12 +152,12 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
                         className="inline-flex"
                       >
                         <Check
-                          className="size-3.5 stroke-[2] text-[var(--ios-blue)]"
+                          className="size-4 stroke-[1.75] text-[var(--ios-blue)]"
                           aria-hidden
                         />
                       </motion.span>
                     ) : (
-                      <span className="w-3.5" aria-hidden />
+                      <span className="w-4" aria-hidden />
                     )}
                   </AnimatePresence>
                 </motion.button>

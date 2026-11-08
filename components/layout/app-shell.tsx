@@ -16,7 +16,7 @@ export function AppShell({ children }: AppShellProps) {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <AppHeader />
-          <main className="fade-in flex-1 px-4 pb-24 pt-5 md:px-8 md:pb-8 md:pt-6">
+          <main className="fade-in flex-1 px-5 pb-24 pt-5 md:px-8 md:pb-8 md:pt-6">
             {children}
           </main>
           <MobileTabBar />

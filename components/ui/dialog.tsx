@@ -94,14 +94,14 @@ export function Dialog({
         <div className="px-4 pb-3.5 pt-5 text-center">
           <h2
             id={titleId}
-            className="text-[17px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]"
+            className="text-[var(--text-body)] font-semibold tracking-[-0.01em] text-[var(--ios-label)]"
           >
             {title}
           </h2>
           {description ? (
             <p
               id={descriptionId}
-              className="mt-1 text-[13px] leading-snug text-[var(--ios-secondary-label)]"
+              className="mt-1 text-[var(--text-footnote)] leading-snug text-[var(--ios-secondary-label)]"
             >
               {description}
             </p>
@@ -125,7 +125,7 @@ export function Dialog({
                 onOpenChange(false);
               }}
               className={cn(
-                "min-h-11 cursor-pointer px-2 py-2.5 text-[17px] transition-colors hover:bg-[var(--ios-fill)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ios-blue)]/35",
+                "pressable min-h-11 cursor-pointer px-2 py-2.5 text-[var(--text-body)] transition-colors hover:bg-[var(--ios-fill)]/60 focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
                 index > 0 && actions.length > 1
                   ? "border-l border-[var(--ios-separator)]"
                   : null,
