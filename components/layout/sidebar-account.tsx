@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { LogOut, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/cn";
@@ -104,8 +103,6 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
           <LogOut className="size-4 stroke-[1.75]" aria-hidden />
           {t("logout")}
         </button>
-
-        <LocaleSwitcher className="w-full justify-center" />
       </div>
       {logoutDialog}
     </>

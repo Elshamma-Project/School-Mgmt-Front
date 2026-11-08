@@ -14,6 +14,7 @@
     "accessDeniedTitle": "Limited access",
     "accessDeniedDescription": "This module is not available for your profile.",
     "language": "Language",
+    "switchLanguage": "Switch to {locale}",
     "french": "Français",
     "english": "English",
     "demoBadge": "Demo",
