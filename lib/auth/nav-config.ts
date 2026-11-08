@@ -20,6 +20,17 @@ import {
   type AcademicTab,
 } from "@/lib/academic/tabs";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
+import {
+  GRADES_TABS,
+  moduleListPath,
+  REPORTING_TABS,
+  STUDENT_TABS,
+  TIMETABLE_TABS,
+  type GradesTab,
+  type ReportingTab,
+  type StudentTab,
+  type TimetableTab,
+} from "@/lib/modules/tabs";
 import { staffListTabsForRole, type StaffListTab } from "@/lib/staff/functions";
 import { staffListPath } from "@/lib/staff/routes";
 import type { AppRole } from "@/types/auth";
@@ -46,13 +57,19 @@ export type NavItemKey =
 
 export type NavHref = `/${string}`;
 
-export type NavChildKind = "academic" | "staff";
+export type NavChildKind =
+  | "academic"
+  | "staff"
+  | "students"
+  | "reporting"
+  | "grades"
+  | "timetable";
 
-/** Sous-entrée (onglets Académique / Personnel). */
+/** Sous-entrée (onglets module). */
 export type NavChildItem = {
   href: NavHref;
   kind: NavChildKind;
-  tab: AcademicTab | StaffListTab;
+  tab: AcademicTab | StaffListTab | StudentTab | ReportingTab | GradesTab | TimetableTab;
 };
 
 export type NavItem = {
@@ -83,6 +100,41 @@ function staffNavChildren(home: `/${string}`, role: AppRole): NavChildItem[] {
   return staffListTabsForRole(role).map((tab) => ({
     href: staffListPath(home, tab),
     kind: "staff" as const,
+    tab,
+  }));
+}
+
+function studentsNavChildren(home: `/${string}`): NavChildItem[] {
+  return STUDENT_TABS.map((tab) => ({
+    href: moduleListPath(home, "students", tab, "all"),
+    kind: "students" as const,
+    tab,
+  }));
+}
+
+function reportingNavChildren(home: `/${string}`): NavChildItem[] {
+  return REPORTING_TABS.map((tab) => ({
+    href: moduleListPath(home, "reporting", tab, "templates"),
+    kind: "reporting" as const,
+    tab,
+  }));
+}
+
+function gradesNavChildren(
+  home: `/${string}`,
+  module: "grades" | "sequences",
+): NavChildItem[] {
+  return GRADES_TABS.map((tab) => ({
+    href: moduleListPath(home, module, tab, "sessions"),
+    kind: "grades" as const,
+    tab,
+  }));
+}
+
+function timetableNavChildren(home: `/${string}`): NavChildItem[] {
+  return TIMETABLE_TABS.map((tab) => ({
+    href: moduleListPath(home, "timetable", tab, "overview"),
+    kind: "timetable" as const,
     tab,
   }));
 }
@@ -131,24 +183,29 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
     case "ADMINISTRATION":
       return [
         item(home, "home", LayoutDashboard),
-        item(`${home}/students`, "students", GraduationCap),
+        item(`${home}/students`, "students", GraduationCap, studentsNavChildren(home)),
         item(`${home}/staff`, "staff", Users, staffNavChildren(home, role)),
         item(`${home}/academic`, "academic", BookOpen, academicNavChildren(home)),
-        item(`${home}/grades`, "grades", ClipboardList),
-        item(`${home}/reporting`, "reporting", FileSpreadsheet),
-        item(`${home}/timetable`, "timetable", CalendarDays),
+        item(`${home}/grades`, "grades", ClipboardList, gradesNavChildren(home, "grades")),
+        item(`${home}/reporting`, "reporting", FileSpreadsheet, reportingNavChildren(home)),
+        item(`${home}/timetable`, "timetable", CalendarDays, timetableNavChildren(home)),
         ...sharedTail,
       ];
     case "DIRECTOR":
       return [
         item(home, "home", LayoutDashboard),
-        item(`${home}/students`, "students", GraduationCap),
+        item(`${home}/students`, "students", GraduationCap, studentsNavChildren(home)),
         item(`${home}/staff`, "staff", Users, staffNavChildren(home, role)),
         item(`${home}/academic`, "academic", BookOpen, academicNavChildren(home)),
-        item(`${home}/sequences`, "sequences", Shield),
-        item(`${home}/reporting`, "reporting", FileSpreadsheet),
+        item(
+          `${home}/sequences`,
+          "sequences",
+          Shield,
+          gradesNavChildren(home, "sequences"),
+        ),
+        item(`${home}/reporting`, "reporting", FileSpreadsheet, reportingNavChildren(home)),
         item(`${home}/admin-accounts`, "adminAccounts", UserRound),
-        item(`${home}/timetable`, "timetable", CalendarDays),
+        item(`${home}/timetable`, "timetable", CalendarDays, timetableNavChildren(home)),
         ...sharedTail,
       ];
     case "SUPER_ADMIN":

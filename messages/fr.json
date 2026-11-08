@@ -541,5 +541,233 @@
     "forbidden": "Accès non autorisé.",
     "notFound": "Ressource introuvable.",
     "validation": "Veuillez vérifier les informations saisies."
+  },
+  "students": {
+    "tabsNav": "Filtres élèves",
+    "yearLabel": "Année scolaire",
+    "yearEmpty": "Aucune année scolaire configurée",
+    "yearHint": "Les inscriptions affichées concernent l’année courante.",
+    "yearStatus": {
+      "PLANNED": "Planifiée",
+      "ACTIVE": "Active",
+      "CLOSED": "Clôturée"
+    },
+    "statusActive": "Actif",
+    "inactive": "Inactif",
+    "loadError": "Impossible de charger les élèves.",
+    "tableCount": "{count, plural, one {# élève affiché} other {# élèves affichés}}",
+    "stats": {
+      "total": "Total",
+      "active": "Actifs",
+      "inactive": "Inactifs",
+      "enrollments": "Inscriptions"
+    },
+    "tabs": {
+      "all": "Tous",
+      "active": "Actifs",
+      "inactive": "Inactifs",
+      "enrollments": "Inscriptions"
+    },
+    "search": {
+      "all": "Nom, matricule, e-mail…",
+      "active": "Nom, matricule…",
+      "inactive": "Nom, matricule…",
+      "enrollments": "Élève, classe, statut…"
+    },
+    "columns": {
+      "name": "Nom",
+      "matricule": "Matricule",
+      "sex": "Sexe",
+      "status": "Statut",
+      "studentId": "Élève",
+      "classId": "Classe",
+      "year": "Année"
+    },
+    "empty": {
+      "all": {
+        "title": "Aucun élève",
+        "description": "Ajoutez les élèves de l’établissement pour gérer les inscriptions."
+      },
+      "active": {
+        "title": "Aucun élève actif",
+        "description": "Les élèves actifs apparaissent ici."
+      },
+      "inactive": {
+        "title": "Aucun élève inactif",
+        "description": "Les fiches désactivées apparaissent ici."
+      },
+      "enrollments": {
+        "title": "Aucune inscription",
+        "description": "Les inscriptions de l’année courante apparaîtront ici."
+      }
+    }
+  },
+  "reportingHub": {
+    "tabsNav": "Reporting",
+    "yearLabel": "Année scolaire",
+    "yearEmpty": "Aucune année scolaire configurée",
+    "yearHint": "Les gabarits de bulletins sont liés à l’établissement ; la génération suit l’année.",
+    "yearStatus": {
+      "PLANNED": "Planifiée",
+      "ACTIVE": "Active",
+      "CLOSED": "Clôturée"
+    },
+    "statusActive": "Actif",
+    "inactive": "Inactif",
+    "loadError": "Impossible de charger le reporting.",
+    "tableCount": "{count, plural, one {# gabarit affiché} other {# gabarits affichés}}",
+    "stats": {
+      "templates": "Gabarits",
+      "active": "Actifs",
+      "annual": "Annuels",
+      "term": "Trimestres"
+    },
+    "tabs": {
+      "templates": "Gabarits",
+      "bulletins": "Bulletins",
+      "reviews": "Revues"
+    },
+    "search": {
+      "templates": "Code ou libellé…",
+      "bulletins": "Recherche…",
+      "reviews": "Recherche…"
+    },
+    "columns": {
+      "name": "Nom",
+      "code": "Code",
+      "period": "Période",
+      "status": "Statut"
+    },
+    "empty": {
+      "templates": {
+        "title": "Aucun gabarit",
+        "description": "Configurez les ReportTemplate pour générer les bulletins."
+      },
+      "bulletins": {
+        "title": "Bulletins à brancher",
+        "description": "La génération et la liste des bulletins arriveront ensuite."
+      },
+      "reviews": {
+        "title": "Revues à brancher",
+        "description": "Les revues / validations de bulletins arriveront ensuite."
+      }
+    }
+  },
+  "gradesHub": {
+    "tabsNav": "Notes et séquences",
+    "yearLabel": "Année scolaire",
+    "yearEmpty": "Aucune année scolaire configurée",
+    "yearHint": "Les sessions d’évaluation sont liées à l’année courante.",
+    "yearStatus": {
+      "PLANNED": "Planifiée",
+      "ACTIVE": "Active",
+      "CLOSED": "Clôturée"
+    },
+    "statusActive": "Actif",
+    "inactive": "Inactif",
+    "afterClosed": "Après clôture",
+    "loadError": "Impossible de charger les notes / séquences.",
+    "tableCount": "{count, plural, one {# élément affiché} other {# éléments affichés}}",
+    "stats": {
+      "sessions": "Sessions",
+      "open": "Ouvertes",
+      "schemes": "Barèmes",
+      "audits": "Audits"
+    },
+    "tabs": {
+      "sessions": "Sessions",
+      "schemes": "Barèmes",
+      "audits": "Audits"
+    },
+    "search": {
+      "sessions": "Libellé, statut…",
+      "schemes": "Code ou libellé…",
+      "audits": "Action, cible, acteur…"
+    },
+    "columns": {
+      "session": "Session",
+      "term": "Trimestre",
+      "status": "Statut",
+      "examDate": "Examen",
+      "name": "Nom",
+      "code": "Code",
+      "passMark": "Seuil",
+      "action": "Action",
+      "target": "Cible",
+      "actor": "Acteur",
+      "when": "Quand"
+    },
+    "sessionStatus": {
+      "PLANNED": "Planifiée",
+      "OPEN": "Ouverte",
+      "CLOSED": "Clôturée"
+    },
+    "empty": {
+      "sessions": {
+        "title": "Aucune session",
+        "description": "Ouvrez les séquences d’évaluation de l’année courante."
+      },
+      "schemes": {
+        "title": "Aucun barème",
+        "description": "Les GradingScheme paramètrent seuils, mentions et arrondis."
+      },
+      "audits": {
+        "title": "Aucun audit",
+        "description": "Les corrections de notes (BR-18) apparaissent ici."
+      }
+    }
+  },
+  "timetableHub": {
+    "tabsNav": "Emploi du temps",
+    "yearLabel": "Année scolaire",
+    "yearEmpty": "Aucune année scolaire configurée",
+    "yearHint": "Les salles sont déjà disponibles ; la grille d’emploi du temps arrive ensuite.",
+    "yearStatus": {
+      "PLANNED": "Planifiée",
+      "ACTIVE": "Active",
+      "CLOSED": "Clôturée"
+    },
+    "statusActive": "Actif",
+    "inactive": "Inactif",
+    "loadError": "Impossible de charger l’emploi du temps.",
+    "tableCount": "{count, plural, one {# salle affichée} other {# salles affichées}}",
+    "stats": {
+      "overview": "Grille",
+      "rooms": "Salles"
+    },
+    "tabs": {
+      "overview": "Vue d’ensemble",
+      "rooms": "Salles"
+    },
+    "search": {
+      "overview": "Recherche…",
+      "rooms": "Nom ou type…"
+    },
+    "columns": {
+      "name": "Nom",
+      "type": "Type",
+      "capacity": "Capacité",
+      "status": "Statut"
+    },
+    "empty": {
+      "overview": {
+        "title": "Grille à brancher",
+        "description": "La liste / édition des créneaux d’emploi du temps arrivera ensuite."
+      },
+      "rooms": {
+        "title": "Aucune salle",
+        "description": "Ajoutez des salles dans le module Académique."
+      }
+    }
+  },
+  "adminAccountsHub": {
+    "stats": {
+      "accounts": "Comptes",
+      "active": "Actifs"
+    },
+    "empty": {
+      "title": "Liste des comptes à brancher",
+      "description": "L’API de liste paginée des UserAccount n’existe pas encore ; création et consultation par id seulement."
+    }
   }
 }

@@ -19,16 +19,32 @@ export function SidebarNav({ collapsed = false }: SidebarNavProps) {
   const t = useTranslations("nav");
   const tAcademic = useTranslations("academic");
   const tStaff = useTranslations("staff");
+  const tStudents = useTranslations("students");
+  const tReporting = useTranslations("reportingHub");
+  const tGrades = useTranslations("gradesHub");
+  const tTimetable = useTranslations("timetableHub");
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const items = getNavItemsForRole(primaryRole(user));
 
   function childLabel(child: NavChildItem): string {
-    if (child.kind === "academic") {
-      return tAcademic(`tabs.${child.tab}`);
+    switch (child.kind) {
+      case "academic":
+        return tAcademic(`tabs.${child.tab}`);
+      case "staff":
+        return tStaff(`tabs.${child.tab}`);
+      case "students":
+        return tStudents(`tabs.${child.tab}`);
+      case "reporting":
+        return tReporting(`tabs.${child.tab}`);
+      case "grades":
+        return tGrades(`tabs.${child.tab}`);
+      case "timetable":
+        return tTimetable(`tabs.${child.tab}`);
+      default:
+        return String(child.tab);
     }
-    return tStaff(`tabs.${child.tab}`);
   }
 
   return (

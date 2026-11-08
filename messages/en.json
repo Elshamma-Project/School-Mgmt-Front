@@ -541,5 +541,233 @@
     "forbidden": "Access denied.",
     "notFound": "Resource not found.",
     "validation": "Please check the information you entered."
+  },
+  "students": {
+    "tabsNav": "Student filters",
+    "yearLabel": "Academic year",
+    "yearEmpty": "No academic year configured",
+    "yearHint": "Enrollments shown are for the current year.",
+    "yearStatus": {
+      "PLANNED": "Planned",
+      "ACTIVE": "Active",
+      "CLOSED": "Closed"
+    },
+    "statusActive": "Active",
+    "inactive": "Inactive",
+    "loadError": "Unable to load students.",
+    "tableCount": "{count, plural, one {# student shown} other {# students shown}}",
+    "stats": {
+      "total": "Total",
+      "active": "Active",
+      "inactive": "Inactive",
+      "enrollments": "Enrollments"
+    },
+    "tabs": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "enrollments": "Enrollments"
+    },
+    "search": {
+      "all": "Name, ID, email…",
+      "active": "Name, ID…",
+      "inactive": "Name, ID…",
+      "enrollments": "Student, class, status…"
+    },
+    "columns": {
+      "name": "Name",
+      "matricule": "Student ID",
+      "sex": "Sex",
+      "status": "Status",
+      "studentId": "Student",
+      "classId": "Class",
+      "year": "Year"
+    },
+    "empty": {
+      "all": {
+        "title": "No students",
+        "description": "Add school students to manage enrollments."
+      },
+      "active": {
+        "title": "No active students",
+        "description": "Active student records appear here."
+      },
+      "inactive": {
+        "title": "No inactive students",
+        "description": "Deactivated records appear here."
+      },
+      "enrollments": {
+        "title": "No enrollments",
+        "description": "Current-year enrollments will appear here."
+      }
+    }
+  },
+  "reportingHub": {
+    "tabsNav": "Reporting",
+    "yearLabel": "Academic year",
+    "yearEmpty": "No academic year configured",
+    "yearHint": "Report templates belong to the school; generation follows the year.",
+    "yearStatus": {
+      "PLANNED": "Planned",
+      "ACTIVE": "Active",
+      "CLOSED": "Closed"
+    },
+    "statusActive": "Active",
+    "inactive": "Inactive",
+    "loadError": "Unable to load reporting.",
+    "tableCount": "{count, plural, one {# template shown} other {# templates shown}}",
+    "stats": {
+      "templates": "Templates",
+      "active": "Active",
+      "annual": "Annual",
+      "term": "Term"
+    },
+    "tabs": {
+      "templates": "Templates",
+      "bulletins": "Report cards",
+      "reviews": "Reviews"
+    },
+    "search": {
+      "templates": "Code or label…",
+      "bulletins": "Search…",
+      "reviews": "Search…"
+    },
+    "columns": {
+      "name": "Name",
+      "code": "Code",
+      "period": "Period",
+      "status": "Status"
+    },
+    "empty": {
+      "templates": {
+        "title": "No templates",
+        "description": "Configure ReportTemplate records to generate report cards."
+      },
+      "bulletins": {
+        "title": "Report cards coming next",
+        "description": "Generation and listing of report cards will follow."
+      },
+      "reviews": {
+        "title": "Reviews coming next",
+        "description": "Report-card review / validation will follow."
+      }
+    }
+  },
+  "gradesHub": {
+    "tabsNav": "Grades and sequences",
+    "yearLabel": "Academic year",
+    "yearEmpty": "No academic year configured",
+    "yearHint": "Evaluation sessions belong to the current year.",
+    "yearStatus": {
+      "PLANNED": "Planned",
+      "ACTIVE": "Active",
+      "CLOSED": "Closed"
+    },
+    "statusActive": "Active",
+    "inactive": "Inactive",
+    "afterClosed": "After close",
+    "loadError": "Unable to load grades / sequences.",
+    "tableCount": "{count, plural, one {# item shown} other {# items shown}}",
+    "stats": {
+      "sessions": "Sessions",
+      "open": "Open",
+      "schemes": "Schemes",
+      "audits": "Audits"
+    },
+    "tabs": {
+      "sessions": "Sessions",
+      "schemes": "Schemes",
+      "audits": "Audits"
+    },
+    "search": {
+      "sessions": "Label, status…",
+      "schemes": "Code or label…",
+      "audits": "Action, target, actor…"
+    },
+    "columns": {
+      "session": "Session",
+      "term": "Term",
+      "status": "Status",
+      "examDate": "Exam",
+      "name": "Name",
+      "code": "Code",
+      "passMark": "Pass mark",
+      "action": "Action",
+      "target": "Target",
+      "actor": "Actor",
+      "when": "When"
+    },
+    "sessionStatus": {
+      "PLANNED": "Planned",
+      "OPEN": "Open",
+      "CLOSED": "Closed"
+    },
+    "empty": {
+      "sessions": {
+        "title": "No sessions",
+        "description": "Open evaluation sequences for the current year."
+      },
+      "schemes": {
+        "title": "No schemes",
+        "description": "GradingScheme records configure thresholds, mentions and rounding."
+      },
+      "audits": {
+        "title": "No audits",
+        "description": "Grade corrections (BR-18) appear here."
+      }
+    }
+  },
+  "timetableHub": {
+    "tabsNav": "Timetable",
+    "yearLabel": "Academic year",
+    "yearEmpty": "No academic year configured",
+    "yearHint": "Rooms are already available; the timetable grid comes next.",
+    "yearStatus": {
+      "PLANNED": "Planned",
+      "ACTIVE": "Active",
+      "CLOSED": "Closed"
+    },
+    "statusActive": "Active",
+    "inactive": "Inactive",
+    "loadError": "Unable to load timetable.",
+    "tableCount": "{count, plural, one {# room shown} other {# rooms shown}}",
+    "stats": {
+      "overview": "Grid",
+      "rooms": "Rooms"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "rooms": "Rooms"
+    },
+    "search": {
+      "overview": "Search…",
+      "rooms": "Name or type…"
+    },
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "capacity": "Capacity",
+      "status": "Status"
+    },
+    "empty": {
+      "overview": {
+        "title": "Grid coming next",
+        "description": "Timetable slot listing / editing will follow."
+      },
+      "rooms": {
+        "title": "No rooms",
+        "description": "Add rooms in the Academic module."
+      }
+    }
+  },
+  "adminAccountsHub": {
+    "stats": {
+      "accounts": "Accounts",
+      "active": "Active"
+    },
+    "empty": {
+      "title": "Account list coming next",
+      "description": "Paginated UserAccount listing is not available yet; create and get-by-id only."
+    }
   }
 }
