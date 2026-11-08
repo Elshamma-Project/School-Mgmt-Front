@@ -15,37 +15,37 @@ type MockPersona = {
 const PERSONAS: Record<AppRole, MockPersona> = {
   TEACHER: {
     role: "TEACHER",
-    username: "demo.enseignant",
+    username: "enseignant@elshammah.demo",
     displayName: "Demo Teacher",
   },
   PARENT: {
     role: "PARENT",
-    username: "demo.parent",
+    username: "parent.demo@elshammah.demo",
     displayName: "Demo Parent",
   },
   ADMINISTRATION: {
     role: "ADMINISTRATION",
-    username: "demo.administration",
+    username: "admin@elshammah.demo",
     displayName: "Demo Administration",
   },
   SURVEILLANT_GENERAL: {
     role: "SURVEILLANT_GENERAL",
-    username: "demo.surveillant",
+    username: "surveillant@elshammah.demo",
     displayName: "Demo Surveillant",
   },
   DIRECTOR: {
     role: "DIRECTOR",
-    username: "demo.directeur",
+    username: "directeur@elshammah.demo",
     displayName: "Demo Director",
   },
   SUPER_ADMIN: {
     role: "SUPER_ADMIN",
-    username: "demo.super",
+    username: "superadmin@smels.local",
     displayName: "Demo Platform",
   },
   STUDENT: {
     role: "STUDENT",
-    username: "demo.student",
+    username: "eleve.demo@elshammah.demo",
     displayName: "Demo Student",
     comingSoon: true,
   },

@@ -1,15 +1,17 @@
 /**
- * Paramètres multi-tenant / déploiement — jamais d’identifiants école en dur
- * dans la logique métier. Tout passe par env + (optionnel) nom d’hôte.
+ * Paramètres multi-tenant / déploiement.
+ *
+ * Important Next.js : les `NEXT_PUBLIC_*` doivent être référencés de façon
+ * **statique** (`process.env.NEXT_PUBLIC_FOO`) pour être injectés dans le bundle client.
+ * Un accès dynamique `process.env[name]` renvoie toujours `undefined` côté navigateur.
  */
 
-function readPublic(name: string, fallback = ""): string {
-  const value = process.env[name];
+function trimEnv(value: string | undefined, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;
 }
 
-function readBool(name: string, fallback: boolean): boolean {
-  const raw = readPublic(name);
+function readBool(value: string | undefined, fallback: boolean): boolean {
+  const raw = trimEnv(value);
   if (!raw) return fallback;
   return raw === "1" || raw.toLowerCase() === "true" || raw.toLowerCase() === "yes";
 }
@@ -18,22 +20,18 @@ export type TenantPublicConfig = {
   /** URL de base de l’API SMELS (ex. http://localhost:8090). */
   apiBaseUrl: string;
   /**
-   * Identifiant établissement résolu (env prioritaire, sinon hostname).
+   * Identifiant établissement (env prioritaire, sinon hostname hors localhost).
    * Envoyé automatiquement au login — jamais saisi par l’utilisateur.
    */
   schoolId: string;
-  /** Libellé UI de l’école (branding déploiement), pas un id technique. */
+  /** Libellé UI de l’école (branding déploiement). */
   schoolDisplayName: string;
   /** Nom produit affiché (souvent SMELS). */
   appDisplayName: string;
-  /**
-   * Autorise le mode démo local (personas sans API).
-   * À laisser false dès qu’on branche un vrai backend.
-   */
+  /** Personas UI sans API (dev seulement). */
   enableDemoLogin: boolean;
 };
 
-/** Hostname navigateur, sans port (ex. elshammah.cm, localhost). */
 function browserHostname(): string {
   if (typeof window === "undefined") return "";
   return window.location.hostname.trim().toLowerCase();
@@ -41,11 +39,14 @@ function browserHostname(): string {
 
 /**
  * schoolId effectif :
- * 1. NEXT_PUBLIC_DEFAULT_SCHOOL_ID
+ * 1. NEXT_PUBLIC_DEFAULT_SCHOOL_ID (.env)
  * 2. sinon le nom de domaine (hors localhost / IP)
  */
-export function resolveSchoolId(): string {
-  const fromEnv = readPublic("NEXT_PUBLIC_DEFAULT_SCHOOL_ID");
+export function resolveSchoolId(override?: string | null): string {
+  const fromOverride = override?.trim();
+  if (fromOverride) return fromOverride;
+
+  const fromEnv = trimEnv(process.env.NEXT_PUBLIC_DEFAULT_SCHOOL_ID);
   if (fromEnv) return fromEnv;
 
   const host = browserHostname();
@@ -55,12 +56,12 @@ export function resolveSchoolId(): string {
   return host;
 }
 
-export function getTenantConfig(): TenantPublicConfig {
+export function getTenantConfig(schoolIdOverride?: string | null): TenantPublicConfig {
   return {
-    apiBaseUrl: readPublic("NEXT_PUBLIC_API_BASE_URL", "http://localhost:8090"),
-    schoolId: resolveSchoolId(),
-    schoolDisplayName: readPublic("NEXT_PUBLIC_SCHOOL_DISPLAY_NAME", "School"),
-    appDisplayName: readPublic("NEXT_PUBLIC_APP_DISPLAY_NAME", "SMELS"),
-    enableDemoLogin: readBool("NEXT_PUBLIC_ENABLE_DEMO_LOGIN", false),
+    apiBaseUrl: trimEnv(process.env.NEXT_PUBLIC_API_BASE_URL, "http://localhost:8090"),
+    schoolId: resolveSchoolId(schoolIdOverride),
+    schoolDisplayName: trimEnv(process.env.NEXT_PUBLIC_SCHOOL_DISPLAY_NAME, "School"),
+    appDisplayName: trimEnv(process.env.NEXT_PUBLIC_APP_DISPLAY_NAME, "SMELS"),
+    enableDemoLogin: readBool(process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN, false),
   };
 }

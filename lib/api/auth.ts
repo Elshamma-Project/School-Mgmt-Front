@@ -21,7 +21,7 @@ function toLoginResponse(raw: AuthTokensResponse): LoginResponse {
 
 export async function login(payload: LoginRequest): Promise<LoginResponse> {
   const body: Record<string, string> = {
-    username: payload.username.trim(),
+    email: payload.email.trim().toLowerCase(),
     password: payload.password,
   };
   const schoolId = payload.schoolId?.trim();

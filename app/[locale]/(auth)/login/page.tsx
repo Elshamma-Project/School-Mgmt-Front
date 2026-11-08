@@ -9,6 +9,8 @@ export const instant = false;
 export default async function LoginPage() {
   const t = await getTranslations("auth");
   const tCommon = await getTranslations("common");
+  // Lu côté serveur depuis .env (fiable) puis passé au formulaire client.
+  const schoolId = process.env.NEXT_PUBLIC_DEFAULT_SCHOOL_ID?.trim() ?? "";
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-[var(--ios-bg)]">
@@ -34,7 +36,7 @@ export default async function LoginPage() {
           <h2 className="mb-5 text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
             {t("loginTitle")}
           </h2>
-          <LoginForm />
+          <LoginForm schoolId={schoolId} />
         </div>
 
         <div className="mt-8">

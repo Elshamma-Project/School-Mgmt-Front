@@ -68,9 +68,9 @@ export type AuthUser = {
 };
 
 export type LoginRequest = {
-  username: string;
+  email: string;
   password: string;
-  /** Requis pour les comptes d’établissement ; omis pour SUPER_ADMIN. */
+  /** Résolu automatiquement (env / domaine) ; SUPER_ADMIN détecté côté API. */
   schoolId?: string | null;
   deviceLabel?: string;
 };

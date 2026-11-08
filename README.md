@@ -18,11 +18,11 @@ npm run dev
 
 ### Tester la connexion (back mock)
 
-| Username | Mot de passe | schoolId |
-|---|---|---|
-| `directeur` | `DemoPass123!` | `school-demo-elshammah` |
-| `enseignant` | `DemoPass123!` | `school-demo-elshammah` |
-| `superadmin` | `DemoPass123!` | *(détecté auto — même formulaire)* |
+| E-mail | Mot de passe |
+|---|---|
+| `directeur@elshammah.demo` | `DemoPass123!` |
+| `enseignant@elshammah.demo` | `DemoPass123!` |
+| `superadmin@smels.local` | `DemoPass123!` |
 
 ## Docker (`setup/`)
 

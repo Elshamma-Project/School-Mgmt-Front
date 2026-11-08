@@ -17,8 +17,12 @@ export function AppSidebar() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setReady(useSidebarStore.persist.hasHydrated());
-    return useSidebarStore.persist.onFinishHydration(() => setReady(true));
+    const finish = () => setReady(true);
+    if (useSidebarStore.persist.hasHydrated()) {
+      finish();
+      return;
+    }
+    return useSidebarStore.persist.onFinishHydration(finish);
   }, []);
 
   return (

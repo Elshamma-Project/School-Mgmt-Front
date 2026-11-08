@@ -21,8 +21,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setHydrated(useAuthStore.persist.hasHydrated());
-    return useAuthStore.persist.onFinishHydration(() => setHydrated(true));
+    const finish = () => setHydrated(true);
+    if (useAuthStore.persist.hasHydrated()) {
+      finish();
+      return;
+    }
+    return useAuthStore.persist.onFinishHydration(finish);
   }, []);
 
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Eye, EyeOff, KeyRound, UserRound } from "lucide-react";
+import { Check, Eye, EyeOff, KeyRound, Mail } from "lucide-react";
 import { LoginLoading } from "@/components/auth/login-loading";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -24,20 +24,28 @@ import { primaryRole } from "@/types/auth";
 
 const LOGIN_MIN_MS = 700;
 
-export function LoginForm() {
+type LoginFormProps = {
+  /** schoolId lu côté serveur depuis .env (prioritaire). */
+  schoolId?: string;
+};
+
+export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
   const t = useTranslations("auth");
   const tRoles = useTranslations("roles");
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
-  const tenant = useMemo(() => getTenantConfig(), []);
+  const tenant = useMemo(
+    () => getTenantConfig(schoolIdFromServer),
+    [schoolIdFromServer],
+  );
 
   const [demoMode, setDemoMode] = useState(false);
   const [role, setRole] = useState<AppRole>("DIRECTOR");
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
-    username?: string;
+    email?: string;
     password?: string;
   }>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -75,7 +83,9 @@ export function LoginForm() {
     }
 
     const nextErrors: typeof fieldErrors = {};
-    if (!username.trim()) nextErrors.username = t("requiredField");
+    const emailValue = email.trim().toLowerCase();
+    if (!emailValue) nextErrors.email = t("requiredField");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) nextErrors.email = t("invalidEmail");
     if (!password) nextErrors.password = t("requiredField");
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -90,7 +100,7 @@ export function LoginForm() {
     try {
       // schoolId automatique (env / domaine). SUPER_ADMIN résolu côté API en secours.
       const response = await apiLogin({
-        username: username.trim(),
+        email: emailValue,
         password,
         schoolId: tenant.schoolId,
         deviceLabel: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 120) : undefined,
@@ -121,7 +131,7 @@ export function LoginForm() {
 
   const loadingRoleLabel = demoMode
     ? tRoles(`${role}.label`)
-    : username.trim() || t("loginPreparingHint");
+    : email.trim() || t("loginPreparingHint");
 
   return (
     <>
@@ -197,14 +207,16 @@ export function LoginForm() {
           </fieldset>
         ) : (
           <div className="flex flex-col gap-4">
-            <Field id="login-username" label={t("username")} error={fieldErrors.username}>
+            <Field id="login-email" label={t("email")} error={fieldErrors.email}>
               <IconInput
-                id="login-username"
-                icon={<UserRound className="size-4 stroke-[1.75]" />}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                invalid={Boolean(fieldErrors.username)}
+                id="login-email"
+                type="email"
+                icon={<Mail className="size-4 stroke-[1.75]" />}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                invalid={Boolean(fieldErrors.email)}
                 autoComplete="username"
+                inputMode="email"
                 disabled={submitting}
               />
             </Field>

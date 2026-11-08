@@ -11,7 +11,7 @@
 | Variable | Rôle |
 |---|---|
 | `NEXT_PUBLIC_API_BASE_URL` | Base URL API |
-| `NEXT_PUBLIC_DEFAULT_SCHOOL_ID` | Préremplissage login |
+| `NEXT_PUBLIC_DEFAULT_SCHOOL_ID` | schoolId auto (lu depuis `.env`, passé aussi serveur → client) |
 | `NEXT_PUBLIC_SCHOOL_DISPLAY_NAME` | Branding UI |
 | `NEXT_PUBLIC_APP_DISPLAY_NAME` | Nom produit |
 | `NEXT_PUBLIC_ENABLE_DEMO_LOGIN` | Personas sans API (dev UI) |

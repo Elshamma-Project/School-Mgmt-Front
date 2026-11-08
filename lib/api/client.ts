@@ -60,7 +60,8 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const { body, auth = true, headers, skipRefresh = false, ...rest } = options;
   const requestHeaders = new Headers(headers);
-  const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "");
+  // Accès statique NEXT_PUBLIC_* via getTenantConfig (inliné au build / dev).
+  const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "") || "http://localhost:8090";
 
   if (body !== undefined && !requestHeaders.has("Content-Type")) {
     requestHeaders.set("Content-Type", "application/json");
