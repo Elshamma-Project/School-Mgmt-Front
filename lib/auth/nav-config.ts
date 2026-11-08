@@ -20,6 +20,8 @@ import {
   type AcademicTab,
 } from "@/lib/academic/tabs";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
+import { staffListTabsForRole, type StaffListTab } from "@/lib/staff/functions";
+import { staffListPath } from "@/lib/staff/routes";
 import type { AppRole } from "@/types/auth";
 
 export type NavItemKey =
@@ -44,11 +46,13 @@ export type NavItemKey =
 
 export type NavHref = `/${string}`;
 
-/** Sous-entrée (ex. onglets Académique). */
+export type NavChildKind = "academic" | "staff";
+
+/** Sous-entrée (onglets Académique / Personnel). */
 export type NavChildItem = {
   href: NavHref;
-  /** Clé i18n sous `academic.tabs.*`. */
-  tab: AcademicTab;
+  kind: NavChildKind;
+  tab: AcademicTab | StaffListTab;
 };
 
 export type NavItem = {
@@ -70,6 +74,15 @@ function item(
 function academicNavChildren(home: `/${string}`): NavChildItem[] {
   return ACADEMIC_TABS.map((tab) => ({
     href: academicListPath(home, tab),
+    kind: "academic" as const,
+    tab,
+  }));
+}
+
+function staffNavChildren(home: `/${string}`, role: AppRole): NavChildItem[] {
+  return staffListTabsForRole(role).map((tab) => ({
+    href: staffListPath(home, tab),
+    kind: "staff" as const,
     tab,
   }));
 }
@@ -119,7 +132,7 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
       return [
         item(home, "home", LayoutDashboard),
         item(`${home}/students`, "students", GraduationCap),
-        item(`${home}/staff`, "staff", Users),
+        item(`${home}/staff`, "staff", Users, staffNavChildren(home, role)),
         item(`${home}/academic`, "academic", BookOpen, academicNavChildren(home)),
         item(`${home}/grades`, "grades", ClipboardList),
         item(`${home}/reporting`, "reporting", FileSpreadsheet),
@@ -130,7 +143,7 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
       return [
         item(home, "home", LayoutDashboard),
         item(`${home}/students`, "students", GraduationCap),
-        item(`${home}/staff`, "staff", Users),
+        item(`${home}/staff`, "staff", Users, staffNavChildren(home, role)),
         item(`${home}/academic`, "academic", BookOpen, academicNavChildren(home)),
         item(`${home}/sequences`, "sequences", Shield),
         item(`${home}/reporting`, "reporting", FileSpreadsheet),

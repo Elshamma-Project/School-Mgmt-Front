@@ -7,11 +7,8 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { Link, usePathname } from "@/i18n/navigation";
-import {
-  isAcademicChildActive,
-  isNavItemActive,
-} from "@/lib/auth/nav-active";
-import { getNavItemsForRole, type NavItem } from "@/lib/auth/nav-config";
+import { isNavChildActive, isNavItemActive } from "@/lib/auth/nav-active";
+import { getNavItemsForRole, type NavChildItem, type NavItem } from "@/lib/auth/nav-config";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
@@ -27,12 +24,20 @@ type MobileNavDrawerProps = {
 export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
   const t = useTranslations("nav");
   const tAcademic = useTranslations("academic");
+  const tStaff = useTranslations("staff");
   const tCommon = useTranslations("common");
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const items = getNavItemsForRole(primaryRole(user));
   const titleId = useId();
+
+  function childLabel(child: NavChildItem): string {
+    if (child.kind === "academic") {
+      return tAcademic(`tabs.${child.tab}`);
+    }
+    return tStaff(`tabs.${child.tab}`);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -100,7 +105,7 @@ export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
                 pathname={pathname}
                 searchParams={searchParams}
                 label={t(entry.key)}
-                childLabel={(tab) => tAcademic(`tabs.${tab}`)}
+                childLabel={childLabel}
                 onNavigate={() => onOpenChange(false)}
               />
             ))}
@@ -127,7 +132,7 @@ type MobileNavEntryProps = {
   pathname: string;
   searchParams: { get: (key: string) => string | null };
   label: string;
-  childLabel: (tab: string) => string;
+  childLabel: (child: NavChildItem) => string;
   onNavigate: () => void;
 };
 
@@ -207,25 +212,21 @@ function MobileNavEntry({
       {open ? (
         <ul className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-[var(--ios-separator)] pl-2">
           {children!.map((child) => {
-            const childActive = isAcademicChildActive(
-              child.tab,
-              pathname,
-              searchParams,
-            );
+            const isActive = isNavChildActive(child, pathname, searchParams);
             return (
               <li key={child.href}>
                 <Link
                   href={child.href}
-                  aria-current={childActive ? "page" : undefined}
+                  aria-current={isActive ? "page" : undefined}
                   onClick={onNavigate}
                   className={cn(
                     "pressable flex items-center rounded-[var(--radius-md)] px-3 py-2 text-[12px] font-medium transition-colors focus-visible:shadow-[var(--focus-ring)]",
-                    childActive
+                    isActive
                       ? "bg-[var(--ios-blue)]/10 text-[var(--ios-blue)]"
                       : "text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)]",
                   )}
                 >
-                  <span className="truncate">{childLabel(child.tab)}</span>
+                  <span className="truncate">{childLabel(child)}</span>
                 </Link>
               </li>
             );

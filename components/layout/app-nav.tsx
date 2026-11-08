@@ -5,11 +5,8 @@ import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Link, usePathname } from "@/i18n/navigation";
-import {
-  isAcademicChildActive,
-  isNavItemActive,
-} from "@/lib/auth/nav-active";
-import { getNavItemsForRole, type NavItem } from "@/lib/auth/nav-config";
+import { isNavChildActive, isNavItemActive } from "@/lib/auth/nav-active";
+import { getNavItemsForRole, type NavChildItem, type NavItem } from "@/lib/auth/nav-config";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
@@ -21,10 +18,18 @@ type SidebarNavProps = {
 export function SidebarNav({ collapsed = false }: SidebarNavProps) {
   const t = useTranslations("nav");
   const tAcademic = useTranslations("academic");
+  const tStaff = useTranslations("staff");
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const items = getNavItemsForRole(primaryRole(user));
+
+  function childLabel(child: NavChildItem): string {
+    if (child.kind === "academic") {
+      return tAcademic(`tabs.${child.tab}`);
+    }
+    return tStaff(`tabs.${child.tab}`);
+  }
 
   return (
     <nav
@@ -42,7 +47,7 @@ export function SidebarNav({ collapsed = false }: SidebarNavProps) {
           pathname={pathname}
           searchParams={searchParams}
           label={t(entry.key)}
-          childLabel={(tab) => tAcademic(`tabs.${tab}`)}
+          childLabel={childLabel}
         />
       ))}
     </nav>
@@ -55,7 +60,7 @@ type NavEntryProps = {
   pathname: string;
   searchParams: { get: (key: string) => string | null };
   label: string;
-  childLabel: (tab: string) => string;
+  childLabel: (child: NavChildItem) => string;
 };
 
 function NavEntry({
@@ -96,12 +101,16 @@ function NavEntry({
     );
   }
 
+  const childActive = children!.some((c) =>
+    isNavChildActive(c, pathname, searchParams),
+  );
+
   return (
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-0.5">
         <Link
           href={href}
-          aria-current={active && !children?.some((c) => isAcademicChildActive(c.tab, pathname, searchParams)) ? "page" : undefined}
+          aria-current={active && !childActive ? "page" : undefined}
           className={cn(
             "pressable flex min-w-0 flex-1 items-center gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-[11px] font-medium transition-colors duration-[var(--duration-fast)] focus-visible:shadow-[var(--focus-ring)]",
             active
@@ -135,24 +144,20 @@ function NavEntry({
       {open ? (
         <ul className="ml-2 flex flex-col gap-0.5 border-l border-[var(--ios-separator)] pl-2">
           {children!.map((child) => {
-            const childActive = isAcademicChildActive(
-              child.tab,
-              pathname,
-              searchParams,
-            );
+            const isActive = isNavChildActive(child, pathname, searchParams);
             return (
               <li key={child.href}>
                 <Link
                   href={child.href}
-                  aria-current={childActive ? "page" : undefined}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "pressable flex items-center rounded-[var(--radius-sm)] px-2 py-1.5 text-[11px] font-medium transition-colors duration-[var(--duration-fast)] focus-visible:shadow-[var(--focus-ring)]",
-                    childActive
+                    isActive
                       ? "bg-[var(--ios-blue)]/10 text-[var(--ios-blue)]"
                       : "text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)]",
                   )}
                 >
-                  <span className="truncate">{childLabel(child.tab)}</span>
+                  <span className="truncate">{childLabel(child)}</span>
                 </Link>
               </li>
             );

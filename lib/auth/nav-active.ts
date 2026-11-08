@@ -1,5 +1,7 @@
 import { parseAcademicTab, type AcademicTab } from "@/lib/academic/tabs";
-import type { NavHref, NavItemKey } from "@/lib/auth/nav-config";
+import type { NavChildItem, NavHref, NavItemKey } from "@/lib/auth/nav-config";
+import type { StaffListTab } from "@/lib/staff/functions";
+import { isStaffTypeSlug, parseStaffListTab } from "@/lib/staff/routes";
 
 /** Onglet académique actif d’après le pathname + query `tab`. */
 export function academicTabFromLocation(
@@ -23,6 +25,32 @@ export function academicTabFromLocation(
   return null;
 }
 
+/** Onglet personnel actif d’après le pathname + query `tab`. */
+export function staffTabFromLocation(
+  pathname: string,
+  searchParams: { get: (key: string) => string | null },
+): StaffListTab | null {
+  const marker = "/staff";
+  const idx = pathname.indexOf(marker);
+  if (idx < 0) return null;
+
+  const rest = pathname.slice(idx + marker.length);
+  if (rest === "/create" || rest.startsWith("/create/")) {
+    return "all";
+  }
+
+  const typeMatch = rest.match(/^\/([^/]+)(?:\/|$)/);
+  if (typeMatch && isStaffTypeSlug(typeMatch[1]!)) {
+    return typeMatch[1] as StaffListTab;
+  }
+
+  if (rest === "" || rest === "/") {
+    return parseStaffListTab(searchParams.get("tab")) ?? "all";
+  }
+
+  return null;
+}
+
 export function isNavItemActive(
   key: NavItemKey,
   href: NavHref,
@@ -32,10 +60,13 @@ export function isNavItemActive(
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function isAcademicChildActive(
-  tab: AcademicTab,
+export function isNavChildActive(
+  child: NavChildItem,
   pathname: string,
   searchParams: { get: (key: string) => string | null },
 ): boolean {
-  return academicTabFromLocation(pathname, searchParams) === tab;
+  if (child.kind === "academic") {
+    return academicTabFromLocation(pathname, searchParams) === child.tab;
+  }
+  return staffTabFromLocation(pathname, searchParams) === child.tab;
 }
