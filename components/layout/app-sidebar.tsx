@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { PanelLeftClose } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SidebarNav } from "@/components/layout/app-nav";
@@ -75,7 +75,9 @@ export function AppSidebar() {
         )}
       </div>
 
-      <SidebarNav collapsed={collapsed} />
+      <Suspense fallback={<div className="flex-1" />}>
+        <SidebarNav collapsed={collapsed} />
+      </Suspense>
       <SidebarAccount collapsed={collapsed} />
     </aside>
   );

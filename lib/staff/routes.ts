@@ -40,6 +40,12 @@ export function staffListPath(
   return `${base}/staff?tab=${encodeURIComponent(tab)}` as `/${string}`;
 }
 
+/** Chemin relatif workspace : `/administration/staff/create`. */
+export function staffCreatePath(workspaceHome: `/${string}`): `/${string}` {
+  const base = workspaceHome.replace(/\/$/, "") as `/${string}`;
+  return `${base}/staff/create` as `/${string}`;
+}
+
 export function parseStaffListTab(value: string | null | undefined): StaffListTab | null {
   if (!value) return null;
   if (value === "all" || isStaffTypeSlug(value)) return value;

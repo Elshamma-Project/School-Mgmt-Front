@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ArrowLeft, Menu, PanelLeftOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
@@ -142,7 +142,9 @@ export function AppHeader() {
         </div>
       </header>
 
-      <MobileNavDrawer open={menuOpen} onOpenChange={setMenuOpen} />
+      <Suspense fallback={null}>
+        <MobileNavDrawer open={menuOpen} onOpenChange={setMenuOpen} />
+      </Suspense>
     </>
   );
 }

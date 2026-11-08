@@ -25,13 +25,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Field } from "@/components/ui/field";
 import { IconInput } from "@/components/ui/icon-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import {
-  createStaff,
   deactivateStaff,
   listStaff,
   reactivateStaff,
@@ -41,11 +39,12 @@ import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { formatInstant } from "@/lib/datetime/format";
 import {
   matchesStaffTab,
-  STAFF_LIST_TABS,
+  staffListTabsForRole,
   type StaffListTab,
 } from "@/lib/staff/functions";
 import {
   parseStaffListTab,
+  staffCreatePath,
   staffDetailPath,
   staffListPath,
   staffTypeSlug,
@@ -126,30 +125,23 @@ type StatCardProps = {
   onSelect?: () => void;
 };
 
-const toneStyles: Record<
-  StatTone,
-  { accent: string; icon: string; value: string; ring: string }
-> = {
+const toneStyles: Record<StatTone, { icon: string; value: string; ring: string }> = {
   blue: {
-    accent: "bg-[var(--ios-blue)]",
     icon: "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]",
     value: "text-[var(--ios-blue)]",
     ring: "ring-[color-mix(in_srgb,var(--ios-blue)_35%,transparent)]",
   },
   green: {
-    accent: "bg-[var(--ios-success)]",
     icon: "bg-[var(--ios-success-soft)] text-[var(--ios-success)]",
     value: "text-[var(--ios-success)]",
     ring: "ring-[color-mix(in_srgb,var(--ios-success)_35%,transparent)]",
   },
   amber: {
-    accent: "bg-[var(--ios-warning)]",
     icon: "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]",
     value: "text-[var(--ios-warning)]",
     ring: "ring-[color-mix(in_srgb,var(--ios-warning)_35%,transparent)]",
   },
   slate: {
-    accent: "bg-[var(--ios-secondary-label)]",
     icon: "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
     value: "text-[var(--ios-label)]",
     ring: "ring-[color-mix(in_srgb,var(--ios-fill-tertiary)_55%,transparent)]",
@@ -185,14 +177,6 @@ function StatCard({
         (!interactive || loading) && "cursor-default",
       )}
     >
-      <span
-        className={cn(
-          "absolute inset-x-0 top-0 h-[3px]",
-          styles.accent,
-          !active && "opacity-70",
-        )}
-        aria-hidden
-      />
       <div className="flex items-center gap-3 px-3.5 py-3.5 sm:gap-3.5 sm:px-4 sm:py-4">
         <span
           className={cn(
@@ -239,33 +223,34 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
   const role = primaryRole(useAuthStore((s) => s.user));
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
 
+  const visibleTabs = useMemo(() => staffListTabsForRole(role), [role]);
   const tabFromUrl = parseStaffListTab(searchParams.get("tab")) ?? "all";
-  const [tab, setTab] = useState<StaffListTab>(tabFromUrl);
+  const resolvedTab: StaffListTab = visibleTabs.includes(tabFromUrl) ? tabFromUrl : "all";
+  const [tab, setTab] = useState<StaffListTab>(resolvedTab);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounced(query, 280);
 
   useEffect(() => {
-    setTab(tabFromUrl);
-  }, [tabFromUrl]);
+    setTab(resolvedTab);
+    if (tabFromUrl !== resolvedTab) {
+      router.replace(staffListPath(workspaceHome, resolvedTab));
+    }
+  }, [resolvedTab, router, tabFromUrl, workspaceHome]);
 
   function selectTab(next: StaffListTab) {
+    if (!visibleTabs.includes(next)) return;
     setTab(next);
     router.replace(staffListPath(workspaceHome, next));
   }
+
+  function canManageMember(member: StaffResponse): boolean {
+    return member.canManage !== false;
+  }
   const [allItems, setAllItems] = useState<StaffResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
-
-  const [lastName, setLastName] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [asTeacher, setAsTeacher] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -331,43 +316,8 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
     router.push(staffDetailPath(workspaceHome, staffTypeSlug(member.functions), member.id));
   }
 
-  function resetCreateForm() {
-    setLastName("");
-    setFirstName("");
-    setEmail("");
-    setPhone("");
-    setAsTeacher(true);
-    setFormError(null);
-  }
-
-  async function submitCreate() {
-    if (!lastName.trim()) {
-      setFormError(t("lastNameRequired"));
-      return;
-    }
-    setSaving(true);
-    setFormError(null);
-    try {
-      await createStaff({
-        lastName: lastName.trim(),
-        firstName: firstName.trim(),
-        contact: {
-          email: email.trim() || null,
-          phones: phone.trim() ? [phone.trim()] : [],
-        },
-        functions: asTeacher ? ["TEACHER"] : ["OTHER"],
-        schoolId,
-      });
-      notify.success(t("created"));
-      setCreateOpen(false);
-      resetCreateForm();
-      await load();
-    } catch (error) {
-      if (error instanceof ApiError) setFormError(error.message);
-      else setFormError(t("createError"));
-    } finally {
-      setSaving(false);
-    }
+  function openCreate() {
+    router.push(staffCreatePath(workspaceHome));
   }
 
   async function confirmPendingAction() {
@@ -402,6 +352,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
 
   function ActionMenu({ member }: { member: StaffResponse }) {
     const open = menuId === member.id;
+    if (!canManageMember(member)) return null;
     return (
       <div className="relative" onClick={stopRowNav}>
         <button
@@ -468,7 +419,12 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
 
   return (
     <div className="space-y-5 slide-up">
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+      <div
+        className={cn(
+          "grid grid-cols-2 gap-2.5 sm:gap-3",
+          visibleTabs.includes("leadership") ? "lg:grid-cols-4" : "lg:grid-cols-3",
+        )}
+      >
         <StatCard
           label={t("stats.total")}
           value={stats.total}
@@ -487,15 +443,17 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
           onSelect={() => selectTab("teachers")}
           icon={<UserRound className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
-        <StatCard
-          label={t("stats.leadership")}
-          value={stats.leadership}
-          loading={loading}
-          tone="amber"
-          active={tab === "leadership"}
-          onSelect={() => selectTab("leadership")}
-          icon={<Shield className="size-[18px] stroke-[1.75]" aria-hidden />}
-        />
+        {visibleTabs.includes("leadership") ? (
+          <StatCard
+            label={t("stats.leadership")}
+            value={stats.leadership}
+            loading={loading}
+            tone="amber"
+            active={tab === "leadership"}
+            onSelect={() => selectTab("leadership")}
+            icon={<Shield className="size-[18px] stroke-[1.75]" aria-hidden />}
+          />
+        ) : null}
         <StatCard
           label={t("stats.support")}
           value={stats.support}
@@ -512,7 +470,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
           aria-label={t("tabsNav")}
           className="flex min-w-0 items-stretch gap-0 overflow-x-auto border-b border-[var(--ios-separator)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {STAFF_LIST_TABS.map((key) => {
+          {visibleTabs.map((key) => {
             const active = tab === key;
             return (
               <button
@@ -553,10 +511,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
             type="button"
             className="shrink-0"
             leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
-            onClick={() => {
-              resetCreateForm();
-              setCreateOpen(true);
-            }}
+            onClick={openCreate}
           >
             {t("add")}
           </Button>
@@ -587,10 +542,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
             <Button
               type="button"
               leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
-              onClick={() => {
-                resetCreateForm();
-                setCreateOpen(true);
-              }}
+              onClick={openCreate}
             >
               {t("add")}
             </Button>
@@ -752,27 +704,29 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
                           className="inline-flex items-center justify-end gap-0.5 rounded-[var(--radius-md)] bg-[var(--ios-fill)]/0 p-0.5 transition-colors group-hover:bg-[var(--ios-fill)]/55"
                           onClick={stopRowNav}
                         >
-                          {member.active ? (
-                            <button
-                              type="button"
-                              title={t("actionDeactivate")}
-                              aria-label={t("actionDeactivate")}
-                              className="pressable inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-danger-soft)] hover:text-[var(--ios-danger)] focus-visible:shadow-[var(--focus-ring)]"
-                              onClick={() => setPending({ member, kind: "deactivate" })}
-                            >
-                              <PowerOff className="size-3.5 stroke-[1.75]" aria-hidden />
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              title={t("actionReactivate")}
-                              aria-label={t("actionReactivate")}
-                              className="pressable inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-success-soft)] hover:text-[var(--ios-success)] focus-visible:shadow-[var(--focus-ring)]"
-                              onClick={() => setPending({ member, kind: "reactivate" })}
-                            >
-                              <Power className="size-3.5 stroke-[1.75]" aria-hidden />
-                            </button>
-                          )}
+                          {canManageMember(member) ? (
+                            member.active ? (
+                              <button
+                                type="button"
+                                title={t("actionDeactivate")}
+                                aria-label={t("actionDeactivate")}
+                                className="pressable inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-danger-soft)] hover:text-[var(--ios-danger)] focus-visible:shadow-[var(--focus-ring)]"
+                                onClick={() => setPending({ member, kind: "deactivate" })}
+                              >
+                                <PowerOff className="size-3.5 stroke-[1.75]" aria-hidden />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                title={t("actionReactivate")}
+                                aria-label={t("actionReactivate")}
+                                className="pressable inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-success-soft)] hover:text-[var(--ios-success)] focus-visible:shadow-[var(--focus-ring)]"
+                                onClick={() => setPending({ member, kind: "reactivate" })}
+                              >
+                                <Power className="size-3.5 stroke-[1.75]" aria-hidden />
+                              </button>
+                            )
+                          ) : null}
                           <button
                             type="button"
                             title={t("actionEdit")}
@@ -823,105 +777,6 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
         tone={pending?.kind === "deactivate" ? "destructive" : "default"}
         onConfirm={() => void confirmPendingAction()}
       />
-
-      {createOpen ? (
-        <div className="fixed inset-0 z-[200] flex items-end justify-center p-4 sm:items-center">
-          <button
-            type="button"
-            aria-label={tCommon("cancel")}
-            className="absolute inset-0 bg-black/40 backdrop-blur-[6px]"
-            onClick={() => {
-              if (!saving) {
-                setCreateOpen(false);
-                resetCreateForm();
-              }
-            }}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={t("createTitle")}
-            className="relative z-10 w-full max-w-[400px] overflow-hidden rounded-[var(--radius-xl)] bg-[var(--ios-card)] shadow-[var(--ios-shadow-lg)] ring-1 ring-[var(--ios-separator)] slide-up"
-          >
-            <div className="border-b border-[var(--ios-separator)] px-5 py-4">
-              <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
-                {t("createTitle")}
-              </h2>
-              <p className="mt-1 text-[12px] leading-relaxed text-[var(--ios-secondary-label)]">
-                {t("createDescription")}
-              </p>
-            </div>
-            <div className="space-y-3 px-5 py-4">
-              <Field id="staff-last-name" label={t("lastName")} error={formError ?? undefined}>
-                <IconInput
-                  id="staff-last-name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  autoComplete="family-name"
-                  invalid={Boolean(formError)}
-                />
-              </Field>
-              <Field id="staff-first-name" label={t("firstName")}>
-                <IconInput
-                  id="staff-first-name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  autoComplete="given-name"
-                />
-              </Field>
-              <Field id="staff-email" label={t("email")}>
-                <IconInput
-                  id="staff-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                />
-              </Field>
-              <Field id="staff-phone" label={t("phone")}>
-                <IconInput
-                  id="staff-phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  autoComplete="tel"
-                />
-              </Field>
-              <label className="flex cursor-pointer items-center gap-2 text-[var(--text-subhead)] text-[var(--ios-label)]">
-                <input
-                  type="checkbox"
-                  checked={asTeacher}
-                  onChange={(e) => setAsTeacher(e.target.checked)}
-                  className="size-4 accent-[var(--ios-blue)]"
-                />
-                {t("markAsTeacher")}
-              </label>
-            </div>
-            <div className="flex gap-2 border-t border-[var(--ios-separator)] px-5 py-3">
-              <Button
-                type="button"
-                variant="secondary"
-                className="flex-1"
-                disabled={saving}
-                onClick={() => {
-                  setCreateOpen(false);
-                  resetCreateForm();
-                }}
-              >
-                {tCommon("cancel")}
-              </Button>
-              <Button
-                type="button"
-                className="flex-1"
-                loading={saving}
-                onClick={() => void submitCreate()}
-              >
-                {t("createSubmit")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -219,6 +219,7 @@
     "phone": "Téléphone",
     "lastNameRequired": "Le nom est obligatoire.",
     "markAsTeacher": "Enseignant",
+    "createKindLabel": "Type de fiche",
     "stats": {
       "total": "Total",
       "teachers": "Enseignants",
@@ -250,6 +251,96 @@
       "SUPERVISOR": "Surveillant",
       "ACCOUNTANT": "Comptable",
       "OTHER": "Autre"
+    }
+  },
+  "academic": {
+    "tabsNav": "Référentiels académiques",
+    "yearLabel": "Année scolaire",
+    "yearEmpty": "Aucune année scolaire configurée",
+    "yearHint": "Les classes sont liées à l’année courante ; niveaux, matières et groupes sont permanents.",
+    "yearStatus": {
+      "PLANNED": "Planifiée",
+      "ACTIVE": "Active",
+      "CLOSED": "Clôturée"
+    },
+    "statusActive": "Actif",
+    "inactive": "Inactif",
+    "loadError": "Impossible de charger le référentiel académique.",
+    "tableCount": "{count, plural, one {# élément affiché} other {# éléments affichés}}",
+    "createComingSoon": "Le formulaire de création détaillé arrive ensuite ; le hub liste déjà les données existantes.",
+    "stats": {
+      "levels": "Niveaux",
+      "classes": "Classes",
+      "subjects": "Matières",
+      "groups": "Groupes"
+    },
+    "tabs": {
+      "levels": "Niveaux",
+      "classes": "Classes",
+      "subjects": "Matières",
+      "groups": "Groupes",
+      "rooms": "Salles"
+    },
+    "add": {
+      "levels": "Nouveau niveau",
+      "classes": "Nouvelle classe",
+      "subjects": "Nouvelle matière",
+      "groups": "Nouveau groupe",
+      "rooms": "Nouvelle salle"
+    },
+    "search": {
+      "levels": "Code, nom, cycle…",
+      "classes": "Classe, niveau, série…",
+      "subjects": "Code ou libellé…",
+      "groups": "Code ou libellé…",
+      "rooms": "Nom ou type…"
+    },
+    "columns": {
+      "name": "Nom",
+      "code": "Code",
+      "section": "Section",
+      "cycle": "Cycle",
+      "status": "Statut",
+      "class": "Classe",
+      "level": "Niveau",
+      "language": "Langue",
+      "capacity": "Capacité",
+      "kind": "Type",
+      "order": "Ordre",
+      "type": "Type"
+    },
+    "subjectKind": {
+      "ACADEMIC": "Matière",
+      "ACTIVITY": "Activité"
+    },
+    "empty": {
+      "levels": {
+        "title": "Aucun niveau",
+        "description": "Ajoutez les niveaux (6ème, Form 3, Tle…) de l’établissement."
+      },
+      "classes": {
+        "title": "Aucune classe",
+        "description": "Créez les classes de l’année scolaire courante."
+      },
+      "subjects": {
+        "title": "Aucune matière",
+        "description": "Le catalogue bilingue des matières sera utilisé pour les notes et l’emploi du temps."
+      },
+      "groups": {
+        "title": "Aucun groupe",
+        "description": "Les groupes servent aux sous-totaux des bulletins (LANG_LIT, SCI_TECH…)."
+      },
+      "rooms": {
+        "title": "Aucune salle",
+        "description": "Les salles seront utilisées par l’emploi du temps."
+      }
+    },
+    "createHints": {
+      "levels": "Un niveau porte un code, un libellé FR/EN, un cycle et une section (FR ou EN).",
+      "classes": "Une classe appartient à une année scolaire et à un niveau ; la langue par défaut pilote les documents.",
+      "subjects": "Matière permanente bilingue (kind ACADEMIC ou ACTIVITY).",
+      "groups": "Bloc de sous-total pour les bulletins ; ordre d’affichage paramétrable.",
+      "rooms": "Salle (classe, labo…) avec capacité optionnelle."
     }
   },
   "profile": {

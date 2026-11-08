@@ -25,6 +25,11 @@ export type StaffResponse = {
   active: boolean;
   /** Compte lié (user) — null si aucun compte ou jamais connecté. */
   lastLoginAt: string | null;
+  /** Droit de gestion pour l’appelant (modifier / désactiver). */
+  canManage?: boolean;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  updatedAt?: string | null;
 };
 
 export type PageResponse<T> = {

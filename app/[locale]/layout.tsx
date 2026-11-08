@@ -41,7 +41,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   return (
     <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
-      <body className="min-h-full font-sans">
+      {/* suppressHydrationWarning : extensions / outil Cursor injectent parfois style (ex. cursor:none) sur body */}
+      <body className="min-h-full font-sans" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <StoreHydration />
           {children}

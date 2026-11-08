@@ -256,28 +256,30 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
           </div>
         </div>
 
-        <div className="mt-3 flex w-full justify-center">
-          {member.active ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              leadingIcon={<PowerOff className="size-3.5 stroke-[1.75]" aria-hidden />}
-              onClick={() => setPendingKind("deactivate")}
-            >
-              {t("actionDeactivate")}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              size="sm"
-              leadingIcon={<Power className="size-3.5 stroke-[1.75]" aria-hidden />}
-              onClick={() => setPendingKind("reactivate")}
-            >
-              {t("actionReactivate")}
-            </Button>
-          )}
-        </div>
+        {member.canManage !== false ? (
+          <div className="mt-3 flex w-full justify-center">
+            {member.active ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                leadingIcon={<PowerOff className="size-3.5 stroke-[1.75]" aria-hidden />}
+                onClick={() => setPendingKind("deactivate")}
+              >
+                {t("actionDeactivate")}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                leadingIcon={<Power className="size-3.5 stroke-[1.75]" aria-hidden />}
+                onClick={() => setPendingKind("reactivate")}
+              >
+                {t("actionReactivate")}
+              </Button>
+            )}
+          </div>
+        ) : null}
       </section>
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">

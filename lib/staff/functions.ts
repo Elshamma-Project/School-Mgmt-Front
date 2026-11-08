@@ -45,3 +45,22 @@ export function matchesStaffTab(functions: string[], tab: StaffListTab): boolean
   if (tab === "other") return functions.includes("OTHER");
   return true;
 }
+
+export function isLeadershipStaff(functions: string[]): boolean {
+  return functions.some((f) => LEADERSHIP.includes(f as StaffFunctionCode));
+}
+
+/** Secrétaire / SG / comptable sans TEACHER ni OTHER — lecture seule pour ADMINISTRATION. */
+export function isPeerAdminOnlyStaff(functions: string[]): boolean {
+  if (isLeadershipStaff(functions)) return false;
+  if (!functions.some((f) => SUPPORT.includes(f as StaffFunctionCode))) return false;
+  return !functions.includes("TEACHER") && !functions.includes("OTHER");
+}
+
+/** Onglets visibles selon le rôle UI (docs/05). */
+export function staffListTabsForRole(role: string | null | undefined): StaffListTab[] {
+  if (role === "ADMINISTRATION") {
+    return STAFF_LIST_TABS.filter((tab) => tab !== "leadership");
+  }
+  return STAFF_LIST_TABS;
+}

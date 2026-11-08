@@ -219,6 +219,7 @@
     "phone": "Phone",
     "lastNameRequired": "Last name is required.",
     "markAsTeacher": "Teacher",
+    "createKindLabel": "Staff type",
     "stats": {
       "total": "Total",
       "teachers": "Teachers",
@@ -250,6 +251,96 @@
       "SUPERVISOR": "Supervisor",
       "ACCOUNTANT": "Accountant",
       "OTHER": "Other"
+    }
+  },
+  "academic": {
+    "tabsNav": "Academic references",
+    "yearLabel": "School year",
+    "yearEmpty": "No school year configured",
+    "yearHint": "Classes belong to the current year; levels, subjects and groups are permanent.",
+    "yearStatus": {
+      "PLANNED": "Planned",
+      "ACTIVE": "Active",
+      "CLOSED": "Closed"
+    },
+    "statusActive": "Active",
+    "inactive": "Inactive",
+    "loadError": "Could not load the academic directory.",
+    "tableCount": "{count, plural, one {# item shown} other {# items shown}}",
+    "createComingSoon": "Detailed create forms come next; the hub already lists existing data.",
+    "stats": {
+      "levels": "Levels",
+      "classes": "Classes",
+      "subjects": "Subjects",
+      "groups": "Groups"
+    },
+    "tabs": {
+      "levels": "Levels",
+      "classes": "Classes",
+      "subjects": "Subjects",
+      "groups": "Groups",
+      "rooms": "Rooms"
+    },
+    "add": {
+      "levels": "New level",
+      "classes": "New class",
+      "subjects": "New subject",
+      "groups": "New group",
+      "rooms": "New room"
+    },
+    "search": {
+      "levels": "Code, name, cycle…",
+      "classes": "Class, level, track…",
+      "subjects": "Code or label…",
+      "groups": "Code or label…",
+      "rooms": "Name or type…"
+    },
+    "columns": {
+      "name": "Name",
+      "code": "Code",
+      "section": "Section",
+      "cycle": "Cycle",
+      "status": "Status",
+      "class": "Class",
+      "level": "Level",
+      "language": "Language",
+      "capacity": "Capacity",
+      "kind": "Kind",
+      "order": "Order",
+      "type": "Type"
+    },
+    "subjectKind": {
+      "ACADEMIC": "Subject",
+      "ACTIVITY": "Activity"
+    },
+    "empty": {
+      "levels": {
+        "title": "No levels",
+        "description": "Add school levels (Form 3, 6ème, Tle…)."
+      },
+      "classes": {
+        "title": "No classes",
+        "description": "Create classes for the current school year."
+      },
+      "subjects": {
+        "title": "No subjects",
+        "description": "The bilingual subject catalogue feeds grades and the timetable."
+      },
+      "groups": {
+        "title": "No groups",
+        "description": "Groups drive report-card subtotals (LANG_LIT, SCI_TECH…)."
+      },
+      "rooms": {
+        "title": "No rooms",
+        "description": "Rooms will be used by the timetable."
+      }
+    },
+    "createHints": {
+      "levels": "A level has a code, FR/EN labels, a cycle and a section (FR or EN).",
+      "classes": "A class belongs to a school year and a level; default language drives documents.",
+      "subjects": "Permanent bilingual subject (ACADEMIC or ACTIVITY kind).",
+      "groups": "Subtotal block for report cards; display order is configurable.",
+      "rooms": "Room (classroom, lab…) with optional capacity."
     }
   },
   "profile": {

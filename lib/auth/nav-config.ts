@@ -14,6 +14,11 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
+import {
+  ACADEMIC_TABS,
+  academicListPath,
+  type AcademicTab,
+} from "@/lib/academic/tabs";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import type { AppRole } from "@/types/auth";
 
@@ -39,14 +44,34 @@ export type NavItemKey =
 
 export type NavHref = `/${string}`;
 
+/** Sous-entrée (ex. onglets Académique). */
+export type NavChildItem = {
+  href: NavHref;
+  /** Clé i18n sous `academic.tabs.*`. */
+  tab: AcademicTab;
+};
+
 export type NavItem = {
   href: NavHref;
   key: NavItemKey;
   icon: LucideIcon;
+  children?: NavChildItem[];
 };
 
-function item(href: NavHref, key: NavItemKey, icon: LucideIcon): NavItem {
-  return { href, key, icon };
+function item(
+  href: NavHref,
+  key: NavItemKey,
+  icon: LucideIcon,
+  children?: NavChildItem[],
+): NavItem {
+  return { href, key, icon, children };
+}
+
+function academicNavChildren(home: `/${string}`): NavChildItem[] {
+  return ACADEMIC_TABS.map((tab) => ({
+    href: academicListPath(home, tab),
+    tab,
+  }));
 }
 
 /** Navigation par espace de rôle — plus de menu unique partagé. */
@@ -95,7 +120,7 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
         item(home, "home", LayoutDashboard),
         item(`${home}/students`, "students", GraduationCap),
         item(`${home}/staff`, "staff", Users),
-        item(`${home}/academic`, "academic", BookOpen),
+        item(`${home}/academic`, "academic", BookOpen, academicNavChildren(home)),
         item(`${home}/grades`, "grades", ClipboardList),
         item(`${home}/reporting`, "reporting", FileSpreadsheet),
         item(`${home}/timetable`, "timetable", CalendarDays),
@@ -106,7 +131,7 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
         item(home, "home", LayoutDashboard),
         item(`${home}/students`, "students", GraduationCap),
         item(`${home}/staff`, "staff", Users),
-        item(`${home}/academic`, "academic", BookOpen),
+        item(`${home}/academic`, "academic", BookOpen, academicNavChildren(home)),
         item(`${home}/sequences`, "sequences", Shield),
         item(`${home}/reporting`, "reporting", FileSpreadsheet),
         item(`${home}/admin-accounts`, "adminAccounts", UserRound),

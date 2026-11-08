@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useId } from "react";
+import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { Link, usePathname } from "@/i18n/navigation";
-import { getNavItemsForRole } from "@/lib/auth/nav-config";
+import {
+  isAcademicChildActive,
+  isNavItemActive,
+} from "@/lib/auth/nav-active";
+import { getNavItemsForRole, type NavItem } from "@/lib/auth/nav-config";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
@@ -21,8 +26,10 @@ type MobileNavDrawerProps = {
  */
 export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
   const t = useTranslations("nav");
+  const tAcademic = useTranslations("academic");
   const tCommon = useTranslations("common");
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const items = getNavItemsForRole(primaryRole(user));
   const titleId = useId();
@@ -86,32 +93,17 @@ export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
           className="flex-1 overflow-y-auto overscroll-contain px-2 py-3"
         >
           <ul className="flex flex-col gap-0.5">
-            {items.map(({ href, key, icon: Icon }) => {
-              const active =
-                key === "home"
-                  ? pathname === href
-                  : pathname === href || pathname.startsWith(`${href}/`);
-              const label = t(key);
-
-              return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    aria-current={active ? "page" : undefined}
-                    onClick={() => onOpenChange(false)}
-                    className={cn(
-                      "pressable flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-[var(--text-subhead)] font-medium transition-colors focus-visible:shadow-[var(--focus-ring)]",
-                      active
-                        ? "bg-[var(--ios-blue)]/10 text-[var(--ios-blue)]"
-                        : "text-[var(--ios-label)] hover:bg-[var(--ios-fill)]",
-                    )}
-                  >
-                    <Icon className="size-4 shrink-0 stroke-[1.75]" aria-hidden />
-                    <span className="truncate">{label}</span>
-                  </Link>
-                </li>
-              );
-            })}
+            {items.map((entry) => (
+              <MobileNavEntry
+                key={entry.href}
+                entry={entry}
+                pathname={pathname}
+                searchParams={searchParams}
+                label={t(entry.key)}
+                childLabel={(tab) => tAcademic(`tabs.${tab}`)}
+                onNavigate={() => onOpenChange(false)}
+              />
+            ))}
           </ul>
         </nav>
 
@@ -127,5 +119,119 @@ export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
       </aside>
     </div>,
     document.body,
+  );
+}
+
+type MobileNavEntryProps = {
+  entry: NavItem;
+  pathname: string;
+  searchParams: { get: (key: string) => string | null };
+  label: string;
+  childLabel: (tab: string) => string;
+  onNavigate: () => void;
+};
+
+function MobileNavEntry({
+  entry,
+  pathname,
+  searchParams,
+  label,
+  childLabel,
+  onNavigate,
+}: MobileNavEntryProps) {
+  const { href, key, icon: Icon, children } = entry;
+  const active = isNavItemActive(key, href, pathname);
+  const hasChildren = Boolean(children?.length);
+  const [open, setOpen] = useState(active);
+
+  useEffect(() => {
+    if (active) setOpen(true);
+  }, [active]);
+
+  if (!hasChildren) {
+    return (
+      <li>
+        <Link
+          href={href}
+          aria-current={active ? "page" : undefined}
+          onClick={onNavigate}
+          className={cn(
+            "pressable flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-[var(--text-subhead)] font-medium transition-colors focus-visible:shadow-[var(--focus-ring)]",
+            active
+              ? "bg-[var(--ios-blue)]/10 text-[var(--ios-blue)]"
+              : "text-[var(--ios-label)] hover:bg-[var(--ios-fill)]",
+          )}
+        >
+          <Icon className="size-4 shrink-0 stroke-[1.75]" aria-hidden />
+          <span className="truncate">{label}</span>
+        </Link>
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      <div className="flex items-center gap-0.5">
+        <Link
+          href={href}
+          onClick={onNavigate}
+          className={cn(
+            "pressable flex min-w-0 flex-1 items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-[var(--text-subhead)] font-medium transition-colors focus-visible:shadow-[var(--focus-ring)]",
+            active
+              ? "bg-[var(--ios-blue)]/10 text-[var(--ios-blue)]"
+              : "text-[var(--ios-label)] hover:bg-[var(--ios-fill)]",
+          )}
+        >
+          <Icon className="size-4 shrink-0 stroke-[1.75]" aria-hidden />
+          <span className="truncate">{label}</span>
+        </Link>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label={label}
+          onClick={() => setOpen((v) => !v)}
+          className={cn(
+            "pressable flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] focus-visible:shadow-[var(--focus-ring)]",
+            active && "text-[var(--ios-blue)]",
+          )}
+        >
+          <ChevronDown
+            className={cn(
+              "size-4 stroke-[1.75] transition-transform duration-[var(--duration-fast)]",
+              open && "rotate-180",
+            )}
+            aria-hidden
+          />
+        </button>
+      </div>
+      {open ? (
+        <ul className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-[var(--ios-separator)] pl-2">
+          {children!.map((child) => {
+            const childActive = isAcademicChildActive(
+              child.tab,
+              pathname,
+              searchParams,
+            );
+            return (
+              <li key={child.href}>
+                <Link
+                  href={child.href}
+                  aria-current={childActive ? "page" : undefined}
+                  onClick={onNavigate}
+                  className={cn(
+                    "pressable flex items-center rounded-[var(--radius-md)] px-3 py-2 text-[12px] font-medium transition-colors focus-visible:shadow-[var(--focus-ring)]",
+                    childActive
+                      ? "bg-[var(--ios-blue)]/10 text-[var(--ios-blue)]"
+                      : "text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)]",
+                  )}
+                >
+                  <span className="truncate">{childLabel(child.tab)}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </li>
   );
 }
