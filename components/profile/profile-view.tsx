@@ -26,7 +26,7 @@ import { getStaff, updateStaffIdentity, type StaffResponse } from "@/lib/api/sta
 import { notify } from "@/lib/ui/notify";
 import {
   INPUT_LIMITS,
-  validatePassword,
+  validatePassword as validatePasswordLib,
   validatePasswordConfirm,
   validatePersonName,
   validatePhone,
@@ -45,6 +45,7 @@ type PasswordErrors = {
 type IdentityErrors = {
   lastName?: string;
   firstName?: string;
+  phone?: string;
 };
 
 /** Indicatif Cameroun — affiché fixe ; stocké avec le numéro à l’enregistrement. */
@@ -205,14 +206,22 @@ export function ProfileView() {
 
   async function onSaveIdentity(event: FormEvent) {
     event.preventDefault();
-    const errors = validateIdentity();
+    const last = validatePersonName(lastName, { required: true });
+    const first = validatePersonName(firstName, { required: false });
+    const tel = validatePhone(phone ? `${CM_DIAL}${toNationalPhone(phone)}` : "", {
+      required: false,
+    });
+    const errors: IdentityErrors = {};
+    if (!last.ok) errors.lastName = validationMessage(tCommon, last);
+    if (!first.ok) errors.firstName = validationMessage(tCommon, first);
+    if (!tel.ok) errors.phone = validationMessage(tCommon, tel);
     setIdentityErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (!last.ok || !first.ok || !tel.ok) return;
 
     setSavingIdentity(true);
     try {
       if (isMock || user?.profileType !== "STAFF" || !user.profileId) {
-        const displayName = [lastName.trim(), firstName.trim()].filter(Boolean).join(" ");
+        const displayName = [last.value, first.value].filter(Boolean).join(" ");
         updateUser({ displayName });
         notify.success(t("profileSaved"), {
           description: isMock ? t("mockHint") : t("identityLocalOnlyHint"),
@@ -226,8 +235,8 @@ export function ProfileView() {
         const member = await updateStaffIdentity(
           user.profileId,
           {
-            lastName: lastName.trim(),
-            firstName: firstName.trim(),
+            lastName: last.value,
+            firstName: first.value,
             civility: staff?.civility ?? null,
             contact: {
               phones,
