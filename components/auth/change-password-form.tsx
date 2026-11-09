@@ -9,6 +9,12 @@ import { IconInput } from "@/components/ui/icon-input";
 import { changePassword } from "@/lib/api/auth";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { notify } from "@/lib/ui/notify";
+import {
+  INPUT_LIMITS,
+  validatePassword,
+  validatePasswordConfirm,
+  validationMessage,
+} from "@/lib/validation/input";
 import { useRouter } from "@/i18n/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { ApiError } from "@/types/api";
@@ -22,6 +28,7 @@ type PasswordErrors = {
 
 export function ChangePasswordForm() {
   const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const tProfile = useTranslations("profile");
   const router = useRouter();
   const setMustChangePassword = useAuthStore((s) => s.setMustChangePassword);
@@ -39,12 +46,18 @@ export function ChangePasswordForm() {
   function validate(): PasswordErrors {
     const next: PasswordErrors = {};
     if (!currentPassword) next.currentPassword = t("requiredField");
-    if (!newPassword) next.newPassword = t("requiredField");
-    else if (newPassword.length < 8) next.newPassword = tProfile("passwordTooShort");
-    if (!confirmPassword) next.confirmPassword = t("requiredField");
-    else if (newPassword && confirmPassword !== newPassword) {
-      next.confirmPassword = tProfile("passwordMismatch");
+    else if (currentPassword.length > INPUT_LIMITS.passwordMax) {
+      next.currentPassword = tCommon("validation.tooLong", {
+        max: INPUT_LIMITS.passwordMax,
+      });
     }
+
+    const pwd = validatePassword(newPassword);
+    if (!pwd.ok) next.newPassword = validationMessage(tCommon, pwd);
+
+    const confirm = validatePasswordConfirm(newPassword, confirmPassword);
+    if (!confirm.ok) next.confirmPassword = validationMessage(tCommon, confirm);
+
     return next;
   }
 
@@ -85,7 +98,7 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit}>
+    <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit} noValidate>
       <Field id="currentPassword" label={t("currentPassword")} error={errors.currentPassword}>
         <IconInput
           id="currentPassword"
@@ -95,6 +108,7 @@ export function ChangePasswordForm() {
           onChange={(e) => setCurrentPassword(e.target.value)}
           invalid={Boolean(errors.currentPassword)}
           autoComplete="current-password"
+          maxLength={INPUT_LIMITS.passwordMax}
         />
       </Field>
 
@@ -112,6 +126,7 @@ export function ChangePasswordForm() {
           onChange={(e) => setNewPassword(e.target.value)}
           invalid={Boolean(errors.newPassword)}
           autoComplete="new-password"
+          maxLength={INPUT_LIMITS.passwordMax}
         />
       </Field>
 
@@ -124,6 +139,7 @@ export function ChangePasswordForm() {
           onChange={(e) => setConfirmPassword(e.target.value)}
           invalid={Boolean(errors.confirmPassword)}
           autoComplete="new-password"
+          maxLength={INPUT_LIMITS.passwordMax}
         />
       </Field>
 

@@ -24,6 +24,14 @@ import { IconInput } from "@/components/ui/icon-input";
 import { changePassword, fetchMe } from "@/lib/api/auth";
 import { getStaff, updateStaffIdentity, type StaffResponse } from "@/lib/api/staff";
 import { notify } from "@/lib/ui/notify";
+import {
+  INPUT_LIMITS,
+  validatePassword,
+  validatePasswordConfirm,
+  validatePersonName,
+  validatePhone,
+  validationMessage,
+} from "@/lib/validation/input";
 import { useAuthStore } from "@/stores/auth-store";
 import { ApiError } from "@/types/api";
 import { primaryRole } from "@/types/auth";
@@ -170,18 +178,28 @@ export function ProfileView() {
   function validatePassword(): PasswordErrors {
     const next: PasswordErrors = {};
     if (!currentPassword) next.currentPassword = tAuth("requiredField");
-    if (!newPassword) next.newPassword = tAuth("requiredField");
-    else if (newPassword.length < 8) next.newPassword = t("passwordTooShort");
-    if (!confirmPassword) next.confirmPassword = tAuth("requiredField");
-    else if (newPassword && confirmPassword !== newPassword) {
-      next.confirmPassword = t("passwordMismatch");
+    else if (currentPassword.length > INPUT_LIMITS.passwordMax) {
+      next.currentPassword = tCommon("validation.tooLong", {
+        max: INPUT_LIMITS.passwordMax,
+      });
     }
+    const pwd = validatePasswordLib(newPassword);
+    if (!pwd.ok) next.newPassword = validationMessage(tCommon, pwd);
+    const confirm = validatePasswordConfirm(newPassword, confirmPassword);
+    if (!confirm.ok) next.confirmPassword = validationMessage(tCommon, confirm);
     return next;
   }
 
   function validateIdentity(): IdentityErrors {
     const next: IdentityErrors = {};
-    if (!lastName.trim()) next.lastName = tAuth("requiredField");
+    const last = validatePersonName(lastName, { required: true });
+    const first = validatePersonName(firstName, { required: false });
+    const tel = validatePhone(phone ? `${CM_DIAL}${toNationalPhone(phone)}` : "", {
+      required: false,
+    });
+    if (!last.ok) next.lastName = validationMessage(tCommon, last);
+    if (!first.ok) next.firstName = validationMessage(tCommon, first);
+    if (!tel.ok) next.phone = validationMessage(tCommon, tel);
     return next;
   }
 
