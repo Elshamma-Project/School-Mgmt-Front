@@ -473,7 +473,7 @@ export function ProfileView() {
               </div>
             </form>
           ) : (
-            <GroupedList header={t("identitySection")} footer={t("identityUnavailableHint")}>
+            <GroupedList header={t("identitySection")}>
               <GroupedListItem className="block py-3">
                 <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
                   {t("identityUnavailableBody")}

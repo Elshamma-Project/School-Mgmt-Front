@@ -181,7 +181,7 @@ export function ProfileSecurityPanel({
 
   return (
     <div className="space-y-3">
-      <GroupedList header={t("securitySection")} footer={t("securitySessionsHint")}>
+      <GroupedList header={t("securitySection")}>
         <GroupedListItem>
           <DetailRow
             label={t("lastLogin")}

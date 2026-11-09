@@ -280,9 +280,6 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
         <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
           {title}
         </h1>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--ios-secondary-label)]">
-          {t(`createHints.${tab}`)}
-        </p>
       </div>
 
       <form

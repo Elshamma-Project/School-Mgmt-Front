@@ -12,6 +12,10 @@ title:
 
 ## FR
 
+### Lecture seule
+
+Sans le droit de gestion de la structure scolaire (Administration / Direction), la fiche est en consultation seule.
+
 ### Organisation
 
 Langue des documents, salle principale, professeur principal et barème se règlent ici.
@@ -25,6 +29,10 @@ C’est ici que vous affectez une matière, fixez le coefficient et choisissez l
 - Groupe — sous-total sur le bulletin
 
 ## EN
+
+### Read-only
+
+Without school-structure management rights (Administration / Director), the record is read-only.
 
 ### Organisation
 

@@ -43,6 +43,28 @@ export const HELP_CATALOG: HelpArticle[] = [
             "fr": "Renseignez les champs obligatoires. Les codes (niveau, matière, groupe) sont stables : évitez de les changer après coup.",
             "en": "Fill required fields. Codes (level, subject, group) are stable — avoid changing them later."
           }
+        ],
+        "bullets": [
+          {
+            "fr": "Niveau : code, libellés FR/EN, cycle et section",
+            "en": "Level: code, FR/EN labels, cycle and section"
+          },
+          {
+            "fr": "Classe : année scolaire + niveau ; langue des documents",
+            "en": "Class: school year + level; document language"
+          },
+          {
+            "fr": "Matière : catalogue bilingue (ACADEMIC ou ACTIVITY)",
+            "en": "Subject: bilingual catalogue (ACADEMIC or ACTIVITY)"
+          },
+          {
+            "fr": "Groupe : bloc de sous-total bulletin, ordre d’affichage",
+            "en": "Group: report-card subtotal block, display order"
+          },
+          {
+            "fr": "Salle : type et capacité optionnelle",
+            "en": "Room: type and optional capacity"
+          }
         ]
       }
     ]
@@ -64,6 +86,18 @@ export const HELP_CATALOG: HelpArticle[] = [
       "en": "Class detail"
     },
     "sections": [
+      {
+        "heading": {
+          "fr": "Lecture seule",
+          "en": "Read-only"
+        },
+        "paragraphs": [
+          {
+            "fr": "Sans le droit de gestion de la structure scolaire (Administration / Direction), la fiche est en consultation seule.",
+            "en": "Without school-structure management rights (Administration / Director), the record is read-only."
+          }
+        ]
+      },
       {
         "heading": {
           "fr": "Organisation",
@@ -248,15 +282,22 @@ export const HELP_CATALOG: HelpArticle[] = [
     "sections": [
       {
         "heading": {
-          "fr": "À quoi sert cette page ?",
-          "en": "What is this page for?"
+          "fr": "Année scolaire",
+          "en": "School year"
         },
         "paragraphs": [
           {
-            "fr": "Le hub Académique regroupe les référentiels de l’établissement.",
-            "en": "The Academic hub holds the school’s reference data."
+            "fr": "Les classes sont liées à l’année courante ; niveaux, matières et groupes sont permanents.",
+            "en": "Classes belong to the current year; levels, subjects and groups are permanent."
           }
-        ],
+        ]
+      },
+      {
+        "heading": {
+          "fr": "À quoi sert cette page ?",
+          "en": "What is this page for?"
+        },
+        "paragraphs": [],
         "bullets": [
           {
             "fr": "Classes — année scolaire + niveau",
@@ -295,6 +336,49 @@ export const HELP_CATALOG: HelpArticle[] = [
     ]
   },
   {
+    "id": "grades",
+    "source": "docs/rag/grades.md",
+    "priority": 30,
+    "routes": [
+      {
+        "path": "/grades"
+      },
+      {
+        "path": "/grades/**"
+      }
+    ],
+    "title": {
+      "fr": "Notes",
+      "en": "Grades"
+    },
+    "sections": [
+      {
+        "heading": {
+          "fr": "Année scolaire",
+          "en": "School year"
+        },
+        "paragraphs": [
+          {
+            "fr": "Les séquences et barèmes s’inscrivent dans l’année courante. Les classes sont liées à cette année.",
+            "en": "Sequences and schemes belong to the current year. Classes are tied to that year."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Saisie",
+          "en": "Entry"
+        },
+        "paragraphs": [
+          {
+            "fr": "Les enseignants saisissent les notes de leurs ClassSubject lorsque la séquence est ouverte. Une note non saisie reste PENDING, jamais 0.",
+            "en": "Teachers enter grades for their ClassSubjects while the sequence is open. An unentered grade stays PENDING, never 0."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "profile",
     "source": "docs/rag/profile.md",
     "priority": 30,
@@ -313,13 +397,111 @@ export const HELP_CATALOG: HelpArticle[] = [
     "sections": [
       {
         "heading": {
-          "fr": "Compte",
-          "en": "Account"
+          "fr": "Identité",
+          "en": "Identity"
         },
         "paragraphs": [
           {
-            "fr": "Identité d’affichage, photo (jamais sur les bulletins) et sécurité des sessions.",
-            "en": "Display identity, photo (never on report cards) and session security."
+            "fr": "Selon le type de compte, le nom peut être modifiable (personnel) ou protégé (élève / tuteur) car il figure sur les bulletins. Seule l’administration corrige alors les noms. La photo de profil n’apparaît jamais sur les bulletins.",
+            "en": "Depending on the account type, the name may be editable (staff) or protected (student / guardian) because it appears on report cards. Only administration can then correct names. The profile photo never appears on report cards."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Mot de passe",
+          "en": "Password"
+        },
+        "paragraphs": [
+          {
+            "fr": "Changez le mot de passe depuis cette page. Respectez la politique de complexité affichée.",
+            "en": "Change your password here. Follow the complexity policy shown."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Sessions",
+          "en": "Sessions"
+        },
+        "paragraphs": [
+          {
+            "fr": "Jusqu’à 2 sessions actives par compte. La plus ancienne est révoquée automatiquement si une 3ᵉ connexion réussit. Vous pouvez révoquer un appareil manuellement.",
+            "en": "Up to 2 active sessions per account. The oldest is revoked automatically if a 3rd sign-in succeeds. You can revoke a device manually."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "reporting",
+    "source": "docs/rag/reporting.md",
+    "priority": 30,
+    "routes": [
+      {
+        "path": "/reporting"
+      },
+      {
+        "path": "/reporting/**"
+      }
+    ],
+    "title": {
+      "fr": "Bulletins",
+      "en": "Report cards"
+    },
+    "sections": [
+      {
+        "heading": {
+          "fr": "Année scolaire",
+          "en": "School year"
+        },
+        "paragraphs": [
+          {
+            "fr": "Les gabarits et bulletins s’appuient sur l’année courante et les notes de séquence.",
+            "en": "Templates and report cards rely on the current year and sequence marks."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Génération",
+          "en": "Generation"
+        },
+        "paragraphs": [
+          {
+            "fr": "Les bulletins se génèrent dans les deux langues ; la langue de la section est prioritaire. Un bulletin tient sur une page A4.",
+            "en": "Report cards are produced in both languages; the section language comes first. A report card fits on one A4 page."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "settings",
+    "source": "docs/rag/settings.md",
+    "priority": 30,
+    "routes": [
+      {
+        "path": "/settings"
+      },
+      {
+        "path": "/settings/**"
+      }
+    ],
+    "title": {
+      "fr": "Paramètres",
+      "en": "Settings"
+    },
+    "sections": [
+      {
+        "heading": {
+          "fr": "Changer d’espace",
+          "en": "Switch workspace"
+        },
+        "paragraphs": [
+          {
+            "fr": "Si votre compte cumule plusieurs rôles, vous pouvez basculer vers l’espace URL du rôle choisi (Administration, Direction, Enseignant…).",
+            "en": "If your account has several roles, you can switch to the URL workspace of the chosen role (Administration, Director, Teacher…)."
           }
         ]
       }
@@ -331,6 +513,9 @@ export const HELP_CATALOG: HelpArticle[] = [
     "priority": 30,
     "routes": [
       {
+        "path": "/staff"
+      },
+      {
         "path": "/staff/**"
       }
     ],
@@ -341,13 +526,191 @@ export const HELP_CATALOG: HelpArticle[] = [
     "sections": [
       {
         "heading": {
-          "fr": "Fiches personnel",
-          "en": "Staff records"
+          "fr": "Fiche personnel",
+          "en": "Staff record"
         },
         "paragraphs": [
           {
-            "fr": "Consultez identité, fonctions et affectations d’enseignement (ClassSubject) sur la fiche d’un enseignant.",
-            "en": "View identity, functions and teaching assignments (ClassSubject) on a teacher’s record."
+            "fr": "Identité, contact, numéro RH et dernière connexion.",
+            "en": "Identity, contact, HR number and last login."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Création et compte de connexion",
+          "en": "Creation and login account"
+        },
+        "paragraphs": [
+          {
+            "fr": "À la création, une option « Créer un compte de connexion » (activée par défaut) provisionne un UserAccount lié à la fiche. L’e-mail devient l’identifiant. Un mot de passe temporaire commun est attribué ; le changement est obligatoire à la première connexion. L’envoi du mot de passe par e-mail arrivera plus tard — notez-le à la création.",
+            "en": "On create, “Create a login account” (on by default) provisions a UserAccount linked to the staff record. Email becomes the username. A shared temporary password is assigned; change is required on first login. Email delivery comes later — note the password at creation time."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Fonctions",
+          "en": "Functions"
+        },
+        "paragraphs": [
+          {
+            "fr": "Les rôles RH (Enseignant, Secrétaire, Direction…) sont cumulables sur une même fiche. Ce n’est pas la même chose que les rôles de connexion (UserAccount.roles).",
+            "en": "HR roles (Teacher, Secretary, Leadership…) can be combined on one record. This is not the same as login roles (UserAccount.roles)."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Matières enseignées",
+          "en": "Subjects taught"
+        },
+        "paragraphs": [
+          {
+            "fr": "Liste issue des affectations ClassSubject où ce membre est enseignant titulaire. Visible surtout pour les fiches avec la fonction Enseignant.",
+            "en": "From ClassSubject assignments where this member is the titular teacher. Mainly relevant for Teacher profiles."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Classes",
+          "en": "Classes"
+        },
+        "paragraphs": [
+          {
+            "fr": "Classes où ce membre est enseignant titulaire (via ClassSubject). Visible surtout pour les enseignants.",
+            "en": "Classes where this member is the titular teacher (via ClassSubject). Mainly for teachers."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "students",
+    "source": "docs/rag/students.md",
+    "priority": 30,
+    "routes": [
+      {
+        "path": "/students"
+      },
+      {
+        "path": "/students/**"
+      }
+    ],
+    "title": {
+      "fr": "Élèves",
+      "en": "Students"
+    },
+    "sections": [
+      {
+        "heading": {
+          "fr": "Année scolaire",
+          "en": "School year"
+        },
+        "paragraphs": [
+          {
+            "fr": "Les inscriptions et classes sont liées à l’année courante.",
+            "en": "Enrollments and classes belong to the current year."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Données mineurs",
+          "en": "Minors’ data"
+        },
+        "paragraphs": [
+          {
+            "fr": "Aucune donnée réelle d’élève dans les logs. Les corrections d’identité se font via l’administration.",
+            "en": "No real student data in logs. Identity corrections go through administration."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "timetable",
+    "source": "docs/rag/timetable.md",
+    "priority": 30,
+    "routes": [
+      {
+        "path": "/timetable"
+      },
+      {
+        "path": "/timetable/**"
+      }
+    ],
+    "title": {
+      "fr": "Emploi du temps",
+      "en": "Timetable"
+    },
+    "sections": [
+      {
+        "heading": {
+          "fr": "Année scolaire",
+          "en": "School year"
+        },
+        "paragraphs": [
+          {
+            "fr": "L’EDT s’appuie sur les classes, salles et ClassSubject de l’année courante.",
+            "en": "The timetable uses classes, rooms and ClassSubjects of the current year."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Mise en page",
+          "en": "Layout"
+        },
+        "paragraphs": [
+          {
+            "fr": "L’emploi du temps tient sur une page A4 paysage.",
+            "en": "The timetable fits on one A4 landscape page."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "home",
+    "source": "docs/rag/home.md",
+    "priority": 20,
+    "routes": [
+      {
+        "path": "/"
+      }
+    ],
+    "title": {
+      "fr": "Accueil",
+      "en": "Home"
+    },
+    "sections": [
+      {
+        "heading": {
+          "fr": "Votre espace",
+          "en": "Your workspace"
+        },
+        "paragraphs": [
+          {
+            "fr": "Résumé du rôle actif, du compte et des capacités indicatives. Le serveur applique toujours les règles du jeton : la liste affichée est un aperçu UI.",
+            "en": "Summary of the active role, account and indicative capabilities. The server always enforces token rules: the list is a UI preview."
+          },
+          {
+            "fr": "En mode démo, certaines actions restent locales (badge Démo).",
+            "en": "In demo mode, some actions stay local (Demo badge)."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Modules",
+          "en": "Modules"
+        },
+        "paragraphs": [
+          {
+            "fr": "Les tuiles mènent aux modules autorisés pour votre rôle (académique, notes, personnel…).",
+            "en": "Tiles lead to modules allowed for your role (academic, grades, staff…)."
           }
         ]
       }

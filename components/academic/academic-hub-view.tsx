@@ -415,9 +415,6 @@ export function AcademicHubView() {
             </p>
           )}
         </div>
-        <p className="max-w-[280px] text-right text-[11px] leading-relaxed text-[var(--ios-secondary-label)]">
-          {t("yearHint")}
-        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">

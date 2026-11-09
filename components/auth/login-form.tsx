@@ -23,6 +23,11 @@ import { getTenantConfig } from "@/lib/tenant/config";
 import { queuePostLoginFlash } from "@/lib/ui/post-login-flash";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/cn";
+import {
+  INPUT_LIMITS,
+  validateEmail,
+  validationMessage,
+} from "@/lib/validation/input";
 import { useAuthStore } from "@/stores/auth-store";
 import { ApiError } from "@/types/api";
 import type { AppRole } from "@/types/auth";
@@ -38,6 +43,7 @@ type LoginFormProps = {
 
 export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
   const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const tRoles = useTranslations("roles");
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
@@ -109,18 +115,24 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
     }
 
     const nextErrors: typeof fieldErrors = {};
-    const emailValue = email.trim().toLowerCase();
-    if (!emailValue) nextErrors.email = t("requiredField");
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) nextErrors.email = t("invalidEmail");
+    const emailResult = validateEmail(email, { required: true });
+    if (!emailResult.ok) nextErrors.email = validationMessage(tCommon, emailResult);
+    // Mot de passe : requis + plafond (pas de règles de force au login — le serveur décide).
     if (!password) nextErrors.password = t("requiredField");
+    else if (password.length > INPUT_LIMITS.passwordMax) {
+      nextErrors.password = tCommon("validation.tooLong", {
+        max: INPUT_LIMITS.passwordMax,
+      });
+    }
     setFieldErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    if (!emailResult.ok || nextErrors.password) return;
 
     if (!tenant.schoolId) {
       setFormError(t("schoolIdMissing"));
       return;
     }
 
+    const emailValue = emailResult.value;
     setSubmitting(true);
     const started = Date.now();
     try {
@@ -246,6 +258,7 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
                 invalid={Boolean(fieldErrors.email)}
                 autoComplete="username"
                 inputMode="email"
+                maxLength={INPUT_LIMITS.email}
                 disabled={submitting}
               />
             </Field>
@@ -259,6 +272,7 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 invalid={Boolean(fieldErrors.password)}
                 autoComplete="current-password"
+                maxLength={INPUT_LIMITS.passwordMax}
                 disabled={submitting}
                 trailing={
                   <button

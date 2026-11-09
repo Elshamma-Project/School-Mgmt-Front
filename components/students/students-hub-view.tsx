@@ -143,7 +143,6 @@ export function StudentsHubView() {
             ? t(`yearStatus.${yearStatus}`)
             : yearStatus
         }
-        hint={t("yearHint")}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />

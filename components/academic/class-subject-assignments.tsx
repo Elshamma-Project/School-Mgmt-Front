@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { Pencil, Plus, Power, PowerOff } from "lucide-react";
+import { BookOpen, Pencil, Plus, Power, PowerOff } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -390,160 +390,175 @@ export function ClassSubjectAssignments({
         )}
       </GroupedList>
 
-      {editorOpen ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 p-4 sm:items-center">
-          <form
-            onSubmit={(e) => void onSave(e)}
-            className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-[var(--radius-xl)] bg-[var(--ios-card)] shadow-[var(--ios-shadow-md)]"
-          >
-            <div className="border-b border-[var(--ios-separator)]/55 px-5 py-4">
-              <h2 className="text-[17px] font-semibold text-[var(--ios-label)]">
-                {draft.id ? t("classSubject.editTitle") : t("classSubject.addTitle")}
-              </h2>
-              <p className="mt-1 text-[12px] text-[var(--ios-secondary-label)]">
-                {t("classSubject.formHint")}
-              </p>
-            </div>
-            <div className="space-y-4 px-5 py-5">
-              <Field id="cs-subject" label={t("tabs.subjects")}>
-                <Select
-                  id="cs-subject"
-                  value={draft.subjectId}
-                  disabled={Boolean(draft.id)}
-                  onChange={(e) => setDraft((d) => ({ ...d, subjectId: e.target.value }))}
-                >
-                  {subjects
-                    .filter((s) => s.active || s.id === draft.subjectId)
-                    .filter((s) => !assignedSubjectIds.has(s.id) || s.id === draft.subjectId)
-                    .map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.code} — {localizedLabel(s.name, locale)}
-                      </option>
-                    ))}
-                </Select>
-              </Field>
-              <Field id="cs-group" label={t("tabs.groups")}>
-                <Select
-                  id="cs-group"
-                  value={draft.groupId}
-                  onChange={(e) => setDraft((d) => ({ ...d, groupId: e.target.value }))}
-                >
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.code} — {localizedLabel(g.name, locale)}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field id="cs-coef" label={t("classSubject.coefficient")}>
-                  <Input
-                    id="cs-coef"
-                    inputMode="decimal"
-                    value={draft.coefficient}
-                    onChange={(e) => setDraft((d) => ({ ...d, coefficient: e.target.value }))}
-                  />
-                </Field>
-                <Field id="cs-hours" label={t("classSubject.weeklyHours")}>
-                  <Input
-                    id="cs-hours"
-                    type="number"
-                    min={0}
-                    value={draft.weeklyHours}
-                    onChange={(e) => setDraft((d) => ({ ...d, weeklyHours: e.target.value }))}
-                  />
-                </Field>
-              </div>
-              <Field id="cs-teacher" label={t("classSubject.teacher")}>
-                <Select
-                  id="cs-teacher"
-                  value={draft.teacherId}
-                  onChange={(e) => setDraft((d) => ({ ...d, teacherId: e.target.value }))}
-                >
-                  <option value="">{t("classSubject.noTeacher")}</option>
-                  {teachers.map((teacher) => (
-                    <option key={teacher.id} value={teacher.id}>
-                      {teacher.fullName}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field id="cs-lang" label={t("fields.teachingLanguage")}>
-                  <Select
-                    id="cs-lang"
-                    value={draft.teachingLanguage}
-                    onChange={(e) =>
-                      setDraft((d) => ({
-                        ...d,
-                        teachingLanguage: e.target.value as "" | "FR" | "EN",
-                      }))
-                    }
-                  >
-                    <option value="">{t("fields.teachingLanguageAny")}</option>
-                    <option value="FR">FR</option>
-                    <option value="EN">EN</option>
-                  </Select>
-                </Field>
-                <Field id="cs-order" label={t("fields.displayOrder")}>
-                  <Input
-                    id="cs-order"
-                    type="number"
-                    value={draft.displayOrder}
-                    onChange={(e) => setDraft((d) => ({ ...d, displayOrder: e.target.value }))}
-                  />
-                </Field>
-                <Field id="cs-max" label={t("classSubject.maxScore")}>
-                  <Input
-                    id="cs-max"
-                    inputMode="decimal"
-                    value={draft.maxScore}
-                    onChange={(e) => setDraft((d) => ({ ...d, maxScore: e.target.value }))}
-                  />
-                </Field>
-              </div>
-              <div className="flex flex-wrap gap-4 text-[13px] text-[var(--ios-label)]">
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={draft.countsInAverage}
-                    onChange={(e) =>
-                      setDraft((d) => ({ ...d, countsInAverage: e.target.checked }))
-                    }
-                  />
-                  {t("classSubject.countsInAverage")}
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={draft.optional}
-                    onChange={(e) => setDraft((d) => ({ ...d, optional: e.target.checked }))}
-                  />
-                  {t("classSubject.optional")}
-                </label>
-              </div>
-              {formError ? (
-                <p className="text-[12px] text-[var(--ios-danger)]" role="alert">
-                  {formError}
-                </p>
-              ) : null}
-            </div>
-            <div className="flex justify-end gap-2 border-t border-[var(--ios-separator)]/55 px-5 py-4">
-              <Button
+      {mounted && editorOpen
+        ? createPortal(
+            <div className="fixed inset-0 z-[200] flex items-end justify-center p-4 sm:items-center">
+              <button
                 type="button"
-                variant="secondary"
-                onClick={() => setEditorOpen(false)}
-                disabled={saving}
+                aria-label={tCommon("cancel")}
+                className="absolute inset-0 cursor-default border-0 bg-[color-mix(in_srgb,var(--ios-label)_22%,transparent)] backdrop-blur-[6px]"
+                onClick={() => {
+                  if (!saving) setEditorOpen(false);
+                }}
+              />
+              <form
+                onSubmit={(e) => void onSave(e)}
+                className="relative z-10 max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-[var(--radius-xl)] bg-[var(--ios-card)] shadow-[var(--ios-shadow-md)] ring-1 ring-[color-mix(in_srgb,var(--ios-separator)_70%,transparent)]"
+                onClick={(e) => e.stopPropagation()}
               >
-                {tCommon("cancel")}
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving ? tCommon("loading") : tCommon("save")}
-              </Button>
-            </div>
-          </form>
-        </div>
-      ) : null}
+                <div className="border-b border-[var(--ios-separator)]/55 px-4 pb-3 pt-4 text-center">
+                  <span className="mx-auto mb-2 inline-flex size-10 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_20%,transparent)]">
+                    <BookOpen className="size-4 stroke-[1.75]" aria-hidden />
+                  </span>
+                  <h2 className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
+                    {draft.id ? t("classSubject.editTitle") : t("classSubject.addTitle")}
+                  </h2>
+                </div>
+                <div className="space-y-2 px-4 py-3 [&_input]:h-[var(--control-height-sm)] [&_select]:h-[var(--control-height-sm)] [&_label]:mb-1">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Field id="cs-subject" label={t("tabs.subjects")}>
+                      <Select
+                        id="cs-subject"
+                        value={draft.subjectId}
+                        disabled={Boolean(draft.id)}
+                        onChange={(e) => setDraft((d) => ({ ...d, subjectId: e.target.value }))}
+                      >
+                        {subjects
+                          .filter((s) => s.active || s.id === draft.subjectId)
+                          .filter((s) => !assignedSubjectIds.has(s.id) || s.id === draft.subjectId)
+                          .map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.code} — {localizedLabel(s.name, locale)}
+                            </option>
+                          ))}
+                      </Select>
+                    </Field>
+                    <Field id="cs-group" label={t("tabs.groups")}>
+                      <Select
+                        id="cs-group"
+                        value={draft.groupId}
+                        onChange={(e) => setDraft((d) => ({ ...d, groupId: e.target.value }))}
+                      >
+                        {groups.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.code} — {localizedLabel(g.name, locale)}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Field id="cs-coef" label={t("classSubject.coefficient")}>
+                      <Input
+                        id="cs-coef"
+                        inputMode="decimal"
+                        value={draft.coefficient}
+                        onChange={(e) => setDraft((d) => ({ ...d, coefficient: e.target.value }))}
+                      />
+                    </Field>
+                    <Field id="cs-hours" label={t("classSubject.weeklyHours")}>
+                      <Input
+                        id="cs-hours"
+                        type="number"
+                        min={0}
+                        value={draft.weeklyHours}
+                        onChange={(e) => setDraft((d) => ({ ...d, weeklyHours: e.target.value }))}
+                      />
+                    </Field>
+                  </div>
+                  <Field id="cs-teacher" label={t("classSubject.teacher")}>
+                    <Select
+                      id="cs-teacher"
+                      value={draft.teacherId}
+                      onChange={(e) => setDraft((d) => ({ ...d, teacherId: e.target.value }))}
+                    >
+                      <option value="">{t("classSubject.noTeacher")}</option>
+                      {teachers.map((teacher) => (
+                        <option key={teacher.id} value={teacher.id}>
+                          {teacher.fullName}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <Field id="cs-lang" label={t("fields.teachingLanguage")}>
+                      <Select
+                        id="cs-lang"
+                        value={draft.teachingLanguage}
+                        onChange={(e) =>
+                          setDraft((d) => ({
+                            ...d,
+                            teachingLanguage: e.target.value as "" | "FR" | "EN",
+                          }))
+                        }
+                      >
+                        <option value="">{t("fields.teachingLanguageAny")}</option>
+                        <option value="FR">FR</option>
+                        <option value="EN">EN</option>
+                      </Select>
+                    </Field>
+                    <Field id="cs-order" label={t("fields.displayOrder")}>
+                      <Input
+                        id="cs-order"
+                        type="number"
+                        value={draft.displayOrder}
+                        onChange={(e) => setDraft((d) => ({ ...d, displayOrder: e.target.value }))}
+                      />
+                    </Field>
+                    <Field id="cs-max" label={t("classSubject.maxScore")}>
+                      <Input
+                        id="cs-max"
+                        inputMode="decimal"
+                        value={draft.maxScore}
+                        onChange={(e) => setDraft((d) => ({ ...d, maxScore: e.target.value }))}
+                      />
+                    </Field>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-0.5 text-[12.5px] text-[var(--ios-label)]">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={draft.countsInAverage}
+                        onChange={(e) =>
+                          setDraft((d) => ({ ...d, countsInAverage: e.target.checked }))
+                        }
+                      />
+                      {t("classSubject.countsInAverage")}
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={draft.optional}
+                        onChange={(e) => setDraft((d) => ({ ...d, optional: e.target.checked }))}
+                      />
+                      {t("classSubject.optional")}
+                    </label>
+                  </div>
+                  {formError ? (
+                    <p className="text-[12px] text-[var(--ios-danger)]" role="alert">
+                      {formError}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex justify-end gap-2 border-t border-[var(--ios-separator)]/55 px-4 py-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setEditorOpen(false)}
+                    disabled={saving}
+                  >
+                    {tCommon("cancel")}
+                  </Button>
+                  <Button type="submit" size="sm" disabled={saving}>
+                    {saving ? tCommon("loading") : tCommon("save")}
+                  </Button>
+                </div>
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <ConfirmDialog
         open={Boolean(pendingToggle)}

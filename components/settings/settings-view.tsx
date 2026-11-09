@@ -88,7 +88,7 @@ export function SettingsView() {
       </GroupedList>
 
       {isMock ? (
-        <GroupedList header={t("switchRoleSection")} footer={t("switchRoleFooter")}>
+        <GroupedList header={t("switchRoleSection")}>
           {listMockRoles().map((role) => {
             const active = role === currentRole;
             return (

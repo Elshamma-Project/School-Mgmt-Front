@@ -164,7 +164,6 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
             ? t(`yearStatus.${yearStatus}`)
             : yearStatus
         }
-        hint={t("yearHint")}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />

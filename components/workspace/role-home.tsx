@@ -47,7 +47,7 @@ export function RoleHome() {
         <Alert tone="warning" title={tRoles(`${role}.comingSoonTitle`)} description={tRoles(`${role}.comingSoonBody`)} />
       ) : null}
 
-      <GroupedList header={t("profileSection")} footer={isMock ? t("demoFooter") : undefined}>
+      <GroupedList header={t("profileSection")}>
         <GroupedListItem>
           <span className="text-[var(--text-body)] text-[var(--ios-label)]">{t("roleLabel")}</span>
           <span className="flex flex-wrap items-center justify-end gap-2">
@@ -71,7 +71,7 @@ export function RoleHome() {
         ) : null}
       </GroupedList>
 
-      <GroupedList header={t("scopeSection")} footer={t("scopeFooter")}>
+      <GroupedList header={t("scopeSection")}>
         {caps.map((cap) => (
           <GroupedListItem key={cap}>
             <span className="text-[var(--text-body)] text-[var(--ios-label)]">{tCaps(cap)}</span>

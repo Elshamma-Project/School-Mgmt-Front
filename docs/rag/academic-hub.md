@@ -10,9 +10,11 @@ title:
 
 ## FR
 
-### À quoi sert cette page ?
+### Année scolaire
 
-Le hub Académique regroupe les référentiels de l’établissement.
+Les classes sont liées à l’année courante ; niveaux, matières et groupes sont permanents.
+
+### À quoi sert cette page ?
 
 - Classes — année scolaire + niveau
 - Matières — catalogue bilingue permanent
@@ -26,9 +28,11 @@ Créer, modifier et désactiver : Administration et Direction. Les autres rôles
 
 ## EN
 
-### What is this page for?
+### School year
 
-The Academic hub holds the school’s reference data.
+Classes belong to the current year; levels, subjects and groups are permanent.
+
+### What is this page for?
 
 - Classes — school year + level
 - Subjects — permanent bilingual catalogue

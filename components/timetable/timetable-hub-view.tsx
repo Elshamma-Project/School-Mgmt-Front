@@ -96,7 +96,6 @@ export function TimetableHubView() {
             ? t(`yearStatus.${yearStatus}`)
             : yearStatus
         }
-        hint={t("yearHint")}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />

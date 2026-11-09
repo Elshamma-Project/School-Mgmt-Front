@@ -673,11 +673,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
               {active ? t("actionDeactivate") : t("actionReactivate")}
             </Button>
           </div>
-        ) : (
-          <p className="mt-3 text-center text-[12px] text-[var(--ios-secondary-label)]">
-            {t("detail.readOnlyHint")}
-          </p>
-        )}
+        ) : null}
       </section>
 
       {editing && canManage ? (

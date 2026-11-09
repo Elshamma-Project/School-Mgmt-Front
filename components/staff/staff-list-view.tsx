@@ -35,6 +35,7 @@ import {
   reactivateStaff,
   type StaffResponse,
 } from "@/lib/api/staff";
+import { userHasCapability } from "@/lib/auth/permissions";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { formatInstant } from "@/lib/datetime/format";
 import {
@@ -220,8 +221,14 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
   const router = useRouter();
   const searchParams = useSearchParams();
   const schoolId = useAuthStore((s) => s.user?.schoolId);
-  const role = primaryRole(useAuthStore((s) => s.user));
+  const user = useAuthStore((s) => s.user);
+  const role = primaryRole(user);
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
+  /**
+   * Création de personnel : ADMINISTRATION (enseignants / Autre) et DIRECTOR (tous types).
+   * Les types « admin » (Direction, Secrétaire…) restent filtrés dans le formulaire de création.
+   */
+  const canAddStaff = userHasCapability(user?.roles, "manageStaff");
 
   const visibleTabs = useMemo(() => staffListTabsForRole(role), [role]);
   const tabFromUrl = parseStaffListTab(searchParams.get("tab")) ?? "all";
@@ -507,14 +514,16 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
               aria-label={tCommon("search")}
             />
           </div>
-          <Button
-            type="button"
-            className="shrink-0"
-            leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
-            onClick={openCreate}
-          >
-            {t("add")}
-          </Button>
+          {canAddStaff ? (
+            <Button
+              type="button"
+              className="shrink-0"
+              leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
+              onClick={openCreate}
+            >
+              {t("add")}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -539,13 +548,15 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
           description={t("emptyDescription")}
           icon={<Users className="size-9 stroke-[1.5]" aria-hidden />}
           action={
-            <Button
-              type="button"
-              leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
-              onClick={openCreate}
-            >
-              {t("add")}
-            </Button>
+            canAddStaff ? (
+              <Button
+                type="button"
+                leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
+                onClick={openCreate}
+              >
+                {t("add")}
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -583,7 +594,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
                       <p className="mt-0.5 truncate text-[11px] text-[var(--ios-secondary-label)]">
                         {member.contact.email || t("noContact")}
                       </p>
-                      <p className="mt-1 font-mono text-[10px] text-[var(--ios-secondary-label)]">
+                      <p className="mt-1 truncate font-mono text-[10px] whitespace-nowrap text-[var(--ios-secondary-label)]">
                         {member.staffNumber || "—"}
                       </p>
                       <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -661,7 +672,7 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
                         </div>
                       </td>
                       <td className="px-3 py-3.5">
-                        <span className="inline-flex rounded-[var(--radius-sm)] border border-[var(--ios-separator)]/70 bg-[var(--ios-card)] px-2 py-1 font-mono text-[11px] text-[var(--ios-secondary-label)]">
+                        <span className="inline-flex whitespace-nowrap rounded-[var(--radius-sm)] border border-[var(--ios-separator)]/70 bg-[var(--ios-card)] px-2 py-1 font-mono text-[11px] text-[var(--ios-secondary-label)]">
                           {member.staffNumber || "—"}
                         </span>
                       </td>
