@@ -267,12 +267,12 @@
     "inactive": "Inactive",
     "loadError": "Could not load the academic directory.",
     "tableCount": "{count, plural, one {# item shown} other {# items shown}}",
-    "createComingSoon": "Detailed create forms come next; the hub already lists existing data.",
     "stats": {
       "levels": "Levels",
       "classes": "Classes",
       "subjects": "Subjects",
-      "groups": "Groups"
+      "groups": "Groups",
+      "rooms": "Rooms"
     },
     "tabs": {
       "levels": "Levels",
@@ -307,7 +307,8 @@
       "capacity": "Capacity",
       "kind": "Kind",
       "order": "Order",
-      "type": "Type"
+      "type": "Type",
+      "actions": "Actions"
     },
     "subjectKind": {
       "ACADEMIC": "Subject",
@@ -341,7 +342,102 @@
       "subjects": "Permanent bilingual subject (ACADEMIC or ACTIVITY kind).",
       "groups": "Subtotal block for report cards; display order is configurable.",
       "rooms": "Room (classroom, lab…) with optional capacity."
-    }
+    },
+    "created": "Item created",
+    "createError": "Unable to create.",
+    "form": {
+      "required": "Please fill in the required fields."
+    },
+    "fields": {
+      "code": "Code",
+      "nameFr": "Label (FR)",
+      "nameEn": "Label (EN)",
+      "cycle": "Cycle",
+      "section": "Section",
+      "order": "Order",
+      "nextLevelCode": "Next level (code)",
+      "year": "Academic year",
+      "level": "Level",
+      "className": "Class name",
+      "trackCode": "Track",
+      "capacity": "Capacity",
+      "defaultLanguage": "Document language",
+      "homeRoom": "Home room",
+      "homeRoomNone": "None",
+      "kind": "Kind",
+      "shortFr": "Short (FR)",
+      "shortEn": "Short (EN)",
+      "displayOrder": "Display order",
+      "roomName": "Room name",
+      "roomType": "Room type",
+      "teachingLanguage": "Teaching language",
+      "teachingLanguageAny": "Any",
+      "timetableAlias": "Timetable alias",
+      "equivalenceIndex": "Equivalence index",
+      "defaultGradingScheme": "Default grading scheme",
+      "availableLanguages": "Available languages",
+      "mainTeacher": "Form teacher",
+      "gradingScheme": "Grading scheme"
+    },
+    "detail": {
+      "identitySection": "Identity",
+      "teachingSection": "Teaching",
+      "progressionSection": "Progression",
+      "organisationSection": "Organisation",
+      "classesSection": "Linked classes",
+      "subjectsSection": "Class subjects",
+      "bulletinSection": "Report card",
+      "homeClassesSection": "Classes (home room)",
+      "subjectIdentityHint": "Bilingual labels used on report cards and in the UI.",
+      "subjectTeachingHint": "Kind, language and alias for grades, timetable and documents.",
+      "levelProgressionHint": "Pedagogical order and next level for promotion.",
+      "classOrgHint": "Document language, room, form teacher and grading scheme.",
+      "classSubjectsHint": "Active assignments: coefficient, subtotal group and hours.",
+      "groupIdentityHint": "Stable code for the report-card subtotal block.",
+      "groupBulletinHint": "Display order controls the sequence of groups on the PDF.",
+      "classesHint": "Current-year classes linked to this level.",
+      "classesOfYear": "Year {year}",
+      "classesEmpty": "No classes linked for the current year.",
+      "subjectsEmpty": "No subjects assigned to this class.",
+      "homeClassesHint": "Classes that use this room as their home room.",
+      "homeClassesEmpty": "No class uses this room as home room."
+    },
+    "cycles": {
+      "MATERNELLE": "Nursery",
+      "PRIMAIRE": "Primary",
+      "SECONDAIRE_1ER_CYCLE": "Lower secondary",
+      "SECONDAIRE_2ND_CYCLE": "Upper secondary"
+    },
+    "sections": {
+      "FRANCOPHONE": "Francophone",
+      "ANGLOPHONE": "Anglophone",
+      "BILINGUAL": "Bilingual"
+    },
+    "roomTypes": {
+      "CLASSROOM": "Classroom",
+      "LABORATORY": "Laboratory",
+      "COMPUTER_LAB": "Computer lab",
+      "SPORTS": "Sports",
+      "WORKSHOP": "Workshop",
+      "HALL": "Hall",
+      "OTHER": "Other"
+    },
+    "actionEdit": "Edit",
+    "actionDeactivate": "Deactivate",
+    "actionReactivate": "Reactivate",
+    "updated": "Changes saved",
+    "updateError": "Unable to update.",
+    "deactivated": "Item deactivated",
+    "deactivatedNamed": "{name} deactivated",
+    "reactivated": "Item reactivated",
+    "actionError": "Action failed.",
+    "deactivateConfirmTitle": "Deactivate this item?",
+    "deactivateConfirmDescription": "{name} will no longer appear in active lists. The record is kept.",
+    "reactivateConfirmTitle": "Reactivate this item?",
+    "reactivateConfirmDescription": "{name} will become available again.",
+    "detailNotFoundTitle": "Record not found",
+    "detailNotFoundDescription": "This item does not exist or is no longer accessible.",
+    "backToList": "Back to list"
   },
   "profile": {
     "title": "Profile",
@@ -620,7 +716,8 @@
       "templates": "Templates",
       "active": "Active",
       "annual": "Annual",
-      "term": "Term"
+      "term": "Term",
+      "cards": "Report cards"
     },
     "tabs": {
       "templates": "Templates",
@@ -636,7 +733,10 @@
       "name": "Name",
       "code": "Code",
       "period": "Period",
-      "status": "Status"
+      "status": "Status",
+      "average": "Average",
+      "rank": "Rank",
+      "actions": "Actions"
     },
     "empty": {
       "templates": {
@@ -644,13 +744,27 @@
         "description": "Configure ReportTemplate records to generate report cards."
       },
       "bulletins": {
-        "title": "Report cards coming next",
-        "description": "Generation and listing of report cards will follow."
+        "title": "No report cards",
+        "description": "Generate annual report cards for the demo class (marks already seeded)."
       },
       "reviews": {
         "title": "Reviews coming next",
         "description": "Report-card review / validation will follow."
       }
+    },
+    "cardsCount": "{count, plural, one {# report card} other {# report cards}}",
+    "generate": {
+      "action": "Generate (annual)",
+      "running": "Generating…",
+      "class": "Class",
+      "noClass": "No class",
+      "success": "{count, plural, one {# report card generated} other {# report cards generated}}",
+      "error": "Unable to generate."
+    },
+    "download": {
+      "action": "PDF",
+      "success": "PDF downloaded",
+      "error": "Unable to download."
     }
   },
   "gradesHub": {

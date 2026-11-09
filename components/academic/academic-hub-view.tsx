@@ -19,8 +19,10 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { AcademicEntityList } from "@/components/academic/academic-entity-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconInput } from "@/components/ui/icon-input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,11 +30,17 @@ import { useRouter } from "@/i18n/navigation";
 import {
   academicCreatePath,
   academicListPath,
+  ACADEMIC_DEFAULT_TAB,
   ACADEMIC_TABS,
   parseAcademicTab,
   type AcademicTab,
 } from "@/lib/academic/tabs";
 import {
+  deactivateLevel,
+  deactivateRoom,
+  deactivateSchoolClass,
+  deactivateSubject,
+  deactivateSubjectGroup,
   listAcademicYears,
   listClasses,
   listLevels,
@@ -158,26 +166,6 @@ function useDebounced<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
-function StatusPill({ active, activeLabel, inactiveLabel }: {
-  active: boolean;
-  activeLabel: string;
-  inactiveLabel: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
-        active
-          ? "bg-[var(--ios-success-soft)] text-[var(--ios-success)]"
-          : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
-      )}
-    >
-      <span className="size-1.5 rounded-full bg-current" aria-hidden />
-      {active ? activeLabel : inactiveLabel}
-    </span>
-  );
-}
-
 export function AcademicHubView() {
   const t = useTranslations("academic");
   const tCommon = useTranslations("common");
@@ -188,7 +176,7 @@ export function AcademicHubView() {
   const role = primaryRole(useAuthStore((s) => s.user));
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
 
-  const tabFromUrl = parseAcademicTab(searchParams.get("tab")) ?? "levels";
+  const tabFromUrl = parseAcademicTab(searchParams.get("tab")) ?? ACADEMIC_DEFAULT_TAB;
   const [tab, setTab] = useState<AcademicTab>(tabFromUrl);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounced(query, 280);
@@ -200,6 +188,11 @@ export function AcademicHubView() {
   const [groups, setGroups] = useState<SubjectGroupResponse[]>([]);
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDeactivate, setPendingDeactivate] = useState<{
+    tab: AcademicTab;
+    id: string;
+    label: string;
+  } | null>(null);
 
   useEffect(() => {
     setTab(tabFromUrl);
@@ -344,6 +337,52 @@ export function AcademicHubView() {
     router.push(academicCreatePath(workspaceHome, tab));
   }
 
+  async function confirmDeactivate() {
+    if (!pendingDeactivate) return;
+    const { tab: entityTab, id, label } = pendingDeactivate;
+    try {
+      switch (entityTab) {
+        case "levels":
+          await deactivateLevel(id, schoolId);
+          setLevels((rows) =>
+            rows.map((row) => (row.id === id ? { ...row, active: false } : row)),
+          );
+          break;
+        case "classes":
+          await deactivateSchoolClass(id, schoolId);
+          setClasses((rows) =>
+            rows.map((row) => (row.id === id ? { ...row, active: false } : row)),
+          );
+          break;
+        case "subjects":
+          await deactivateSubject(id, schoolId);
+          setSubjects((rows) =>
+            rows.map((row) => (row.id === id ? { ...row, active: false } : row)),
+          );
+          break;
+        case "groups":
+          await deactivateSubjectGroup(id, schoolId);
+          setGroups((rows) =>
+            rows.map((row) => (row.id === id ? { ...row, active: false } : row)),
+          );
+          break;
+        case "rooms":
+          await deactivateRoom(id, schoolId);
+          setRooms((rows) =>
+            rows.map((row) => (row.id === id ? { ...row, active: false } : row)),
+          );
+          break;
+      }
+      notify.success(t("deactivatedNamed", { name: label }));
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("actionError"));
+    } finally {
+      setPendingDeactivate(null);
+    }
+  }
+
   return (
     <div className="space-y-5 slide-up">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] px-4 py-3 shadow-[var(--ios-shadow)]">
@@ -377,15 +416,6 @@ export function AcademicHubView() {
 
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         <StatCard
-          label={t("stats.levels")}
-          value={stats.levels}
-          loading={loading}
-          tone="blue"
-          active={tab === "levels"}
-          onSelect={() => selectTab("levels")}
-          icon={<Layers3 className="size-[18px] stroke-[1.75]" aria-hidden />}
-        />
-        <StatCard
           label={t("stats.classes")}
           value={stats.classes}
           loading={loading}
@@ -411,6 +441,15 @@ export function AcademicHubView() {
           active={tab === "groups"}
           onSelect={() => selectTab("groups")}
           icon={<Shapes className="size-[18px] stroke-[1.75]" aria-hidden />}
+        />
+        <StatCard
+          label={t("stats.levels")}
+          value={stats.levels}
+          loading={loading}
+          tone="blue"
+          active={tab === "levels"}
+          onSelect={() => selectTab("levels")}
+          icon={<Layers3 className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
       </div>
 
@@ -510,432 +549,36 @@ export function AcademicHubView() {
           }
         />
       ) : (
-        <>
-          <ul className="space-y-2.5 md:hidden">
-            {tab === "levels"
-              ? filteredLevels.map((item) => (
-                  <li
-                    key={item.id}
-                    className="rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
-                          {localizedLabel(item.name, locale)}
-                        </p>
-                        <p className="mt-0.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                          {item.code}
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          <Badge tone="neutral">{item.section}</Badge>
-                          <Badge tone="blue">{item.cycle}</Badge>
-                        </div>
-                      </div>
-                      <StatusPill
-                        active={item.active}
-                        activeLabel={t("statusActive")}
-                        inactiveLabel={t("inactive")}
-                      />
-                    </div>
-                  </li>
-                ))
-              : null}
-            {tab === "classes"
-              ? filteredClasses.map((item) => (
-                  <li
-                    key={item.id}
-                    className="rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
-                          {item.name}
-                        </p>
-                        <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
-                          {item.levelCode}
-                          {item.trackCode ? ` · ${item.trackCode}` : ""}
-                        </p>
-                      </div>
-                      <StatusPill
-                        active={item.active}
-                        activeLabel={t("statusActive")}
-                        inactiveLabel={t("inactive")}
-                      />
-                    </div>
-                  </li>
-                ))
-              : null}
-            {tab === "subjects"
-              ? filteredSubjects.map((item) => (
-                  <li
-                    key={item.id}
-                    className="rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
-                          {localizedLabel(item.name, locale)}
-                        </p>
-                        <p className="mt-0.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                          {item.code}
-                        </p>
-                      </div>
-                      <StatusPill
-                        active={item.active}
-                        activeLabel={t("statusActive")}
-                        inactiveLabel={t("inactive")}
-                      />
-                    </div>
-                  </li>
-                ))
-              : null}
-            {tab === "groups"
-              ? filteredGroups.map((item) => (
-                  <li
-                    key={item.id}
-                    className="rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
-                          {localizedLabel(item.name, locale)}
-                        </p>
-                        <p className="mt-0.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                          {item.code}
-                        </p>
-                      </div>
-                      <StatusPill
-                        active={item.active}
-                        activeLabel={t("statusActive")}
-                        inactiveLabel={t("inactive")}
-                      />
-                    </div>
-                  </li>
-                ))
-              : null}
-            {tab === "rooms"
-              ? filteredRooms.map((item) => (
-                  <li
-                    key={item.id}
-                    className="rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
-                          {item.name}
-                        </p>
-                        <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
-                          {item.type}
-                          {item.capacity != null ? ` · ${item.capacity}` : ""}
-                        </p>
-                      </div>
-                      <StatusPill
-                        active={item.active}
-                        activeLabel={t("statusActive")}
-                        inactiveLabel={t("inactive")}
-                      />
-                    </div>
-                  </li>
-                ))
-              : null}
-          </ul>
-
-          <div className="hidden overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/50 bg-[var(--ios-card)] shadow-[var(--ios-shadow)] md:block">
-            <div className="overflow-x-auto">
-              {tab === "levels" ? (
-                <table className="w-full min-w-[720px] border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.name")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.code")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.section")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.cycle")}
-                      </th>
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.status")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLevels.map((item, index) => (
-                      <tr
-                        key={item.id}
-                        className={cn(
-                          "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                          index % 2 === 1 &&
-                            "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                          !item.active && "opacity-70",
-                        )}
-                      >
-                        <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
-                          {localizedLabel(item.name, locale)}
-                        </td>
-                        <td className="px-3 py-3.5">
-                          <span className="inline-flex rounded-[var(--radius-sm)] border border-[var(--ios-separator)]/70 px-2 py-1 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                            {item.code}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3.5">
-                          <Badge tone="neutral">{item.section}</Badge>
-                        </td>
-                        <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
-                          {item.cycle}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <StatusPill
-                            active={item.active}
-                            activeLabel={t("statusActive")}
-                            inactiveLabel={t("inactive")}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : null}
-
-              {tab === "classes" ? (
-                <table className="w-full min-w-[720px] border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.class")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.level")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.language")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.capacity")}
-                      </th>
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.status")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredClasses.map((item, index) => (
-                      <tr
-                        key={item.id}
-                        className={cn(
-                          "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                          index % 2 === 1 &&
-                            "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                          !item.active && "opacity-70",
-                        )}
-                      >
-                        <td className="px-5 py-3.5">
-                          <p className="text-[13px] font-semibold text-[var(--ios-label)]">
-                            {item.name}
-                          </p>
-                          {item.trackCode ? (
-                            <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
-                              {item.trackCode}
-                            </p>
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-3.5">
-                          <span className="inline-flex rounded-[var(--radius-sm)] border border-[var(--ios-separator)]/70 px-2 py-1 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                            {item.levelCode}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3.5">
-                          <Badge tone="blue">{item.defaultLanguage}</Badge>
-                        </td>
-                        <td className="px-3 py-3.5 text-[12px] tabular-nums text-[var(--ios-label)]">
-                          {item.capacity ?? "—"}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <StatusPill
-                            active={item.active}
-                            activeLabel={t("statusActive")}
-                            inactiveLabel={t("inactive")}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : null}
-
-              {tab === "subjects" ? (
-                <table className="w-full min-w-[720px] border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.name")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.code")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.kind")}
-                      </th>
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.status")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredSubjects.map((item, index) => (
-                      <tr
-                        key={item.id}
-                        className={cn(
-                          "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                          index % 2 === 1 &&
-                            "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                          !item.active && "opacity-70",
-                        )}
-                      >
-                        <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
-                          {localizedLabel(item.name, locale)}
-                        </td>
-                        <td className="px-3 py-3.5">
-                          <span className="inline-flex rounded-[var(--radius-sm)] border border-[var(--ios-separator)]/70 px-2 py-1 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                            {item.code}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3.5">
-                          <Badge tone={item.kind === "ACADEMIC" ? "blue" : "neutral"}>
-                            {t.has(`subjectKind.${item.kind}`)
-                              ? t(`subjectKind.${item.kind}`)
-                              : item.kind}
-                          </Badge>
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <StatusPill
-                            active={item.active}
-                            activeLabel={t("statusActive")}
-                            inactiveLabel={t("inactive")}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : null}
-
-              {tab === "groups" ? (
-                <table className="w-full min-w-[640px] border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.name")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.code")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.order")}
-                      </th>
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.status")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredGroups.map((item, index) => (
-                      <tr
-                        key={item.id}
-                        className={cn(
-                          "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                          index % 2 === 1 &&
-                            "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                          !item.active && "opacity-70",
-                        )}
-                      >
-                        <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
-                          {localizedLabel(item.name, locale)}
-                        </td>
-                        <td className="px-3 py-3.5">
-                          <span className="inline-flex rounded-[var(--radius-sm)] border border-[var(--ios-separator)]/70 px-2 py-1 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                            {item.code}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3.5 text-[12px] tabular-nums text-[var(--ios-label)]">
-                          {item.displayOrder}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <StatusPill
-                            active={item.active}
-                            activeLabel={t("statusActive")}
-                            inactiveLabel={t("inactive")}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : null}
-
-              {tab === "rooms" ? (
-                <table className="w-full min-w-[640px] border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.name")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.type")}
-                      </th>
-                      <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.capacity")}
-                      </th>
-                      <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                        {t("columns.status")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRooms.map((item, index) => (
-                      <tr
-                        key={item.id}
-                        className={cn(
-                          "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                          index % 2 === 1 &&
-                            "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                          !item.active && "opacity-70",
-                        )}
-                      >
-                        <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
-                          {item.name}
-                        </td>
-                        <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
-                          {item.type}
-                        </td>
-                        <td className="px-3 py-3.5 text-[12px] tabular-nums text-[var(--ios-label)]">
-                          {item.capacity ?? "—"}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <StatusPill
-                            active={item.active}
-                            activeLabel={t("statusActive")}
-                            inactiveLabel={t("inactive")}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : null}
-            </div>
-            <div className="flex items-center justify-between border-t border-[var(--ios-separator)]/60 bg-[color-mix(in_srgb,var(--ios-fill)_28%,var(--ios-card))] px-5 py-2.5">
-              <p className="text-[11px] text-[var(--ios-secondary-label)]">
-                {t("tableCount", { count: activeCount })}
-              </p>
-            </div>
-          </div>
-        </>
+        <AcademicEntityList
+          tab={tab}
+          workspaceHome={workspaceHome}
+          levels={filteredLevels}
+          classes={filteredClasses}
+          subjects={filteredSubjects}
+          groups={filteredGroups}
+          rooms={filteredRooms}
+          onDeactivate={(entityTab, id, label) =>
+            setPendingDeactivate({ tab: entityTab, id, label })
+          }
+        />
       )}
+
+      <ConfirmDialog
+        open={Boolean(pendingDeactivate)}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeactivate(null);
+        }}
+        title={t("deactivateConfirmTitle")}
+        description={
+          pendingDeactivate
+            ? t("deactivateConfirmDescription", { name: pendingDeactivate.label })
+            : undefined
+        }
+        confirmLabel={t("actionDeactivate")}
+        cancelLabel={tCommon("cancel")}
+        tone="destructive"
+        onConfirm={() => void confirmDeactivate()}
+      />
     </div>
   );
 }

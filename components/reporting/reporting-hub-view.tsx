@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClipboardList, FileSpreadsheet, Layers3 } from "lucide-react";
+import { ClipboardList, Download, FileSpreadsheet, Layers3, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Select } from "@/components/ui/select";
 import { StatCard } from "@/components/ui/stat-card";
 import {
   HubLoadingRows,
@@ -14,8 +16,20 @@ import {
   HubYearBanner,
 } from "@/components/workspace/hub-chrome";
 import { useRouter } from "@/i18n/navigation";
-import { listAcademicYears, localizedLabel } from "@/lib/api/academic";
-import { listReportTemplates, type ReportTemplateResponse } from "@/lib/api/reporting";
+import {
+  listAcademicYears,
+  listClasses,
+  localizedLabel,
+  type SchoolClassResponse,
+} from "@/lib/api/academic";
+import {
+  downloadReportCardPdf,
+  generateReportCards,
+  listReportCardsForStudent,
+  listReportTemplates,
+  type ReportCardSummaryResponse,
+  type ReportTemplateResponse,
+} from "@/lib/api/reporting";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import {
   moduleListPath,
@@ -29,6 +43,9 @@ import { useAuthStore } from "@/stores/auth-store";
 import { ApiError, isAuthFailure } from "@/types/api";
 import { primaryRole } from "@/types/auth";
 
+/** Élève démo seedé — utilisé pour lister les bulletins déjà générés. */
+const DEMO_STUDENT_ID = "student-demo-01";
+
 export function ReportingHubView() {
   const t = useTranslations("reportingHub");
   const locale = useLocale();
@@ -41,9 +58,15 @@ export function ReportingHubView() {
   const tab = parseReportingTab(searchParams.get("tab"));
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [yearId, setYearId] = useState<string | null>(null);
   const [yearLabel, setYearLabel] = useState<string | null>(null);
   const [yearStatus, setYearStatus] = useState<string | null>(null);
   const [templates, setTemplates] = useState<ReportTemplateResponse[]>([]);
+  const [classes, setClasses] = useState<SchoolClassResponse[]>([]);
+  const [classId, setClassId] = useState("");
+  const [cards, setCards] = useState<ReportCardSummaryResponse[]>([]);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const selectTab = (next: ReportingTab) => {
     router.replace(moduleListPath(workspaceHome, "reporting", next, "templates"));
@@ -63,12 +86,39 @@ export function ReportingHubView() {
         null;
       setYearLabel(year?.label ?? null);
       setYearStatus(year?.status ?? null);
+      setYearId(year?.id ?? null);
       setTemplates(templateRows);
+
+      if (year) {
+        const classPage = await listClasses({
+          academicYearId: year.id,
+          page: 0,
+          size: 100,
+          schoolId,
+        });
+        setClasses(classPage.content);
+        setClassId((prev) => prev || classPage.content[0]?.id || "");
+      } else {
+        setClasses([]);
+        setClassId("");
+      }
+
+      try {
+        const existing = await listReportCardsForStudent(DEMO_STUDENT_ID, {
+          academicYearId: year?.id,
+          schoolId,
+        });
+        setCards(existing);
+      } catch {
+        setCards([]);
+      }
     } catch (error) {
       if (isAuthFailure(error)) return;
       if (error instanceof ApiError) notify.error(error.message);
       else notify.error(t("loadError"));
       setTemplates([]);
+      setClasses([]);
+      setCards([]);
     } finally {
       setLoading(false);
     }
@@ -87,15 +137,66 @@ export function ReportingHubView() {
     });
   }, [locale, q, templates]);
 
+  const filteredCards = useMemo(() => {
+    if (!q) return cards;
+    return cards.filter((c) =>
+      [c.id, c.status, c.periodType, c.verificationCode].join(" ").toLowerCase().includes(q),
+    );
+  }, [cards, q]);
+
   const stats = useMemo(
     () => ({
       templates: templates.length,
       active: templates.filter((x) => x.active).length,
       annual: templates.filter((x) => x.periodType === "ANNUAL").length,
-      term: templates.filter((x) => x.periodType === "TERM").length,
+      cards: cards.length,
     }),
-    [templates],
+    [cards.length, templates],
   );
+
+  async function onGenerate() {
+    if (!classId) {
+      notify.error(t("generate.noClass"));
+      return;
+    }
+    setGenerating(true);
+    try {
+      const created = await generateReportCards({
+        classId,
+        periodType: "ANNUAL",
+        language: "FR",
+        schoolId,
+      });
+      setCards(created);
+      notify.success(t("generate.success", { count: created.length }));
+      selectTab("bulletins");
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("generate.error"));
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function onDownload(cardId: string) {
+    setDownloadingId(cardId);
+    try {
+      const blob = await downloadReportCardPdf(cardId, schoolId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bulletin-${cardId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      notify.success(t("download.success"));
+    } catch (error) {
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("download.error"));
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   return (
     <div className="space-y-5 slide-up">
@@ -138,10 +239,12 @@ export function ReportingHubView() {
           icon={<FileSpreadsheet className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
         <StatCard
-          label={t("stats.term")}
-          value={stats.term}
+          label={t("stats.cards")}
+          value={stats.cards}
           loading={loading}
           tone="slate"
+          active={tab === "bulletins"}
+          onSelect={() => selectTab("bulletins")}
           icon={<ClipboardList className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
       </div>
@@ -154,16 +257,120 @@ export function ReportingHubView() {
         searchValue={query}
         onSearchChange={setQuery}
         searchPlaceholder={t(`search.${tab}`)}
+        trailing={
+          tab === "bulletins" ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                value={classId}
+                onChange={(e) => setClassId(e.target.value)}
+                className="min-w-[140px]"
+                aria-label={t("generate.class")}
+              >
+                {classes.length === 0 ? (
+                  <option value="">{t("generate.noClass")}</option>
+                ) : (
+                  classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))
+                )}
+              </Select>
+              <Button
+                type="button"
+                size="sm"
+                disabled={generating || !classId || !yearId}
+                onClick={() => void onGenerate()}
+              >
+                <Sparkles className="size-3.5" aria-hidden />
+                {generating ? t("generate.running") : t("generate.action")}
+              </Button>
+            </div>
+          ) : null
+        }
       />
 
       {loading ? (
         <HubLoadingRows />
-      ) : tab !== "templates" ? (
+      ) : tab === "reviews" ? (
         <EmptyState
-          title={t(`empty.${tab}.title`)}
-          description={t(`empty.${tab}.description`)}
+          title={t("empty.reviews.title")}
+          description={t("empty.reviews.description")}
           icon={<FileSpreadsheet className="size-9 stroke-[1.5]" aria-hidden />}
         />
+      ) : tab === "bulletins" ? (
+        filteredCards.length === 0 ? (
+          <EmptyState
+            title={t("empty.bulletins.title")}
+            description={t("empty.bulletins.description")}
+            icon={<FileSpreadsheet className="size-9 stroke-[1.5]" aria-hidden />}
+            action={
+              <Button type="button" disabled={generating || !classId} onClick={() => void onGenerate()}>
+                {t("generate.action")}
+              </Button>
+            }
+          />
+        ) : (
+          <HubTableShell countLabel={t("cardsCount", { count: filteredCards.length })}>
+            <table className="w-full min-w-[780px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
+                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.period")}
+                  </th>
+                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.status")}
+                  </th>
+                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.average")}
+                  </th>
+                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.rank")}
+                  </th>
+                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.actions")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCards.map((item, index) => (
+                  <tr
+                    key={item.id}
+                    className={cn(
+                      "border-b border-[var(--ios-separator)]/55 last:border-b-0",
+                      index % 2 === 1 &&
+                        "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
+                    )}
+                  >
+                    <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
+                      {item.periodType}
+                      {item.periodNumber != null ? ` · ${item.periodNumber}` : ""}
+                    </td>
+                    <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">{item.status}</td>
+                    <td className="px-3 py-3.5 text-[12px] tabular-nums text-[var(--ios-label)]">
+                      {item.average ?? "—"}
+                    </td>
+                    <td className="px-3 py-3.5 text-[12px] tabular-nums text-[var(--ios-label)]">
+                      {item.rank ?? "—"}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={downloadingId === item.id}
+                        onClick={() => void onDownload(item.id)}
+                      >
+                        <Download className="size-3.5" aria-hidden />
+                        {t("download.action")}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </HubTableShell>
+        )
       ) : filteredTemplates.length === 0 ? (
         <EmptyState
           title={t("empty.templates.title")}

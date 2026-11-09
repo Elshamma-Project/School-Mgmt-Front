@@ -17,7 +17,9 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   responseType?: "json" | "blob" | "void";
 };
 
-let refreshInFlight: Promise<boolean> | null = null;
+type RefreshOutcome = "ok" | "auth_failed" | "transient_failed" | "unavailable";
+
+let refreshInFlight: Promise<RefreshOutcome> | null = null;
 const REFRESH_LOCK = "smels-auth-refresh";
 
 async function parseProblem(response: Response): Promise<ProblemDetails | null> {
@@ -46,30 +48,38 @@ function resolveToken(raw: string | null | undefined): string | null {
   return openSecret(raw);
 }
 
-async function tryRefreshAccessToken(clearOnFailure: boolean): Promise<boolean> {
+/**
+ * Renouvelle l’access token.
+ * - `ok` : jetons mis à jour
+ * - `auth_failed` : refresh rejeté (401/400/403) → session nettoyée si demandé
+ * - `transient_failed` : réseau / 5xx → **ne pas** déconnecter (retry possible)
+ * - `unavailable` : pas de refresh token / mock
+ */
+async function tryRefreshAccessToken(clearOnFailure: boolean): Promise<RefreshOutcome> {
   if (refreshInFlight) return refreshInFlight;
 
-  refreshInFlight = withRefreshLock(async () => {
+  refreshInFlight = withRefreshLock(async (): Promise<RefreshOutcome> => {
     const { refreshToken, isMock, applyTokens, clearSession } = useAuthStore.getState();
     const openedRefresh = resolveToken(refreshToken);
 
     if (isMock || !openedRefresh) {
       if (clearOnFailure) clearSession();
-      return false;
+      return "unavailable";
     }
 
     try {
       const { refresh } = await import("@/lib/api/auth");
       const tokens = await refresh(openedRefresh);
       applyTokens(tokens);
-      return true;
+      return "ok";
     } catch (error) {
-      // Réseau / 5xx : ne pas jeter la session. Auth définitive (401/400) : oui.
       const status = error instanceof ApiError ? error.status : 0;
-      if (clearOnFailure && (status === 401 || status === 400 || status === 403)) {
-        clearSession();
+      if (status === 401 || status === 400 || status === 403) {
+        if (clearOnFailure) clearSession();
+        return "auth_failed";
       }
-      return false;
+      // 5xx / réseau / optimistic lock résiduel : garder la session pour un prochain essai.
+      return "transient_failed";
     }
   }).finally(() => {
     refreshInFlight = null;
@@ -115,9 +125,11 @@ export async function apiRequest<T>(
     let token = resolveToken(useAuthStore.getState().accessToken);
     // Access absent mais refresh présent → renouveler avant d’appeler (évite toast « Authentication required »).
     if (!token && !skipRefresh) {
-      const refreshed = await tryRefreshAccessToken(clearSessionOnFailure);
-      if (refreshed) {
+      const outcome = await tryRefreshAccessToken(clearSessionOnFailure);
+      if (outcome === "ok") {
         token = resolveToken(useAuthStore.getState().accessToken);
+      } else if (outcome === "transient_failed") {
+        throw new ApiError(503, "auth_refresh_unavailable");
       }
     }
     if (token) {
@@ -142,12 +154,17 @@ export async function apiRequest<T>(
   }
 
   if (response.status === 401 && auth && !skipRefresh) {
-    const refreshed = await tryRefreshAccessToken(clearSessionOnFailure);
-    if (refreshed) {
+    const outcome = await tryRefreshAccessToken(clearSessionOnFailure);
+    if (outcome === "ok") {
       return apiRequest<T>(path, { ...options, skipRefresh: true });
     }
-    // Session morte : déconnecter silencieusement ; le AuthGuard envoie vers /login.
-    if (clearSessionOnFailure) {
+    // Déconnexion uniquement si le refresh est définitivement rejeté (ou absent).
+    // Un 5xx / optimistic lock ne doit pas éjecter l’utilisateur.
+    if (outcome === "transient_failed") {
+      throw new ApiError(503, "auth_refresh_unavailable");
+    }
+    if (clearSessionOnFailure && outcome !== "auth_failed") {
+      // auth_failed a déjà clearSession dans tryRefreshAccessToken
       useAuthStore.getState().clearSession();
     }
     const problem = await parseProblem(response);

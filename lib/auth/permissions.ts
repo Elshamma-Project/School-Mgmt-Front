@@ -82,3 +82,12 @@ export function roleHasCapability(role: AppRole, capability: UiCapability): bool
 export function listCapabilities(role: AppRole): UiCapability[] {
   return ROLE_CAPS[role];
 }
+
+/** Droit effectif = union des rôles du compte (docs/05). */
+export function userHasCapability(
+  roles: readonly AppRole[] | null | undefined,
+  capability: UiCapability,
+): boolean {
+  if (!roles?.length) return false;
+  return roles.some((role) => roleHasCapability(role, capability));
+}

@@ -1,4 +1,8 @@
-import { parseAcademicTab, type AcademicTab } from "@/lib/academic/tabs";
+import {
+  ACADEMIC_DEFAULT_TAB,
+  parseAcademicTab,
+  type AcademicTab,
+} from "@/lib/academic/tabs";
 import type { NavChildItem, NavHref, NavItemKey } from "@/lib/auth/nav-config";
 import {
   parseGradesTab,
@@ -44,7 +48,7 @@ export function academicTabFromLocation(
   }
 
   if (rest === "" || rest === "/") {
-    return parseAcademicTab(searchParams.get("tab")) ?? "levels";
+    return parseAcademicTab(searchParams.get("tab")) ?? ACADEMIC_DEFAULT_TAB;
   }
 
   return null;

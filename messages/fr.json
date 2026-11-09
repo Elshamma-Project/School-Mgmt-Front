@@ -267,12 +267,12 @@
     "inactive": "Inactif",
     "loadError": "Impossible de charger le référentiel académique.",
     "tableCount": "{count, plural, one {# élément affiché} other {# éléments affichés}}",
-    "createComingSoon": "Le formulaire de création détaillé arrive ensuite ; le hub liste déjà les données existantes.",
     "stats": {
       "levels": "Niveaux",
       "classes": "Classes",
       "subjects": "Matières",
-      "groups": "Groupes"
+      "groups": "Groupes",
+      "rooms": "Salles"
     },
     "tabs": {
       "levels": "Niveaux",
@@ -307,7 +307,8 @@
       "capacity": "Capacité",
       "kind": "Type",
       "order": "Ordre",
-      "type": "Type"
+      "type": "Type",
+      "actions": "Actions"
     },
     "subjectKind": {
       "ACADEMIC": "Matière",
@@ -341,7 +342,102 @@
       "subjects": "Matière permanente bilingue (kind ACADEMIC ou ACTIVITY).",
       "groups": "Bloc de sous-total pour les bulletins ; ordre d’affichage paramétrable.",
       "rooms": "Salle (classe, labo…) avec capacité optionnelle."
-    }
+    },
+    "created": "Élément créé",
+    "createError": "Création impossible.",
+    "form": {
+      "required": "Veuillez renseigner les champs obligatoires."
+    },
+    "fields": {
+      "code": "Code",
+      "nameFr": "Libellé (FR)",
+      "nameEn": "Libellé (EN)",
+      "cycle": "Cycle",
+      "section": "Section",
+      "order": "Ordre",
+      "nextLevelCode": "Niveau suivant (code)",
+      "year": "Année scolaire",
+      "level": "Niveau",
+      "className": "Nom de la classe",
+      "trackCode": "Série / voie",
+      "capacity": "Capacité",
+      "defaultLanguage": "Langue des documents",
+      "homeRoom": "Salle principale",
+      "homeRoomNone": "Aucune",
+      "kind": "Type",
+      "shortFr": "Abrégé (FR)",
+      "shortEn": "Abrégé (EN)",
+      "displayOrder": "Ordre d’affichage",
+      "roomName": "Nom de la salle",
+      "roomType": "Type de salle",
+      "teachingLanguage": "Langue d’enseignement",
+      "teachingLanguageAny": "Indifférente",
+      "timetableAlias": "Alias emploi du temps",
+      "equivalenceIndex": "Index d’équivalence",
+      "defaultGradingScheme": "Barème par défaut",
+      "availableLanguages": "Langues disponibles",
+      "mainTeacher": "Professeur principal",
+      "gradingScheme": "Barème de notes"
+    },
+    "detail": {
+      "identitySection": "Identité",
+      "teachingSection": "Enseignement",
+      "progressionSection": "Progression",
+      "organisationSection": "Organisation",
+      "classesSection": "Classes rattachées",
+      "subjectsSection": "Matières de la classe",
+      "bulletinSection": "Bulletin",
+      "homeClassesSection": "Classes (salle principale)",
+      "subjectIdentityHint": "Libellés bilingues utilisés sur les bulletins et dans l’interface.",
+      "subjectTeachingHint": "Type, langue et alias pour notes, EDT et documents.",
+      "levelProgressionHint": "Ordre pédagogique et niveau suivant pour le passage de classe.",
+      "classOrgHint": "Langue des documents, salle, titulaire et barème de la classe.",
+      "classSubjectsHint": "Affectations actives : coefficient, groupe de sous-total et heures.",
+      "groupIdentityHint": "Code stable du bloc de sous-total sur le bulletin.",
+      "groupBulletinHint": "L’ordre d’affichage contrôle la séquence des groupes sur le PDF.",
+      "classesHint": "Classes de l’année scolaire courante rattachées à ce niveau.",
+      "classesOfYear": "Année {year}",
+      "classesEmpty": "Aucune classe rattachée pour l’année courante.",
+      "subjectsEmpty": "Aucune matière affectée à cette classe.",
+      "homeClassesHint": "Classes qui utilisent cette salle comme salle principale.",
+      "homeClassesEmpty": "Aucune classe n’a cette salle comme salle principale."
+    },
+    "cycles": {
+      "MATERNELLE": "Maternelle",
+      "PRIMAIRE": "Primaire",
+      "SECONDAIRE_1ER_CYCLE": "Secondaire 1er cycle",
+      "SECONDAIRE_2ND_CYCLE": "Secondaire 2nd cycle"
+    },
+    "sections": {
+      "FRANCOPHONE": "Francophone",
+      "ANGLOPHONE": "Anglophone",
+      "BILINGUAL": "Bilingue"
+    },
+    "roomTypes": {
+      "CLASSROOM": "Salle de classe",
+      "LABORATORY": "Laboratoire",
+      "COMPUTER_LAB": "Salle info",
+      "SPORTS": "Sport",
+      "WORKSHOP": "Atelier",
+      "HALL": "Hall",
+      "OTHER": "Autre"
+    },
+    "actionEdit": "Modifier",
+    "actionDeactivate": "Désactiver",
+    "actionReactivate": "Réactiver",
+    "updated": "Modifications enregistrées",
+    "updateError": "Mise à jour impossible.",
+    "deactivated": "Élément désactivé",
+    "deactivatedNamed": "{name} désactivé",
+    "reactivated": "Élément réactivé",
+    "actionError": "Action impossible.",
+    "deactivateConfirmTitle": "Désactiver cet élément ?",
+    "deactivateConfirmDescription": "{name} ne sera plus proposé dans les listes actives. La fiche est conservée.",
+    "reactivateConfirmTitle": "Réactiver cet élément ?",
+    "reactivateConfirmDescription": "{name} redeviendra disponible.",
+    "detailNotFoundTitle": "Fiche introuvable",
+    "detailNotFoundDescription": "Cet élément n’existe pas ou n’est plus accessible.",
+    "backToList": "Retour à la liste"
   },
   "profile": {
     "title": "Profil",
@@ -620,7 +716,8 @@
       "templates": "Gabarits",
       "active": "Actifs",
       "annual": "Annuels",
-      "term": "Trimestres"
+      "term": "Trimestres",
+      "cards": "Bulletins"
     },
     "tabs": {
       "templates": "Gabarits",
@@ -636,7 +733,10 @@
       "name": "Nom",
       "code": "Code",
       "period": "Période",
-      "status": "Statut"
+      "status": "Statut",
+      "average": "Moyenne",
+      "rank": "Rang",
+      "actions": "Actions"
     },
     "empty": {
       "templates": {
@@ -644,13 +744,27 @@
         "description": "Configurez les ReportTemplate pour générer les bulletins."
       },
       "bulletins": {
-        "title": "Bulletins à brancher",
-        "description": "La génération et la liste des bulletins arriveront ensuite."
+        "title": "Aucun bulletin",
+        "description": "Générez les bulletins annuels de la classe démo (notes déjà seedées)."
       },
       "reviews": {
         "title": "Revues à brancher",
         "description": "Les revues / validations de bulletins arriveront ensuite."
       }
+    },
+    "cardsCount": "{count, plural, one {# bulletin} other {# bulletins}}",
+    "generate": {
+      "action": "Générer (annuel)",
+      "running": "Génération…",
+      "class": "Classe",
+      "noClass": "Aucune classe",
+      "success": "{count, plural, one {# bulletin généré} other {# bulletins générés}}",
+      "error": "Génération impossible."
+    },
+    "download": {
+      "action": "PDF",
+      "success": "PDF téléchargé",
+      "error": "Téléchargement impossible."
     }
   },
   "gradesHub": {
