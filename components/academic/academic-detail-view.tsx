@@ -1035,23 +1035,14 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 </GroupedListItem>
               </GroupedList>
 
-              <GroupedList
-                header={t("detail.assignmentSection")}
-                footer={t("detail.subjectAssignmentHint")}
-                className="lg:col-span-2"
-              >
-                <GroupedListItem className="block py-3">
-                  <p className="text-[var(--text-subhead)] leading-snug text-[var(--ios-secondary-label)]">
-                    {t("detail.subjectAssignmentBody")}
-                  </p>
-                  <p className="mt-2">
-                    <Link
-                      href={academicListPath(workspaceHome, "classes")}
-                      className="text-[13px] font-medium text-[var(--ios-blue)] hover:underline"
-                    >
-                      {t("detail.goToClasses")}
-                    </Link>
-                  </p>
+              <GroupedList header={t("detail.assignmentSection")} className="lg:col-span-2">
+                <GroupedListItem>
+                  <Link
+                    href={academicListPath(workspaceHome, "classes")}
+                    className="text-[13px] font-medium text-[var(--ios-blue)] hover:underline"
+                  >
+                    {t("detail.goToClasses")}
+                  </Link>
                 </GroupedListItem>
               </GroupedList>
             </>
@@ -1095,7 +1086,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 </GroupedListItem>
               </GroupedList>
 
-              <GroupedList header={t("detail.progressionSection")} footer={t("detail.levelProgressionHint")}>
+              <GroupedList header={t("detail.progressionSection")}>
                 <GroupedListItem>
                   <DetailRow label={t("fields.order")} value={String(entity.data.order)} />
                 </GroupedListItem>
@@ -1123,7 +1114,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
 
               <GroupedList
                 header={t("detail.classesSection")}
-                footer={yearLabel ? t("detail.classesOfYear", { year: yearLabel }) : t("detail.classesHint")}
+                footer={yearLabel ? t("detail.classesOfYear", { year: yearLabel }) : undefined}
                 className="lg:col-span-2"
               >
                 {relatedLoading ? (
@@ -1201,7 +1192,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 </GroupedListItem>
               </GroupedList>
 
-              <GroupedList header={t("detail.organisationSection")} footer={t("detail.classOrgHint")}>
+              <GroupedList header={t("detail.organisationSection")}>
                 <GroupedListItem>
                   <DetailRow label={t("fields.year")} value={dash(yearLabel)} />
                 </GroupedListItem>
@@ -1262,7 +1253,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
 
           {entity.kind === "groups" ? (
             <>
-              <GroupedList header={t("detail.identitySection")} footer={t("detail.groupIdentityHint")}>
+              <GroupedList header={t("detail.identitySection")}>
                 <GroupedListItem>
                   <DetailRow
                     label={t("columns.code")}
@@ -1277,7 +1268,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                   <DetailRow label={t("fields.nameEn")} value={entity.data.name.en || "—"} stacked />
                 </GroupedListItem>
               </GroupedList>
-              <GroupedList header={t("detail.bulletinSection")} footer={t("detail.groupBulletinHint")}>
+              <GroupedList header={t("detail.bulletinSection")}>
                 <GroupedListItem>
                   <DetailRow
                     label={t("fields.displayOrder")}
@@ -1327,10 +1318,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 </GroupedListItem>
               </GroupedList>
 
-              <GroupedList
-                header={t("detail.homeClassesSection")}
-                footer={t("detail.homeClassesHint")}
-              >
+              <GroupedList header={t("detail.homeClassesSection")}>
                 {relatedLoading ? (
                   <GroupedListItem className="block py-3">
                     <Skeleton className="h-3 w-2/3" />
