@@ -134,7 +134,7 @@ export function HelpMenu({ className }: HelpMenuProps) {
                     aria-label={t("close")}
                     title={t("close")}
                     onClick={() => setOpen(false)}
-                    className="pressable inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-secondary-label)] transition-colors hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)] focus-visible:shadow-[var(--focus-ring)]"
+                    className="pressable inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-danger)] transition-colors hover:bg-[var(--ios-danger-soft)] hover:text-[var(--ios-danger)] focus-visible:shadow-[var(--focus-ring)]"
                   >
                     <X className="size-4 stroke-[1.75]" aria-hidden />
                   </button>
