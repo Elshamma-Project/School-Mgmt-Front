@@ -46,6 +46,10 @@ export type EnrollmentResponse = {
   enrolledOn: string | null;
   leftOn: string | null;
   previousSchool: string | null;
+  /** Enrichi côté API depuis Student. */
+  studentMatricule?: string | null;
+  studentFullName?: string | null;
+  studentSex?: "M" | "F" | null;
 };
 
 function schoolParams(schoolId?: string | null): Record<string, string> {
@@ -95,4 +99,50 @@ export async function listEnrollments(options: {
     ...schoolParams(options.schoolId),
   });
   return apiRequest<PageResponse<EnrollmentResponse>>(`/api/v1/enrollments?${qs}`);
+}
+
+export type CreateEnrollmentPayload = {
+  studentId: string;
+  academicYearId: string;
+  classId: string;
+  levelId: string;
+  rollNumber?: number | null;
+  repeater?: boolean;
+  newStudent?: boolean;
+  enrolledOn?: string | null;
+  previousSchool?: string | null;
+  schoolId?: string | null;
+};
+
+export type UpdateEnrollmentPayload = {
+  classId: string;
+  levelId: string;
+  rollNumber?: number | null;
+  repeater?: boolean;
+  newStudent?: boolean;
+  status?: string;
+  enrolledOn?: string | null;
+  leftOn?: string | null;
+  previousSchool?: string | null;
+};
+
+export async function createEnrollment(
+  payload: CreateEnrollmentPayload,
+): Promise<EnrollmentResponse> {
+  return apiRequest<EnrollmentResponse>("/api/v1/enrollments", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateEnrollment(
+  id: string,
+  payload: UpdateEnrollmentPayload,
+  schoolId?: string | null,
+): Promise<EnrollmentResponse> {
+  const qs = toSearch(schoolParams(schoolId));
+  return apiRequest<EnrollmentResponse>(`/api/v1/enrollments/${id}${qs ? `?${qs}` : ""}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
 }

@@ -135,6 +135,36 @@ export const HELP_CATALOG: HelpArticle[] = [
             "en": "Group — report-card subtotal"
           }
         ]
+      },
+      {
+        "heading": {
+          "fr": "Élèves de la classe",
+          "en": "Class students"
+        },
+        "paragraphs": [
+          {
+            "fr": "Inscriptions de l’année scolaire liée à cette classe.",
+            "en": "Enrollments for the academic year linked to this class."
+          }
+        ],
+        "bullets": [
+          {
+            "fr": "Liste paginée (10, 20, 50 ou 100 par page)",
+            "en": "Paginated list (10, 20, 50 or 100 per page)"
+          },
+          {
+            "fr": "N° d’ordre, matricule, statut et particularités (redoublant, nouveau)",
+            "en": "Roll number, student ID, status and flags (repeater, new)"
+          },
+          {
+            "fr": "Ajouter un élève via recherche nominative, modifier une inscription ou la retirer / la réactiver (Administration / Direction)",
+            "en": "Add a student via name search, edit an enrollment or withdraw / reactivate it (Administration / Director)"
+          },
+          {
+            "fr": "N° d’ordre automatique selon l’ordre alphabétique dans la classe",
+            "en": "Roll number is automatic by alphabetical order in the class"
+          }
+        ]
       }
     ]
   },

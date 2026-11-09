@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   BookOpen,
+  ChevronRight,
   DoorOpen,
   Hash,
   Languages,
@@ -13,8 +14,11 @@ import {
   PowerOff,
   School,
   Shapes,
+  UserRound,
+  Users,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { ClassRoster } from "@/components/academic/class-roster";
 import { ClassSubjectAssignments } from "@/components/academic/class-subject-assignments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,6 +49,7 @@ import {
   getSubjectGroup,
   listAcademicYears,
   listClasses,
+  listClassSubjects,
   listRooms,
   localizedLabel,
   reactivateLevel,
@@ -66,6 +71,7 @@ import {
   type SubjectGroupResponse,
   type SubjectResponse,
 } from "@/lib/api/academic";
+import { listEnrollments } from "@/lib/api/student";
 import { listStaff, type StaffResponse } from "@/lib/api/staff";
 import { userHasCapability } from "@/lib/auth/permissions";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
@@ -131,7 +137,9 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
   const schoolId = user?.schoolId;
   const role = primaryRole(user);
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
-  const canManage = userHasCapability(user?.roles ?? (role ? [role] : []), "manageSchoolStructure");
+  const roles = user?.roles ?? (role ? [role] : []);
+  const canManage = userHasCapability(roles, "manageSchoolStructure");
+  const canManageEnrollments = userHasCapability(roles, "manageEnrollments");
   const setCrumbs = usePageHeadingStore((s) => s.setCrumbs);
   const setBackHref = usePageHeadingStore((s) => s.setBackHref);
   const clearOverride = usePageHeadingStore((s) => s.clearOverride);
@@ -153,6 +161,12 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
   const [mainTeacherName, setMainTeacherName] = useState<string | null>(null);
   const [yearLabel, setYearLabel] = useState<string | null>(null);
   const [relatedLoading, setRelatedLoading] = useState(false);
+  const [classStatsLoading, setClassStatsLoading] = useState(false);
+  const [classStats, setClassStats] = useState({
+    students: 0,
+    subjects: 0,
+    teachers: 0,
+  });
 
   const [nameFr, setNameFr] = useState("");
   const [nameEn, setNameEn] = useState("");
@@ -246,6 +260,48 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
     }
   }, []);
 
+  const loadClassStats = useCallback(
+    async (classEntity: SchoolClassResponse) => {
+      setClassStatsLoading(true);
+      try {
+        const [enrollmentsPage, subjectsPage] = await Promise.all([
+          listEnrollments({
+            page: 0,
+            size: 1,
+            classId: classEntity.id,
+            academicYearId: classEntity.academicYearId,
+            status: "ENROLLED",
+            schoolId,
+          }),
+          listClassSubjects({
+            classId: classEntity.id,
+            page: 0,
+            size: 100,
+            schoolId,
+          }),
+        ]);
+        const uniqueTeachers = new Set(
+          subjectsPage.content
+            .filter((row) => row.active && row.teacherId)
+            .map((row) => row.teacherId as string),
+        );
+        setClassStats({
+          students: enrollmentsPage.totalElements,
+          subjects: subjectsPage.totalElements,
+          teachers: uniqueTeachers.size,
+        });
+      } catch (error) {
+        if (!isAuthFailure(error)) {
+          console.warn("[academic] class stats load failed", error);
+        }
+        setClassStats({ students: 0, subjects: 0, teachers: 0 });
+      } finally {
+        setClassStatsLoading(false);
+      }
+    },
+    [schoolId],
+  );
+
   const loadRelated = useCallback(
     async (next: Entity) => {
       setRelatedLoading(true);
@@ -253,6 +309,9 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
       setHomeRoom(null);
       setMainTeacherName(null);
       setYearLabel(null);
+      if (next.kind !== "classes") {
+        setClassStats({ students: 0, subjects: 0, teachers: 0 });
+      }
       try {
         const years = await listAcademicYears({ schoolId, size: 20 });
         const current =
@@ -275,6 +334,20 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
             size: 100,
           });
           setRelatedClasses(classes.content.filter((c) => c.homeRoomId === next.data.id));
+        }
+
+        if (next.kind === "subjects" && current) {
+          const classes = await listClasses({
+            academicYearId: current.id,
+            schoolId,
+            size: 100,
+            active: true,
+          });
+          setRelatedClasses(
+            [...classes.content].sort((a, b) =>
+              a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+            ),
+          );
         }
 
         if (next.kind === "classes") {
@@ -303,6 +376,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
             const match = years.content.find((y) => y.id === next.data.academicYearId);
             if (match) setYearLabel(match.label);
           }
+          void loadClassStats(next.data);
         }
       } catch (error) {
         if (!isAuthFailure(error)) {
@@ -312,7 +386,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
         setRelatedLoading(false);
       }
     },
-    [schoolId],
+    [loadClassStats, schoolId],
   );
 
   const load = useCallback(async () => {
@@ -587,94 +661,224 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
       ? codeInitials(entity.data.name)
       : codeInitials("code" in entity.data ? entity.data.code : entity.data.id);
 
+  const statsLoading = classStatsLoading || relatedLoading;
+
   return (
     <div className="space-y-6 slide-up">
-      <section className="mx-auto flex w-full max-w-[560px] flex-col items-center text-center">
-        <div
-          className={cn(
-            "flex size-20 items-center justify-center rounded-full text-[18px] font-semibold tracking-[-0.02em]",
-            active
-              ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_18%,transparent)]"
-              : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
-          )}
-          aria-hidden
-        >
-          {avatarLabel}
-        </div>
+      {entity.kind === "classes" ? (
+        <section className="mx-auto w-full max-w-3xl">
+          <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/50 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+            <div className="px-5 py-5 sm:px-6 sm:py-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3.5 sm:gap-4">
+                  <div
+                    className={cn(
+                      "flex size-14 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[16px] font-semibold tracking-[-0.02em] sm:size-16 sm:text-[18px]",
+                      active
+                        ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_18%,transparent)]"
+                        : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
+                    )}
+                    aria-hidden
+                  >
+                    {avatarLabel}
+                  </div>
+                  <div className="min-w-0 pt-0.5 text-left">
+                    <h1 className="truncate text-[22px] font-semibold tracking-[-0.02em] text-[var(--ios-label)] sm:text-[24px]">
+                      {titleLabel}
+                    </h1>
+                    <p className="mt-1 truncate font-mono text-[12px] text-[var(--ios-secondary-label)]">
+                      {subtitle}
+                    </p>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                      <Badge tone={active ? "success" : "neutral"} className="gap-1.5 pl-1.5">
+                        <span
+                          className="size-1.5 shrink-0 rounded-full bg-current opacity-90"
+                          aria-hidden
+                        />
+                        {active ? t("statusActive") : t("inactive")}
+                      </Badge>
+                      <Badge tone="neutral">{entity.data.defaultLanguage}</Badge>
+                      {yearLabel ? <Badge tone="blue">{yearLabel}</Badge> : null}
+                    </div>
+                  </div>
+                </div>
 
-        <div className="mt-4 w-full overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
-          <div className="px-5 pb-3 pt-5">
-            <h1 className="text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
-              {titleLabel}
-            </h1>
-            <p className="mt-1.5 truncate font-mono text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
-              {subtitle}
-            </p>
-          </div>
-          <div className="mx-5 border-t border-[var(--ios-separator)]" />
-          <div className="flex flex-wrap items-center justify-center gap-2 px-5 py-3.5">
-            <Badge tone={active ? "success" : "neutral"} className="gap-1.5 pl-1.5">
-              <span className="size-1.5 shrink-0 rounded-full bg-current opacity-90" aria-hidden />
-              {active ? t("statusActive") : t("inactive")}
-            </Badge>
-            <Badge tone="blue" className="gap-1.5 pl-1.5">
-              <LayoutGrid className="size-3 stroke-[2]" aria-hidden />
-              {t(`tabs.${tab}`)}
-            </Badge>
-            {entity.kind === "subjects" ? (
-              <Badge tone="neutral">
-                {t(`subjectKind.${entity.data.kind}`)}
-              </Badge>
-            ) : null}
-            {entity.kind === "subjects" && entity.data.teachingLanguage ? (
-              <Badge tone="neutral">{entity.data.teachingLanguage}</Badge>
-            ) : null}
-            {entity.kind === "levels" ? (
-              <Badge tone="neutral">
-                {t.has(`sections.${entity.data.section}`)
-                  ? t(`sections.${entity.data.section}` as "sections.FRANCOPHONE")
-                  : entity.data.section}
-              </Badge>
-            ) : null}
-            {entity.kind === "classes" ? (
-              <Badge tone="neutral">{entity.data.defaultLanguage}</Badge>
-            ) : null}
-          </div>
-        </div>
+                {canManage ? (
+                  <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      leadingIcon={<Pencil className="size-3.5" aria-hidden />}
+                      onClick={() => {
+                        hydrateForm(entity);
+                        setEditing((v) => !v);
+                        setFormError(null);
+                      }}
+                    >
+                      {editing ? tCommon("cancel") : t("actionEdit")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={active ? "secondary" : "primary"}
+                      size="sm"
+                      leadingIcon={
+                        active ? (
+                          <PowerOff className="size-3.5" aria-hidden />
+                        ) : (
+                          <Power className="size-3.5" aria-hidden />
+                        )
+                      }
+                      onClick={() => setConfirmOpen(true)}
+                    >
+                      {active ? t("actionDeactivate") : t("actionReactivate")}
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
 
-        {canManage ? (
-          <div className="mt-3 flex w-full flex-wrap justify-center gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              leadingIcon={<Pencil className="size-3.5" aria-hidden />}
-              onClick={() => {
-                hydrateForm(entity);
-                setEditing((v) => !v);
-                setFormError(null);
-              }}
-            >
-              {editing ? tCommon("cancel") : t("actionEdit")}
-            </Button>
-            <Button
-              type="button"
-              variant={active ? "secondary" : "primary"}
-              size="sm"
-              leadingIcon={
-                active ? (
-                  <PowerOff className="size-3.5" aria-hidden />
-                ) : (
-                  <Power className="size-3.5" aria-hidden />
-                )
-              }
-              onClick={() => setConfirmOpen(true)}
-            >
-              {active ? t("actionDeactivate") : t("actionReactivate")}
-            </Button>
+            <div className="grid grid-cols-3 border-t border-[var(--ios-separator)]/60 bg-[color-mix(in_srgb,var(--ios-fill)_22%,var(--ios-card))]">
+              {(
+                [
+                  {
+                    key: "students",
+                    label: t("classStats.students"),
+                    value: classStats.students,
+                    icon: <Users className="size-3.5 stroke-[1.75]" aria-hidden />,
+                    tone: "text-[var(--ios-blue)] bg-[var(--ios-info-soft)]",
+                  },
+                  {
+                    key: "subjects",
+                    label: t("classStats.subjects"),
+                    value: classStats.subjects,
+                    icon: <BookOpen className="size-3.5 stroke-[1.75]" aria-hidden />,
+                    tone: "text-[var(--ios-success)] bg-[var(--ios-success-soft)]",
+                  },
+                  {
+                    key: "teachers",
+                    label: t("classStats.teachers"),
+                    value: classStats.teachers,
+                    icon: <UserRound className="size-3.5 stroke-[1.75]" aria-hidden />,
+                    tone: "text-[var(--ios-warning)] bg-[var(--ios-warning-soft)]",
+                  },
+                ] as const
+              ).map((stat, index) => (
+                <div
+                  key={stat.key}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 px-2 py-3.5 text-center sm:flex-row sm:items-center sm:gap-3 sm:px-4 sm:py-4 sm:text-left",
+                    index > 0 && "border-l border-[var(--ios-separator)]/55",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-flex size-8 shrink-0 items-center justify-center rounded-full sm:size-9",
+                      stat.tone,
+                    )}
+                  >
+                    {stat.icon}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                      {stat.label}
+                    </p>
+                    {statsLoading ? (
+                      <Skeleton className="mx-auto mt-1.5 h-6 w-10 sm:mx-0" />
+                    ) : (
+                      <p className="mt-0.5 text-[22px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-[var(--ios-label)] sm:text-[24px]">
+                        {stat.value}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        ) : null}
-      </section>
+        </section>
+      ) : (
+        <section className="mx-auto flex w-full max-w-[560px] flex-col items-center text-center">
+          <div
+            className={cn(
+              "flex size-20 items-center justify-center rounded-full text-[18px] font-semibold tracking-[-0.02em]",
+              active
+                ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_18%,transparent)]"
+                : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
+            )}
+            aria-hidden
+          >
+            {avatarLabel}
+          </div>
+
+          <div className="mt-4 w-full overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+            <div className="px-5 pb-3 pt-5">
+              <h1 className="text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
+                {titleLabel}
+              </h1>
+              <p className="mt-1.5 truncate font-mono text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
+                {subtitle}
+              </p>
+            </div>
+            <div className="mx-5 border-t border-[var(--ios-separator)]" />
+            <div className="flex flex-wrap items-center justify-center gap-2 px-5 py-3.5">
+              <Badge tone={active ? "success" : "neutral"} className="gap-1.5 pl-1.5">
+                <span className="size-1.5 shrink-0 rounded-full bg-current opacity-90" aria-hidden />
+                {active ? t("statusActive") : t("inactive")}
+              </Badge>
+              <Badge tone="blue" className="gap-1.5 pl-1.5">
+                <LayoutGrid className="size-3 stroke-[2]" aria-hidden />
+                {t(`tabs.${tab}`)}
+              </Badge>
+              {entity.kind === "subjects" ? (
+                <Badge tone="neutral">{t(`subjectKind.${entity.data.kind}`)}</Badge>
+              ) : null}
+              {entity.kind === "subjects" && entity.data.teachingLanguage ? (
+                <Badge tone="neutral">{entity.data.teachingLanguage}</Badge>
+              ) : null}
+              {entity.kind === "levels" ? (
+                <Badge tone="neutral">
+                  {t.has(`sections.${entity.data.section}`)
+                    ? t(`sections.${entity.data.section}` as "sections.FRANCOPHONE")
+                    : entity.data.section}
+                </Badge>
+              ) : null}
+            </div>
+          </div>
+
+          {canManage ? (
+            <div className="mt-3 flex w-full flex-wrap justify-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                leadingIcon={<Pencil className="size-3.5" aria-hidden />}
+                onClick={() => {
+                  hydrateForm(entity);
+                  setEditing((v) => !v);
+                  setFormError(null);
+                }}
+              >
+                {editing ? tCommon("cancel") : t("actionEdit")}
+              </Button>
+              <Button
+                type="button"
+                variant={active ? "secondary" : "primary"}
+                size="sm"
+                leadingIcon={
+                  active ? (
+                    <PowerOff className="size-3.5" aria-hidden />
+                  ) : (
+                    <Power className="size-3.5" aria-hidden />
+                  )
+                }
+                onClick={() => setConfirmOpen(true)}
+              >
+                {active ? t("actionDeactivate") : t("actionReactivate")}
+              </Button>
+            </div>
+          ) : null}
+        </section>
+      )}
 
       {editing && canManage ? (
         <form
@@ -1013,14 +1217,61 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
               </GroupedList>
 
               <GroupedList header={t("detail.assignmentSection")} className="lg:col-span-2">
-                <GroupedListItem>
-                  <Link
-                    href={academicListPath(workspaceHome, "classes")}
-                    className="text-[13px] font-medium text-[var(--ios-blue)] hover:underline"
+                <GroupedListItem className="block py-3">
+                  <p className="text-[12px] leading-relaxed text-[var(--ios-secondary-label)]">
+                    {t("detail.subjectAssignmentBody")}
+                  </p>
+                </GroupedListItem>
+                <GroupedListItem className="justify-end py-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    leadingIcon={<School className="size-3.5" aria-hidden />}
+                    onClick={() => router.push(academicListPath(workspaceHome, "classes"))}
                   >
                     {t("detail.goToClasses")}
-                  </Link>
+                  </Button>
                 </GroupedListItem>
+                {relatedLoading ? (
+                  <GroupedListItem className="block py-3">
+                    <Skeleton className="h-3 w-2/3" />
+                  </GroupedListItem>
+                ) : relatedClasses.length === 0 ? (
+                  <GroupedListItem className="block py-3">
+                    <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
+                      {t("detail.classesEmpty")}
+                    </p>
+                  </GroupedListItem>
+                ) : (
+                  relatedClasses.map((clazz) => (
+                    <GroupedListItem key={clazz.id} className="gap-2">
+                      <Link
+                        href={academicDetailPath(workspaceHome, "classes", clazz.name, clazz.id)}
+                        className="flex min-w-0 flex-1 items-center gap-3 rounded-[var(--radius-sm)] outline-none transition-colors hover:bg-[var(--ios-fill)]/35 focus-visible:shadow-[var(--focus-ring)]"
+                      >
+                        <DetailRow
+                          label={clazz.name}
+                          value={[
+                            clazz.levelCode,
+                            clazz.trackCode,
+                            clazz.defaultLanguage,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ") || "—"}
+                          icon={<School className="size-4 stroke-[1.75]" />}
+                        />
+                      </Link>
+                      <Link
+                        href={academicDetailPath(workspaceHome, "classes", clazz.name, clazz.id)}
+                        aria-label={t("detail.openClass", { name: clazz.name })}
+                        className="pressable inline-flex size-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-blue)] transition-colors hover:bg-[var(--ios-info-soft)]"
+                      >
+                        <ChevronRight className="size-4 stroke-[1.75]" aria-hidden />
+                      </Link>
+                    </GroupedListItem>
+                  ))
+                )}
               </GroupedList>
             </>
           ) : null}
@@ -1132,91 +1383,102 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
 
           {entity.kind === "classes" ? (
             <>
-              <GroupedList header={t("detail.identitySection")}>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.className")}
-                    value={entity.data.name}
-                    icon={<School className="size-4 stroke-[1.75]" />}
-                    stacked
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow label={t("columns.level")} value={entity.data.levelCode} />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.section")}
-                    value={
-                      t.has(`sections.${entity.data.section}`)
-                        ? t(`sections.${entity.data.section}` as "sections.FRANCOPHONE")
-                        : entity.data.section
-                    }
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.cycle")}
-                    value={
-                      t.has(`cycles.${entity.data.cycle}`)
-                        ? t(`cycles.${entity.data.cycle}` as "cycles.PRIMAIRE")
-                        : entity.data.cycle
-                    }
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow label={t("fields.trackCode")} value={dash(entity.data.trackCode)} />
-                </GroupedListItem>
-              </GroupedList>
+              <div className="grid grid-cols-1 items-stretch gap-6 lg:col-span-2 lg:grid-cols-2">
+                <GroupedList header={t("detail.identitySection")} className="h-full">
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.className")}
+                      value={entity.data.name}
+                      icon={<School className="size-4 stroke-[1.75]" />}
+                      stacked
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow label={t("columns.level")} value={entity.data.levelCode} />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.section")}
+                      value={
+                        t.has(`sections.${entity.data.section}`)
+                          ? t(`sections.${entity.data.section}` as "sections.FRANCOPHONE")
+                          : entity.data.section
+                      }
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.cycle")}
+                      value={
+                        t.has(`cycles.${entity.data.cycle}`)
+                          ? t(`cycles.${entity.data.cycle}` as "cycles.PRIMAIRE")
+                          : entity.data.cycle
+                      }
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow label={t("fields.trackCode")} value={dash(entity.data.trackCode)} />
+                  </GroupedListItem>
+                </GroupedList>
 
-              <GroupedList header={t("detail.organisationSection")}>
-                <GroupedListItem>
-                  <DetailRow label={t("fields.year")} value={dash(yearLabel)} />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.defaultLanguage")}
-                    value={entity.data.defaultLanguage}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.availableLanguages")}
-                    value={
-                      entity.data.availableLanguages?.length
-                        ? entity.data.availableLanguages.join(" · ")
-                        : "—"
-                    }
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.capacity")}
-                    value={dash(entity.data.capacity)}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.homeRoom")}
-                    value={homeRoom?.name ?? dash(entity.data.homeRoomId)}
-                    icon={<DoorOpen className="size-4 stroke-[1.75]" />}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.mainTeacher")}
-                    value={mainTeacherName ?? dash(entity.data.mainTeacherId)}
-                    stacked
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.gradingScheme")}
-                    value={dash(entity.data.gradingSchemeId)}
-                    stacked
-                  />
-                </GroupedListItem>
-              </GroupedList>
+                <GroupedList header={t("detail.organisationSection")} className="h-full">
+                  <GroupedListItem>
+                    <DetailRow label={t("fields.year")} value={dash(yearLabel)} />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.defaultLanguage")}
+                      value={entity.data.defaultLanguage}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.availableLanguages")}
+                      value={
+                        entity.data.availableLanguages?.length
+                          ? entity.data.availableLanguages.join(" · ")
+                          : "—"
+                      }
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.capacity")}
+                      value={dash(entity.data.capacity)}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.homeRoom")}
+                      value={homeRoom?.name ?? dash(entity.data.homeRoomId)}
+                      icon={<DoorOpen className="size-4 stroke-[1.75]" />}
+                    />
+                  </GroupedListItem>
+                </GroupedList>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 lg:col-span-2 lg:grid-cols-2">
+                <GroupedList header={t("detail.leadershipSection")}>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.mainTeacher")}
+                      value={mainTeacherName ?? dash(entity.data.mainTeacherId)}
+                      icon={<UserRound className="size-4 stroke-[1.75]" />}
+                      stacked
+                    />
+                  </GroupedListItem>
+                </GroupedList>
+                <GroupedList header={t("detail.gradingSection")}>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.gradingScheme")}
+                      value={dash(entity.data.gradingSchemeId)}
+                      icon={<BookOpen className="size-4 stroke-[1.75]" />}
+                      stacked
+                    />
+                  </GroupedListItem>
+                </GroupedList>
+              </div>
 
               <ClassSubjectAssignments
                 classId={entity.data.id}
@@ -1224,6 +1486,17 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 schoolId={schoolId}
                 workspaceHome={workspaceHome}
                 canManage={canManage}
+                onChanged={() => void loadClassStats(entity.data)}
+              />
+
+              <ClassRoster
+                classId={entity.data.id}
+                academicYearId={entity.data.academicYearId}
+                levelId={entity.data.levelId}
+                schoolId={schoolId}
+                capacity={entity.data.capacity}
+                canManage={canManageEnrollments}
+                onChanged={() => void loadClassStats(entity.data)}
               />
             </>
           ) : null}

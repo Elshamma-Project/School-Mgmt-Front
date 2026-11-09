@@ -10,13 +10,13 @@ type GroupedListProps = {
 
 export function GroupedList({ header, footer, children, className }: GroupedListProps) {
   return (
-    <section className={cn("w-full", className)}>
+    <section className={cn("flex w-full flex-col", className)}>
       {header ? (
         <h2 className="mb-2 px-4 text-[var(--text-footnote)] font-normal uppercase tracking-[0.02em] text-[var(--ios-secondary-label)]">
           {header}
         </h2>
       ) : null}
-      <div className="overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
         {children}
       </div>
       {footer ? (

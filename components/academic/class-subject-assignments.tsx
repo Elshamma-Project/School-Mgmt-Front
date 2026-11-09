@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { BookOpen, Pencil, Plus, Power, PowerOff } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, Pencil, Plus, Power, PowerOff } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,8 +28,28 @@ import {
   type SubjectResponse,
 } from "@/lib/api/academic";
 import { listStaff, type StaffResponse } from "@/lib/api/staff";
+import { cn } from "@/lib/utils/cn";
 import { notify } from "@/lib/ui/notify";
 import { ApiError, isAuthFailure } from "@/types/api";
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+
+/** Pistes fixes (pas d’`auto`) pour que chaque colonne reste alignée entre l’en-tête et les lignes. */
+const ROW_GRID =
+  "grid w-full min-w-0 grid-cols-[minmax(0,1.35fr)_5rem_minmax(0,1fr)_3.5rem_3.5rem_minmax(0,1.05fr)_5.75rem_4.75rem] items-center gap-x-3";
+
+function ColumnHeader({ label, className }: { label: string; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "block w-full text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]",
+        className,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
 
 type ClassSubjectAssignmentsProps = {
   classId: string;
@@ -37,6 +57,8 @@ type ClassSubjectAssignmentsProps = {
   schoolId?: string | null;
   workspaceHome: `/${string}`;
   canManage: boolean;
+  /** Rafraîchir les stats parent après ajout / édition / activation. */
+  onChanged?: () => void;
 };
 
 type Draft = {
@@ -72,6 +94,7 @@ export function ClassSubjectAssignments({
   schoolId,
   workspaceHome,
   canManage,
+  onChanged,
 }: ClassSubjectAssignmentsProps) {
   const t = useTranslations("academic");
   const tCommon = useTranslations("common");
@@ -82,6 +105,8 @@ export function ClassSubjectAssignments({
   const [groups, setGroups] = useState<SubjectGroupResponse[]>([]);
   const [teachers, setTeachers] = useState<StaffResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
   const [editorOpen, setEditorOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
@@ -92,6 +117,10 @@ export function ClassSubjectAssignments({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setPage(0);
+  }, [classId, pageSize]);
 
   useEffect(() => {
     if (!editorOpen) return;
@@ -243,6 +272,7 @@ export function ClassSubjectAssignments({
       setEditorOpen(false);
       notify.success(t("classSubject.saved"));
       await load();
+      onChanged?.();
     } catch (error) {
       if (isAuthFailure(error)) return;
       if (error instanceof ApiError) setFormError(error.message);
@@ -264,6 +294,7 @@ export function ClassSubjectAssignments({
       }
       setPendingToggle(null);
       await load();
+      onChanged?.();
     } catch (error) {
       if (isAuthFailure(error)) return;
       if (error instanceof ApiError) notify.error(error.message);
@@ -276,117 +307,323 @@ export function ClassSubjectAssignments({
     return subject ? localizedLabel(subject.name, locale) : row.subjectId;
   };
 
+  function RowActions({ row }: { row: ClassSubjectResponse }) {
+    if (!canManage) return null;
+    return (
+      <div className="flex shrink-0 justify-end gap-1.5">
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          leadingIcon={<Pencil className="size-3.5" aria-hidden />}
+          onClick={() => openEdit(row)}
+          aria-label={t("actionEdit")}
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          leadingIcon={
+            row.active ? (
+              <PowerOff className="size-3.5" aria-hidden />
+            ) : (
+              <Power className="size-3.5" aria-hidden />
+            )
+          }
+          onClick={() => setPendingToggle(row)}
+          aria-label={row.active ? t("actionDeactivate") : t("actionReactivate")}
+        />
+      </div>
+    );
+  }
+
+  const activeCount = rows.filter((r) => r.active).length;
+  const totalElements = rows.length;
+  const totalPages = totalElements === 0 ? 0 : Math.ceil(totalElements / pageSize);
+  const safePage = Math.min(page, Math.max(totalPages - 1, 0));
+  const pageRows = rows.slice(safePage * pageSize, safePage * pageSize + pageSize);
+  const from = totalElements === 0 ? 0 : safePage * pageSize + 1;
+  const to = Math.min(totalElements, (safePage + 1) * pageSize);
+  const showPager = totalPages > 1;
+  const headerMeta = [
+    !loading && totalElements > 0
+      ? `${t("statusActive")} · ${activeCount}/${totalElements}`
+      : null,
+    !loading && totalElements > 0
+      ? t("classRoster.range", { from, to, total: totalElements })
+      : null,
+  ].filter(Boolean);
+
   return (
     <>
-      <GroupedList
-        header={t("detail.subjectsSection")}
-        className="lg:col-span-2"
-      >
-        {canManage ? (
-          <GroupedListItem className="justify-end py-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              leadingIcon={<Plus className="size-3.5" aria-hidden />}
-              onClick={openCreate}
-              disabled={loading || subjects.length === 0 || groups.length === 0}
-            >
-              {t("classSubject.add")}
-            </Button>
-          </GroupedListItem>
-        ) : null}
+      <GroupedList header={t("detail.subjectsSection")} className="lg:col-span-2">
+        <GroupedListItem className="flex-wrap gap-y-2.5 bg-[color-mix(in_srgb,var(--ios-fill)_28%,var(--ios-card))] py-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <span className="inline-flex size-8 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)]">
+              <BookOpen className="size-3.5 stroke-[1.75]" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold tabular-nums text-[var(--ios-label)]">
+                {loading
+                  ? t("classSubject.loadingCount")
+                  : t("classSubject.totalLabel", { count: totalElements })}
+              </p>
+              {headerMeta.length > 0 ? (
+                <p className="text-[11px] text-[var(--ios-secondary-label)]">
+                  {headerMeta.join(" · ")}
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 text-[12px] text-[var(--ios-secondary-label)]">
+              <span className="whitespace-nowrap">{t("classRoster.pageSize")}</span>
+              <Select
+                value={String(pageSize)}
+                onChange={(e) => {
+                  const next = Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number];
+                  setPageSize(PAGE_SIZE_OPTIONS.includes(next) ? next : 10);
+                }}
+                aria-label={t("classRoster.pageSize")}
+                className="h-8 w-[4.5rem] text-[12px]"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            {canManage ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                leadingIcon={<Plus className="size-3.5" aria-hidden />}
+                onClick={openCreate}
+                disabled={loading || subjects.length === 0 || groups.length === 0}
+              >
+                {t("classSubject.add")}
+              </Button>
+            ) : null}
+          </div>
+        </GroupedListItem>
 
         {loading ? (
-          <GroupedListItem className="block py-3">
-            <div className="space-y-2">
-              <Skeleton className="h-3 w-2/3" />
-              <Skeleton className="h-3 w-1/2" />
+          Array.from({ length: 3 }).map((_, i) => (
+            <GroupedListItem key={i} className="block py-3">
+              <div className={cn(ROW_GRID, "hidden md:grid")}>
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="mx-auto h-6 w-12 rounded-[var(--radius-sm)]" />
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="mx-auto h-3 w-8" />
+                <Skeleton className="mx-auto h-3 w-8" />
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="mx-auto h-6 w-14 rounded-full" />
+                {canManage ? <Skeleton className="ml-auto h-8 w-16" /> : <span />}
+              </div>
+              <div className="space-y-2 md:hidden">
+                <Skeleton className="h-3 w-2/5" />
+                <Skeleton className="h-2.5 w-1/3" />
+              </div>
+            </GroupedListItem>
+          ))
+        ) : rows.length === 0 ? (
+          <GroupedListItem className="block py-8">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <span className="inline-flex size-12 items-center justify-center rounded-full bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]">
+                <BookOpen className="size-5 stroke-[1.5]" aria-hidden />
+              </span>
+              <div className="space-y-1">
+                <p className="text-[14px] font-semibold text-[var(--ios-label)]">
+                  {t("classSubject.emptyTitle")}
+                </p>
+                <p className="mx-auto max-w-sm text-[12px] leading-relaxed text-[var(--ios-secondary-label)]">
+                  {t("classSubject.emptyDescription")}
+                </p>
+              </div>
             </div>
           </GroupedListItem>
-        ) : rows.length === 0 ? (
-          <GroupedListItem className="block py-3">
-            <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
-              {t("detail.subjectsEmpty")}
-            </p>
-          </GroupedListItem>
         ) : (
-          rows.map((row) => {
-            const subject = subjectById.get(row.subjectId);
-            const group = groupById.get(row.groupId);
-            const teacher = row.teacherId ? teacherById.get(row.teacherId) : null;
-            const meta = [
-              subject?.code,
-              group ? localizedLabel(group.name, locale) : null,
-              `×${row.coefficient}`,
-              row.weeklyHours != null ? `${row.weeklyHours}h` : null,
-              teacher?.fullName ?? (row.teacherId ? t("classSubject.teacherUnknown") : t("classSubject.noTeacher")),
-            ]
-              .filter(Boolean)
-              .join(" · ");
-
-            return (
-              <GroupedListItem key={row.id} className="items-start py-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {subject ? (
-                      <Link
-                        href={academicDetailPath(
-                          workspaceHome,
-                          "subjects",
-                          localizedLabel(subject.name, "fr"),
-                          subject.id,
-                        )}
-                        className="text-[var(--text-body)] font-medium text-[var(--ios-label)] hover:underline"
-                      >
-                        {subjectLabel(row)}
-                      </Link>
-                    ) : (
-                      <span className="text-[var(--text-body)] font-medium text-[var(--ios-label)]">
-                        {subjectLabel(row)}
-                      </span>
-                    )}
-                    <Badge tone={row.active ? "success" : "neutral"}>
-                      {row.active ? t("statusActive") : t("inactive")}
-                    </Badge>
-                    {row.optional ? <Badge tone="neutral">{t("classSubject.optional")}</Badge> : null}
-                    {!row.countsInAverage ? (
-                      <Badge tone="neutral">{t("classSubject.notInAverage")}</Badge>
-                    ) : null}
-                  </div>
-                  <p className="mt-1 text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
-                    {meta}
-                  </p>
-                </div>
+          <>
+            <GroupedListItem className="hidden bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] py-2.5 md:block">
+              <div className={ROW_GRID} role="row">
+                <ColumnHeader label={t("classSubject.columns.subject")} />
+                <ColumnHeader
+                  label={t("classSubject.columns.code")}
+                  className="text-center"
+                />
+                <ColumnHeader label={t("classSubject.columns.group")} />
+                <ColumnHeader
+                  label={t("classSubject.columns.coefficient")}
+                  className="text-center"
+                />
+                <ColumnHeader
+                  label={t("classSubject.columns.hours")}
+                  className="text-center"
+                />
+                <ColumnHeader label={t("classSubject.columns.teacher")} />
+                <ColumnHeader
+                  label={t("classSubject.columns.status")}
+                  className="text-center"
+                />
                 {canManage ? (
-                  <div className="flex shrink-0 gap-1.5">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      leadingIcon={<Pencil className="size-3.5" aria-hidden />}
-                      onClick={() => openEdit(row)}
-                      aria-label={t("actionEdit")}
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      leadingIcon={
-                        row.active ? (
-                          <PowerOff className="size-3.5" aria-hidden />
+                  <ColumnHeader
+                    label={t("classSubject.columns.actions")}
+                    className="text-right"
+                  />
+                ) : (
+                  <span aria-hidden />
+                )}
+              </div>
+            </GroupedListItem>
+
+            {pageRows.map((row) => {
+              const subject = subjectById.get(row.subjectId);
+              const group = groupById.get(row.groupId);
+              const teacher = row.teacherId ? teacherById.get(row.teacherId) : null;
+              const teacherLabel =
+                teacher?.fullName ??
+                (row.teacherId ? t("classSubject.teacherUnknown") : t("classSubject.noTeacher"));
+              const flags = (
+                <>
+                  {row.optional ? <Badge tone="neutral">{t("classSubject.optional")}</Badge> : null}
+                  {!row.countsInAverage ? (
+                    <Badge tone="neutral">{t("classSubject.notInAverage")}</Badge>
+                  ) : null}
+                </>
+              );
+
+              return (
+                <GroupedListItem key={row.id} className="block py-3.5">
+                  <div className={cn(ROW_GRID, "hidden md:grid")} role="row">
+                    <div className="min-w-0">
+                      {subject ? (
+                        <Link
+                          href={academicDetailPath(
+                            workspaceHome,
+                            "subjects",
+                            localizedLabel(subject.name, "fr"),
+                            subject.id,
+                          )}
+                          className="block truncate text-[13px] font-semibold text-[var(--ios-label)] hover:underline"
+                        >
+                          {subjectLabel(row)}
+                        </Link>
+                      ) : (
+                        <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
+                          {subjectLabel(row)}
+                        </p>
+                      )}
+                      {row.optional || !row.countsInAverage ? (
+                        <div className="mt-1 flex flex-wrap gap-1.5">{flags}</div>
+                      ) : null}
+                    </div>
+                    <div className="flex justify-center">
+                      <span className="inline-flex max-w-full truncate whitespace-nowrap rounded-[var(--radius-sm)] border border-[var(--ios-separator)]/70 bg-[color-mix(in_srgb,var(--ios-fill)_35%,var(--ios-card))] px-1.5 py-1 font-mono text-[11px] text-[var(--ios-secondary-label)]">
+                        {subject?.code || "—"}
+                      </span>
+                    </div>
+                    <p className="min-w-0 truncate text-[12px] text-[var(--ios-secondary-label)]">
+                      {group ? localizedLabel(group.name, locale) : "—"}
+                    </p>
+                    <p className="text-center text-[12px] font-semibold tabular-nums text-[var(--ios-label)]">
+                      ×{row.coefficient}
+                    </p>
+                    <p className="text-center text-[12px] tabular-nums text-[var(--ios-secondary-label)]">
+                      {row.weeklyHours != null ? `${row.weeklyHours}h` : "—"}
+                    </p>
+                    <p className="min-w-0 truncate text-[12px] text-[var(--ios-secondary-label)]">
+                      {teacherLabel}
+                    </p>
+                    <div className="flex justify-center">
+                      <Badge tone={row.active ? "success" : "neutral"}>
+                        {row.active ? t("statusActive") : t("inactive")}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-end">
+                      <RowActions row={row} />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 md:hidden">
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {subject ? (
+                          <Link
+                            href={academicDetailPath(
+                              workspaceHome,
+                              "subjects",
+                              localizedLabel(subject.name, "fr"),
+                              subject.id,
+                            )}
+                            className="text-[13px] font-semibold text-[var(--ios-label)] hover:underline"
+                          >
+                            {subjectLabel(row)}
+                          </Link>
                         ) : (
-                          <Power className="size-3.5" aria-hidden />
-                        )
-                      }
-                      onClick={() => setPendingToggle(row)}
-                      aria-label={row.active ? t("actionDeactivate") : t("actionReactivate")}
-                    />
+                          <p className="text-[13px] font-semibold text-[var(--ios-label)]">
+                            {subjectLabel(row)}
+                          </p>
+                        )}
+                        <Badge tone={row.active ? "success" : "neutral"}>
+                          {row.active ? t("statusActive") : t("inactive")}
+                        </Badge>
+                        {flags}
+                      </div>
+                      <p className="text-[12px] text-[var(--ios-secondary-label)]">
+                        {[
+                          subject?.code,
+                          group ? localizedLabel(group.name, locale) : null,
+                          `×${row.coefficient}`,
+                          row.weeklyHours != null ? `${row.weeklyHours}h` : null,
+                          teacherLabel,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    </div>
+                    <RowActions row={row} />
+                  </div>
+                </GroupedListItem>
+              );
+            })}
+
+            {!loading && totalElements > 0 ? (
+              <GroupedListItem className="flex-wrap gap-y-2 bg-[color-mix(in_srgb,var(--ios-fill)_22%,var(--ios-card))] py-2.5">
+                <p className="text-[12px] text-[var(--ios-secondary-label)]">
+                  {showPager
+                    ? t("classRoster.pageOf", { page: safePage + 1, total: totalPages })
+                    : t("classRoster.range", { from, to, total: totalElements })}
+                </p>
+                {showPager ? (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={safePage <= 0}
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      className="pressable inline-flex h-8 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ios-separator)]/70 bg-[var(--ios-card)] px-2.5 text-[12px] font-medium text-[var(--ios-label)] transition-colors hover:bg-[var(--ios-fill)]/45 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label={t("classRoster.previous")}
+                    >
+                      <ChevronLeft className="size-3.5" aria-hidden />
+                      <span className="hidden sm:inline">{t("classRoster.previous")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={safePage >= totalPages - 1}
+                      onClick={() => setPage((p) => p + 1)}
+                      className="pressable inline-flex h-8 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--ios-separator)]/70 bg-[var(--ios-card)] px-2.5 text-[12px] font-medium text-[var(--ios-label)] transition-colors hover:bg-[var(--ios-fill)]/45 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label={t("classRoster.next")}
+                    >
+                      <span className="hidden sm:inline">{t("classRoster.next")}</span>
+                      <ChevronRight className="size-3.5" aria-hidden />
+                    </button>
                   </div>
                 ) : null}
               </GroupedListItem>
-            );
-          })
+            ) : null}
+          </>
         )}
       </GroupedList>
 
