@@ -55,6 +55,7 @@ import {
   type SubjectGroupResponse,
   type SubjectResponse,
 } from "@/lib/api/academic";
+import { userHasCapability } from "@/lib/auth/permissions";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { notify } from "@/lib/ui/notify";
 import { cn } from "@/lib/utils/cn";
@@ -172,9 +173,14 @@ export function AcademicHubView() {
   const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const schoolId = useAuthStore((s) => s.user?.schoolId);
-  const role = primaryRole(useAuthStore((s) => s.user));
+  const user = useAuthStore((s) => s.user);
+  const schoolId = user?.schoolId;
+  const role = primaryRole(user);
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
+  const canManage = userHasCapability(
+    user?.roles ?? (role ? [role] : []),
+    "manageSchoolStructure",
+  );
 
   const tabFromUrl = parseAcademicTab(searchParams.get("tab")) ?? ACADEMIC_DEFAULT_TAB;
   const [tab, setTab] = useState<AcademicTab>(tabFromUrl);
@@ -495,14 +501,16 @@ export function AcademicHubView() {
               aria-label={tCommon("search")}
             />
           </div>
-          <Button
-            type="button"
-            className="shrink-0"
-            leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
-            onClick={openCreate}
-          >
-            {t(`add.${tab}`)}
-          </Button>
+          {canManage ? (
+            <Button
+              type="button"
+              className="shrink-0"
+              leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
+              onClick={openCreate}
+            >
+              {t(`add.${tab}`)}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -539,19 +547,22 @@ export function AcademicHubView() {
             )
           }
           action={
-            <Button
-              type="button"
-              leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
-              onClick={openCreate}
-            >
-              {t(`add.${tab}`)}
-            </Button>
+            canManage ? (
+              <Button
+                type="button"
+                leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
+                onClick={openCreate}
+              >
+                {t(`add.${tab}`)}
+              </Button>
+            ) : undefined
           }
         />
       ) : (
         <AcademicEntityList
           tab={tab}
           workspaceHome={workspaceHome}
+          canManage={canManage}
           levels={filteredLevels}
           classes={filteredClasses}
           subjects={filteredSubjects}

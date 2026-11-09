@@ -24,6 +24,7 @@ import {
   type RoomTypeCode,
   type SectionCode,
 } from "@/lib/api/academic";
+import { userHasCapability } from "@/lib/auth/permissions";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { notify } from "@/lib/ui/notify";
 import { useAuthStore } from "@/stores/auth-store";
@@ -63,14 +64,23 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
   const tNav = useTranslations("nav");
   const tCommon = useTranslations("common");
   const router = useRouter();
-  const schoolId = useAuthStore((s) => s.user?.schoolId);
-  const role = primaryRole(useAuthStore((s) => s.user));
+  const user = useAuthStore((s) => s.user);
+  const schoolId = user?.schoolId;
+  const role = primaryRole(user);
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
+  const canManage = userHasCapability(
+    user?.roles ?? (role ? [role] : []),
+    "manageSchoolStructure",
+  );
   const setCrumbs = usePageHeadingStore((s) => s.setCrumbs);
   const setBackHref = usePageHeadingStore((s) => s.setBackHref);
   const clearOverride = usePageHeadingStore((s) => s.clearOverride);
 
   const listHref = academicListPath(workspaceHome, tab);
+
+  useEffect(() => {
+    if (!canManage) router.replace(listHref);
+  }, [canManage, listHref, router]);
 
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);

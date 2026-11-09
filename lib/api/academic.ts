@@ -262,6 +262,34 @@ export async function listClassSubjects(options: {
   return apiRequest<PageResponse<ClassSubjectResponse>>(`/api/v1/class-subjects?${qs}`);
 }
 
+export type CreateClassSubjectPayload = {
+  academicYearId: string;
+  classId: string;
+  subjectId: string;
+  groupId: string;
+  coefficient: string | number;
+  teacherId?: string | null;
+  weeklyHours?: number | null;
+  teachingLanguage?: "FR" | "EN" | null;
+  displayOrder?: number;
+  maxScore?: string | number;
+  countsInAverage?: boolean;
+  optional?: boolean;
+  schoolId?: string | null;
+};
+
+export type UpdateClassSubjectPayload = {
+  groupId: string;
+  coefficient: string | number;
+  teacherId?: string | null;
+  weeklyHours?: number | null;
+  teachingLanguage?: "FR" | "EN" | null;
+  displayOrder?: number;
+  maxScore?: string | number;
+  countsInAverage?: boolean;
+  optional?: boolean;
+};
+
 export async function createClassSubject(
   payload: CreateClassSubjectPayload,
 ): Promise<ClassSubjectResponse> {
@@ -443,34 +471,6 @@ export type UpdateLevelPayload = {
   nextLevelCode?: string | null;
   equivalenceIndex?: number | null;
   defaultGradingSchemeId?: string | null;
-};
-
-export type CreateClassSubjectPayload = {
-  academicYearId: string;
-  classId: string;
-  subjectId: string;
-  groupId: string;
-  coefficient: string | number;
-  teacherId?: string | null;
-  weeklyHours?: number | null;
-  teachingLanguage?: "FR" | "EN" | null;
-  displayOrder?: number;
-  maxScore?: string | number;
-  countsInAverage?: boolean;
-  optional?: boolean;
-  schoolId?: string | null;
-};
-
-export type UpdateClassSubjectPayload = {
-  groupId: string;
-  coefficient: string | number;
-  teacherId?: string | null;
-  weeklyHours?: number | null;
-  teachingLanguage?: "FR" | "EN" | null;
-  displayOrder?: number;
-  maxScore?: string | number;
-  countsInAverage?: boolean;
-  optional?: boolean;
 };
 
 export type UpdateSchoolClassPayload = {

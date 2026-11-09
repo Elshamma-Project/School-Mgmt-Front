@@ -15,6 +15,7 @@ import {
   Shapes,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { ClassSubjectAssignments } from "@/components/academic/class-subject-assignments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -44,9 +45,7 @@ import {
   getSubjectGroup,
   listAcademicYears,
   listClasses,
-  listClassSubjects,
-  listSubjectGroups,
-  listSubjects,
+  listRooms,
   localizedLabel,
   reactivateLevel,
   reactivateRoom,
@@ -58,7 +57,6 @@ import {
   updateSchoolClass,
   updateSubject,
   updateSubjectGroup,
-  type ClassSubjectResponse,
   type CycleCode,
   type LevelResponse,
   type RoomResponse,
@@ -68,6 +66,8 @@ import {
   type SubjectGroupResponse,
   type SubjectResponse,
 } from "@/lib/api/academic";
+import { listStaff, type StaffResponse } from "@/lib/api/staff";
+import { userHasCapability } from "@/lib/auth/permissions";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { notify } from "@/lib/ui/notify";
 import { cn } from "@/lib/utils/cn";
@@ -127,9 +127,11 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const router = useRouter();
-  const schoolId = useAuthStore((s) => s.user?.schoolId);
-  const role = primaryRole(useAuthStore((s) => s.user));
+  const user = useAuthStore((s) => s.user);
+  const schoolId = user?.schoolId;
+  const role = primaryRole(user);
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
+  const canManage = userHasCapability(user?.roles ?? (role ? [role] : []), "manageSchoolStructure");
   const setCrumbs = usePageHeadingStore((s) => s.setCrumbs);
   const setBackHref = usePageHeadingStore((s) => s.setBackHref);
   const clearOverride = usePageHeadingStore((s) => s.clearOverride);
@@ -145,10 +147,10 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [relatedClasses, setRelatedClasses] = useState<SchoolClassResponse[]>([]);
-  const [relatedSubjects, setRelatedSubjects] = useState<SubjectResponse[]>([]);
-  const [relatedGroups, setRelatedGroups] = useState<SubjectGroupResponse[]>([]);
-  const [classSubjects, setClassSubjects] = useState<ClassSubjectResponse[]>([]);
   const [homeRoom, setHomeRoom] = useState<RoomResponse | null>(null);
+  const [rooms, setRooms] = useState<RoomResponse[]>([]);
+  const [teachers, setTeachers] = useState<StaffResponse[]>([]);
+  const [mainTeacherName, setMainTeacherName] = useState<string | null>(null);
   const [yearLabel, setYearLabel] = useState<string | null>(null);
   const [relatedLoading, setRelatedLoading] = useState(false);
 
@@ -161,9 +163,14 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
   const [section, setSection] = useState<SectionCode>("FRANCOPHONE");
   const [order, setOrder] = useState("1");
   const [nextLevelCode, setNextLevelCode] = useState("");
+  const [equivalenceIndex, setEquivalenceIndex] = useState("");
+  const [defaultGradingSchemeId, setDefaultGradingSchemeId] = useState("");
   const [trackCode, setTrackCode] = useState("");
   const [capacity, setCapacity] = useState("");
   const [defaultLanguage, setDefaultLanguage] = useState<"FR" | "EN">("FR");
+  const [homeRoomId, setHomeRoomId] = useState("");
+  const [mainTeacherId, setMainTeacherId] = useState("");
+  const [gradingSchemeId, setGradingSchemeId] = useState("");
   const [subjectKind, setSubjectKind] = useState<"ACADEMIC" | "ACTIVITY">("ACADEMIC");
   const [teachingLanguage, setTeachingLanguage] = useState<"" | "FR" | "EN">("");
   const [timetableAlias, setTimetableAlias] = useState("");
@@ -219,12 +226,19 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
         setSection(next.data.section as SectionCode);
         setOrder(String(next.data.order));
         setNextLevelCode(next.data.nextLevelCode ?? "");
+        setEquivalenceIndex(
+          next.data.equivalenceIndex != null ? String(next.data.equivalenceIndex) : "",
+        );
+        setDefaultGradingSchemeId(next.data.defaultGradingSchemeId ?? "");
         break;
       case "classes":
         setPlainName(next.data.name);
         setTrackCode(next.data.trackCode ?? "");
         setCapacity(next.data.capacity != null ? String(next.data.capacity) : "");
         setDefaultLanguage(next.data.defaultLanguage);
+        setHomeRoomId(next.data.homeRoomId ?? "");
+        setMainTeacherId(next.data.mainTeacherId ?? "");
+        setGradingSchemeId(next.data.gradingSchemeId ?? "");
         break;
       case "subjects":
         setNameFr(next.data.name.fr ?? "");
@@ -252,10 +266,8 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
     async (next: Entity) => {
       setRelatedLoading(true);
       setRelatedClasses([]);
-      setRelatedSubjects([]);
-      setRelatedGroups([]);
-      setClassSubjects([]);
       setHomeRoom(null);
+      setMainTeacherName(null);
       setYearLabel(null);
       try {
         const years = await listAcademicYears({ schoolId, size: 20 });
@@ -282,27 +294,32 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
         }
 
         if (next.kind === "classes") {
+          const [roomsPage, staffPage] = await Promise.all([
+            listRooms({ schoolId, size: 100, active: true }),
+            listStaff({ schoolId, size: 200, active: true, function: "TEACHER" }),
+          ]);
+          setRooms(roomsPage.content);
+          setTeachers(staffPage.content);
           if (next.data.homeRoomId) {
-            try {
-              setHomeRoom(await getRoom(next.data.homeRoomId, schoolId));
-            } catch {
-              setHomeRoom(null);
+            const found = roomsPage.content.find((r) => r.id === next.data.homeRoomId);
+            if (found) setHomeRoom(found);
+            else {
+              try {
+                setHomeRoom(await getRoom(next.data.homeRoomId, schoolId));
+              } catch {
+                setHomeRoom(null);
+              }
             }
           }
-          const [csPage, subjectsPage, groupsPage] = await Promise.all([
-            listClassSubjects({ classId: next.data.id, schoolId, size: 100 }),
-            listSubjects({ schoolId, size: 200 }),
-            listSubjectGroups({ schoolId, size: 100 }),
-          ]);
-          setClassSubjects(csPage.content.filter((row) => row.active));
-          setRelatedSubjects(subjectsPage.content);
-          setRelatedGroups(groupsPage.content);
+          if (next.data.mainTeacherId) {
+            const teacher = staffPage.content.find((s) => s.id === next.data.mainTeacherId);
+            setMainTeacherName(teacher?.fullName ?? next.data.mainTeacherId);
+          }
           if (current && current.id !== next.data.academicYearId) {
             const match = years.content.find((y) => y.id === next.data.academicYearId);
             if (match) setYearLabel(match.label);
           }
         }
-
       } catch (error) {
         if (!isAuthFailure(error)) {
           console.warn("[academic] related load failed", error);
@@ -374,18 +391,6 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
 
   const active = entity?.data.active ?? false;
 
-  const subjectById = useMemo(() => {
-    const map = new Map<string, SubjectResponse>();
-    for (const s of relatedSubjects) map.set(s.id, s);
-    return map;
-  }, [relatedSubjects]);
-
-  const groupById = useMemo(() => {
-    const map = new Map<string, SubjectGroupResponse>();
-    for (const g of relatedGroups) map.set(g.id, g);
-    return map;
-  }, [relatedGroups]);
-
   async function onSave(event: FormEvent) {
     event.preventDefault();
     if (!entity) return;
@@ -405,6 +410,10 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 section,
                 order: Math.max(1, Number.parseInt(order, 10) || 1),
                 nextLevelCode: nextLevelCode.trim() || null,
+                equivalenceIndex: equivalenceIndex.trim()
+                  ? Number.parseInt(equivalenceIndex, 10)
+                  : null,
+                defaultGradingSchemeId: defaultGradingSchemeId.trim() || null,
               },
               schoolId,
             ),
@@ -423,9 +432,9 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 availableLanguages: entity.data.availableLanguages?.length
                   ? entity.data.availableLanguages
                   : ["FR", "EN"],
-                homeRoomId: entity.data.homeRoomId,
-                mainTeacherId: entity.data.mainTeacherId,
-                gradingSchemeId: entity.data.gradingSchemeId,
+                homeRoomId: homeRoomId.trim() || null,
+                mainTeacherId: mainTeacherId.trim() || null,
+                gradingSchemeId: gradingSchemeId.trim() || null,
               },
               schoolId,
             ),
@@ -484,6 +493,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
       setEntity(next);
       hydrateForm(next);
       setEditing(false);
+      void loadRelated(next);
       notify.success(t("updated"));
     } catch (error) {
       if (isAuthFailure(error)) return;
@@ -651,39 +661,45 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
           </div>
         </div>
 
-        <div className="mt-3 flex w-full flex-wrap justify-center gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            leadingIcon={<Pencil className="size-3.5" aria-hidden />}
-            onClick={() => {
-              hydrateForm(entity);
-              setEditing((v) => !v);
-              setFormError(null);
-            }}
-          >
-            {editing ? tCommon("cancel") : t("actionEdit")}
-          </Button>
-          <Button
-            type="button"
-            variant={active ? "secondary" : "primary"}
-            size="sm"
-            leadingIcon={
-              active ? (
-                <PowerOff className="size-3.5" aria-hidden />
-              ) : (
-                <Power className="size-3.5" aria-hidden />
-              )
-            }
-            onClick={() => setConfirmOpen(true)}
-          >
-            {active ? t("actionDeactivate") : t("actionReactivate")}
-          </Button>
-        </div>
+        {canManage ? (
+          <div className="mt-3 flex w-full flex-wrap justify-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              leadingIcon={<Pencil className="size-3.5" aria-hidden />}
+              onClick={() => {
+                hydrateForm(entity);
+                setEditing((v) => !v);
+                setFormError(null);
+              }}
+            >
+              {editing ? tCommon("cancel") : t("actionEdit")}
+            </Button>
+            <Button
+              type="button"
+              variant={active ? "secondary" : "primary"}
+              size="sm"
+              leadingIcon={
+                active ? (
+                  <PowerOff className="size-3.5" aria-hidden />
+                ) : (
+                  <Power className="size-3.5" aria-hidden />
+                )
+              }
+              onClick={() => setConfirmOpen(true)}
+            >
+              {active ? t("actionDeactivate") : t("actionReactivate")}
+            </Button>
+          </div>
+        ) : (
+          <p className="mt-3 text-center text-[12px] text-[var(--ios-secondary-label)]">
+            {t("detail.readOnlyHint")}
+          </p>
+        )}
       </section>
 
-      {editing ? (
+      {editing && canManage ? (
         <form
           onSubmit={(e) => void onSave(e)}
           className="mx-auto w-full max-w-3xl overflow-hidden rounded-[var(--radius-md)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]"
@@ -759,37 +775,93 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                     />
                   </Field>
                 </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field id="det-equiv" label={t("fields.equivalenceIndex")}>
+                    <Input
+                      id="det-equiv"
+                      type="number"
+                      value={equivalenceIndex}
+                      onChange={(e) => setEquivalenceIndex(e.target.value)}
+                    />
+                  </Field>
+                  <Field id="det-scheme" label={t("fields.defaultGradingScheme")}>
+                    <Input
+                      id="det-scheme"
+                      value={defaultGradingSchemeId}
+                      onChange={(e) => setDefaultGradingSchemeId(e.target.value)}
+                    />
+                  </Field>
+                </div>
               </>
             ) : null}
 
             {entity.kind === "classes" ? (
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field id="det-track" label={t("fields.trackCode")}>
+              <>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Field id="det-track" label={t("fields.trackCode")}>
+                    <Input
+                      id="det-track"
+                      value={trackCode}
+                      onChange={(e) => setTrackCode(e.target.value)}
+                    />
+                  </Field>
+                  <Field id="det-cap" label={t("fields.capacity")}>
+                    <Input
+                      id="det-cap"
+                      type="number"
+                      value={capacity}
+                      onChange={(e) => setCapacity(e.target.value)}
+                    />
+                  </Field>
+                  <Field id="det-lang" label={t("fields.defaultLanguage")}>
+                    <Select
+                      id="det-lang"
+                      value={defaultLanguage}
+                      onChange={(e) => setDefaultLanguage(e.target.value as "FR" | "EN")}
+                    >
+                      <option value="FR">FR</option>
+                      <option value="EN">EN</option>
+                    </Select>
+                  </Field>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field id="det-home" label={t("fields.homeRoom")}>
+                    <Select
+                      id="det-home"
+                      value={homeRoomId}
+                      onChange={(e) => setHomeRoomId(e.target.value)}
+                    >
+                      <option value="">{t("fields.homeRoomNone")}</option>
+                      {rooms.map((room) => (
+                        <option key={room.id} value={room.id}>
+                          {room.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field id="det-teacher" label={t("fields.mainTeacher")}>
+                    <Select
+                      id="det-teacher"
+                      value={mainTeacherId}
+                      onChange={(e) => setMainTeacherId(e.target.value)}
+                    >
+                      <option value="">{t("classSubject.noTeacher")}</option>
+                      {teachers.map((teacher) => (
+                        <option key={teacher.id} value={teacher.id}>
+                          {teacher.fullName}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
+                <Field id="det-gs" label={t("fields.gradingScheme")}>
                   <Input
-                    id="det-track"
-                    value={trackCode}
-                    onChange={(e) => setTrackCode(e.target.value)}
+                    id="det-gs"
+                    value={gradingSchemeId}
+                    onChange={(e) => setGradingSchemeId(e.target.value)}
                   />
                 </Field>
-                <Field id="det-cap" label={t("fields.capacity")}>
-                  <Input
-                    id="det-cap"
-                    type="number"
-                    value={capacity}
-                    onChange={(e) => setCapacity(e.target.value)}
-                  />
-                </Field>
-                <Field id="det-lang" label={t("fields.defaultLanguage")}>
-                  <Select
-                    id="det-lang"
-                    value={defaultLanguage}
-                    onChange={(e) => setDefaultLanguage(e.target.value as "FR" | "EN")}
-                  >
-                    <option value="FR">FR</option>
-                    <option value="EN">EN</option>
-                  </Select>
-                </Field>
-              </div>
+              </>
             ) : null}
 
             {entity.kind === "subjects" ? (
@@ -960,6 +1032,26 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 </GroupedListItem>
                 <GroupedListItem>
                   <DetailRow label={t("columns.status")} value={active ? t("statusActive") : t("inactive")} />
+                </GroupedListItem>
+              </GroupedList>
+
+              <GroupedList
+                header={t("detail.assignmentSection")}
+                footer={t("detail.subjectAssignmentHint")}
+                className="lg:col-span-2"
+              >
+                <GroupedListItem className="block py-3">
+                  <p className="text-[var(--text-subhead)] leading-snug text-[var(--ios-secondary-label)]">
+                    {t("detail.subjectAssignmentBody")}
+                  </p>
+                  <p className="mt-2">
+                    <Link
+                      href={academicListPath(workspaceHome, "classes")}
+                      className="text-[13px] font-medium text-[var(--ios-blue)] hover:underline"
+                    >
+                      {t("detail.goToClasses")}
+                    </Link>
+                  </p>
                 </GroupedListItem>
               </GroupedList>
             </>
@@ -1145,7 +1237,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 <GroupedListItem>
                   <DetailRow
                     label={t("fields.mainTeacher")}
-                    value={dash(entity.data.mainTeacherId)}
+                    value={mainTeacherName ?? dash(entity.data.mainTeacherId)}
                     stacked
                   />
                 </GroupedListItem>
@@ -1158,70 +1250,13 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 </GroupedListItem>
               </GroupedList>
 
-              <GroupedList
-                header={t("detail.subjectsSection")}
-                footer={t("detail.classSubjectsHint")}
-                className="lg:col-span-2"
-              >
-                {relatedLoading ? (
-                  <GroupedListItem className="block py-3">
-                    <Skeleton className="h-3 w-2/3" />
-                  </GroupedListItem>
-                ) : classSubjects.length === 0 ? (
-                  <GroupedListItem className="block py-3">
-                    <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
-                      {t("detail.subjectsEmpty")}
-                    </p>
-                  </GroupedListItem>
-                ) : (
-                  [...classSubjects]
-                    .sort((a, b) => a.displayOrder - b.displayOrder)
-                    .map((row) => {
-                      const subject = subjectById.get(row.subjectId);
-                      const group = groupById.get(row.groupId);
-                      const name = subject
-                        ? localizedLabel(subject.name, locale)
-                        : row.subjectId;
-                      const meta = [
-                        subject?.code,
-                        group ? localizedLabel(group.name, locale) : null,
-                        `×${row.coefficient}`,
-                        row.weeklyHours != null ? `${row.weeklyHours}h` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ");
-                      return (
-                        <GroupedListItem key={row.id}>
-                          {subject ? (
-                            <Link
-                              href={academicDetailPath(
-                                workspaceHome,
-                                "subjects",
-                                localizedLabel(subject.name, "fr"),
-                                subject.id,
-                              )}
-                              className="flex min-w-0 flex-1"
-                            >
-                              <DetailRow
-                                label={name}
-                                value={meta}
-                                icon={<BookOpen className="size-4 stroke-[1.75]" />}
-                                stacked
-                              />
-                            </Link>
-                          ) : (
-                            <DetailRow
-                              label={name}
-                              value={meta}
-                              icon={<BookOpen className="size-4 stroke-[1.75]" />}
-                              stacked
-                            />
-                          )}
-                        </GroupedListItem>
-                      );
-                    })
-                )}
-              </GroupedList>
+              <ClassSubjectAssignments
+                classId={entity.data.id}
+                academicYearId={entity.data.academicYearId}
+                schoolId={schoolId}
+                workspaceHome={workspaceHome}
+                canManage={canManage}
+              />
             </>
           ) : null}
 

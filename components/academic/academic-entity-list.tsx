@@ -22,6 +22,7 @@ import { useRouter } from "@/i18n/navigation";
 type Props = {
   tab: AcademicTab;
   workspaceHome: `/${string}`;
+  canManage?: boolean;
   levels: LevelResponse[];
   classes: SchoolClassResponse[];
   subjects: SubjectResponse[];
@@ -164,6 +165,7 @@ function MobileCard({
   onEdit,
   onDelete,
   badges,
+  canManage = false,
 }: {
   title: string;
   subtitle?: string;
@@ -172,6 +174,7 @@ function MobileCard({
   onEdit: () => void;
   onDelete: () => void;
   badges?: ReactNode;
+  canManage?: boolean;
 }) {
   return (
     <li>
@@ -194,9 +197,11 @@ function MobileCard({
             <StatusPill active={active} />
           </div>
         </button>
-        <div className="mt-3 flex justify-end border-t border-[var(--ios-separator)]/50 pt-2.5">
-          <RowActions onEdit={onEdit} onDelete={onDelete} deleteDisabled={!active} />
-        </div>
+        {canManage ? (
+          <div className="mt-3 flex justify-end border-t border-[var(--ios-separator)]/50 pt-2.5">
+            <RowActions onEdit={onEdit} onDelete={onDelete} deleteDisabled={!active} />
+          </div>
+        ) : null}
       </div>
     </li>
   );
@@ -205,6 +210,7 @@ function MobileCard({
 export function AcademicEntityList({
   tab,
   workspaceHome,
+  canManage = false,
   levels,
   classes,
   subjects,
@@ -243,6 +249,7 @@ export function AcademicEntityList({
                   title={label}
                   subtitle={item.code}
                   active={item.active}
+                  canManage={canManage}
                   onOpen={() => open("levels", label, item.id)}
                   onEdit={() => open("levels", label, item.id)}
                   onDelete={() => onDeactivate("levels", item.id, label)}
@@ -263,6 +270,7 @@ export function AcademicEntityList({
                 title={item.name}
                 subtitle={`${item.levelCode}${item.trackCode ? ` · ${item.trackCode}` : ""}`}
                 active={item.active}
+                canManage={canManage}
                 onOpen={() => open("classes", item.name, item.id)}
                 onEdit={() => open("classes", item.name, item.id)}
                 onDelete={() => onDeactivate("classes", item.id, item.name)}
@@ -278,6 +286,7 @@ export function AcademicEntityList({
                   title={label}
                   subtitle={item.code}
                   active={item.active}
+                  canManage={canManage}
                   onOpen={() => open("subjects", label, item.id)}
                   onEdit={() => open("subjects", label, item.id)}
                   onDelete={() => onDeactivate("subjects", item.id, label)}
@@ -294,6 +303,7 @@ export function AcademicEntityList({
                   title={label}
                   subtitle={item.code}
                   active={item.active}
+                  canManage={canManage}
                   onOpen={() => open("groups", label, item.id)}
                   onEdit={() => open("groups", label, item.id)}
                   onDelete={() => onDeactivate("groups", item.id, label)}
@@ -308,6 +318,7 @@ export function AcademicEntityList({
                 title={item.name}
                 subtitle={`${item.type}${item.capacity != null ? ` · ${item.capacity}` : ""}`}
                 active={item.active}
+                canManage={canManage}
                 onOpen={() => open("rooms", item.name, item.id)}
                 onEdit={() => open("rooms", item.name, item.id)}
                 onDelete={() => onDeactivate("rooms", item.id, item.name)}
@@ -354,11 +365,13 @@ export function AcademicEntityList({
                     <StatusPill active={item.active} />
                   </td>
                   <td className="px-5 py-3.5">
-                    <RowActions
-                      onEdit={() => open("levels", label, item.id)}
-                      onDelete={() => onDeactivate("levels", item.id, label)}
-                      deleteDisabled={!item.active}
-                    />
+                    {canManage ? (
+                      <RowActions
+                        onEdit={() => open("levels", label, item.id)}
+                        onDelete={() => onDeactivate("levels", item.id, label)}
+                        deleteDisabled={!item.active}
+                      />
+                    ) : null}
                   </td>
                 </Tr>
               );
@@ -410,11 +423,13 @@ export function AcademicEntityList({
                   <StatusPill active={item.active} />
                 </td>
                 <td className="px-5 py-3.5">
-                  <RowActions
-                    onEdit={() => open("classes", item.name, item.id)}
-                    onDelete={() => onDeactivate("classes", item.id, item.name)}
-                    deleteDisabled={!item.active}
-                  />
+                  {canManage ? (
+                    <RowActions
+                      onEdit={() => open("classes", item.name, item.id)}
+                      onDelete={() => onDeactivate("classes", item.id, item.name)}
+                      deleteDisabled={!item.active}
+                    />
+                  ) : null}
                 </td>
               </Tr>
             ))}
@@ -462,11 +477,13 @@ export function AcademicEntityList({
                     <StatusPill active={item.active} />
                   </td>
                   <td className="px-5 py-3.5">
-                    <RowActions
-                      onEdit={() => open("subjects", label, item.id)}
-                      onDelete={() => onDeactivate("subjects", item.id, label)}
-                      deleteDisabled={!item.active}
-                    />
+                    {canManage ? (
+                      <RowActions
+                        onEdit={() => open("subjects", label, item.id)}
+                        onDelete={() => onDeactivate("subjects", item.id, label)}
+                        deleteDisabled={!item.active}
+                      />
+                    ) : null}
                   </td>
                 </Tr>
               );
@@ -511,11 +528,13 @@ export function AcademicEntityList({
                     <StatusPill active={item.active} />
                   </td>
                   <td className="px-5 py-3.5">
-                    <RowActions
-                      onEdit={() => open("groups", label, item.id)}
-                      onDelete={() => onDeactivate("groups", item.id, label)}
-                      deleteDisabled={!item.active}
-                    />
+                    {canManage ? (
+                      <RowActions
+                        onEdit={() => open("groups", label, item.id)}
+                        onDelete={() => onDeactivate("groups", item.id, label)}
+                        deleteDisabled={!item.active}
+                      />
+                    ) : null}
                   </td>
                 </Tr>
               );
@@ -556,11 +575,13 @@ export function AcademicEntityList({
                   <StatusPill active={item.active} />
                 </td>
                 <td className="px-5 py-3.5">
-                  <RowActions
-                    onEdit={() => open("rooms", item.name, item.id)}
-                    onDelete={() => onDeactivate("rooms", item.id, item.name)}
-                    deleteDisabled={!item.active}
-                  />
+                  {canManage ? (
+                    <RowActions
+                      onEdit={() => open("rooms", item.name, item.id)}
+                      onDelete={() => onDeactivate("rooms", item.id, item.name)}
+                      deleteDisabled={!item.active}
+                    />
+                  ) : null}
                 </td>
               </Tr>
             ))}
