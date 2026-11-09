@@ -2,19 +2,22 @@
 id: academic-group-detail
 priority: 50
 routes:
-  - /academic/groups/*
+  - path: /academic/groups/*
+    excludeLast:
+      - create
+title:
+  fr: Fiche groupe
+  en: Group detail
 ---
-
-# Fiche groupe
 
 ## FR
 
-Un **groupe** (ex. LANG_LIT, SCI_TECH) sert aux **sous-totaux** du bulletin. L’ordre d’affichage contrôle la séquence sur le PDF.
+### Sous-totaux bulletin
 
-Les matières sont rattachées à un groupe lors de l’affectation à une classe (ClassSubject).
+L’ordre d’affichage contrôle la séquence des groupes sur le PDF. Le rattachement matière ↔ groupe se fait à l’affectation en classe.
 
 ## EN
 
-A **group** drives report-card **subtotals**. Display order controls the PDF sequence.
+### Report-card subtotals
 
-Subjects are linked to a group when assigned to a class (ClassSubject).
+Display order controls group sequence on the PDF. Subject ↔ group is set when assigning to a class.

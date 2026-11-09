@@ -24,8 +24,9 @@
   },
   "help": {
     "open": "Help for this page",
-    "badge": "Help",
-    "sourceHint": "Content from the help knowledge base (docs/rag)."
+    "close": "Close",
+    "closeOverlay": "Close help",
+    "badge": "Help"
   },
   "auth": {
     "loginTitle": "Sign in",

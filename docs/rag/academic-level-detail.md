@@ -2,19 +2,22 @@
 id: academic-level-detail
 priority: 50
 routes:
-  - /academic/levels/*
+  - path: /academic/levels/*
+    excludeLast:
+      - create
+title:
+  fr: Fiche niveau
+  en: Level detail
 ---
-
-# Fiche niveau
 
 ## FR
 
-Un **niveau** ancre les classes dans le parcours (6ème, Form 3…). Il porte cycle, section, ordre, niveau suivant et barème par défaut.
+### Rôle du niveau
 
-Les classes de l’année courante rattachées à ce niveau apparaissent en bas de fiche.
+Ancre les classes dans le parcours (cycle, section, ordre, niveau suivant, barème par défaut).
 
 ## EN
 
-A **level** anchors classes in the curriculum ladder. It holds cycle, section, order, next level and default grading scheme.
+### Role of a level
 
-Current-year classes linked to this level appear at the bottom.
+Anchors classes in the curriculum (cycle, section, order, next level, default scheme).

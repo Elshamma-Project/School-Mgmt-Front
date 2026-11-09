@@ -2,31 +2,40 @@
 id: academic-hub
 priority: 30
 routes:
-  - /academic
+  - path: /academic
+title:
+  fr: Académique — référentiels
+  en: Academic — references
 ---
-
-# Académique — référentiels
 
 ## FR
 
-Le hub **Académique** regroupe les référentiels de l’établissement :
+### À quoi sert cette page ?
 
-- **Classes** — créées pour une année scolaire, rattachées à un niveau
-- **Matières** — catalogue bilingue permanent (notes + emploi du temps)
-- **Groupes** — blocs de sous-totaux sur les bulletins
-- **Salles** — utilisées par l’emploi du temps
-- **Niveaux** — référentiel pédagogique (cycle, section, progression)
+Le hub Académique regroupe les référentiels de l’établissement.
 
-Les actions **créer / modifier / désactiver** sont réservées à Administration et Direction.
+- Classes — année scolaire + niveau
+- Matières — catalogue bilingue permanent
+- Groupes — sous-totaux des bulletins
+- Salles — emploi du temps
+- Niveaux — parcours pédagogique
+
+### Qui peut modifier ?
+
+Créer, modifier et désactiver : Administration et Direction. Les autres rôles consultent en lecture seule.
 
 ## EN
 
-The **Academic** hub holds school references:
+### What is this page for?
 
-- **Classes** — tied to a school year and a level
-- **Subjects** — permanent bilingual catalogue
-- **Groups** — report-card subtotal blocks
-- **Rooms** — for the timetable
-- **Levels** — pedagogical ladder (cycle, section, progression)
+The Academic hub holds the school’s reference data.
 
-Create / edit / deactivate require Administration or Director.
+- Classes — school year + level
+- Subjects — permanent bilingual catalogue
+- Groups — report-card subtotals
+- Rooms — timetable
+- Levels — curriculum ladder
+
+### Who can edit?
+
+Create, edit and deactivate: Administration and Director. Other roles are read-only.

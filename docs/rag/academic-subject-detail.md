@@ -2,19 +2,26 @@
 id: academic-subject-detail
 priority: 50
 routes:
-  - /academic/subjects/*
+  - path: /academic/subjects/*
+    excludeLast:
+      - create
+title:
+  fr: Fiche matière
+  en: Subject detail
 ---
-
-# Fiche matière
 
 ## FR
 
-La fiche matière décrit le **catalogue** (code, libellés FR/EN, abrégés, type, langue d’enseignement, alias EDT).
+### Catalogue seulement
 
-Le **coefficient** et l’**enseignant** ne se définissent pas ici : ouvrez une **classe**, section « Matières de la classe ».
+Code, libellés FR/EN, abrégés, type et alias EDT. Pas de coefficient ni d’enseignant ici.
+
+Pour le coef et l’enseignant : ouvrez une classe → Matières de la classe.
 
 ## EN
 
-This record is the **catalogue** entry (code, FR/EN labels, shorts, kind, teaching language, timetable alias).
+### Catalogue only
 
-**Coefficient** and **teacher** are set on a **class** under “Class subjects”, not here.
+Code, FR/EN labels, shorts, kind and timetable alias. No coefficient or teacher here.
+
+For coefficient and teacher: open a class → Class subjects.

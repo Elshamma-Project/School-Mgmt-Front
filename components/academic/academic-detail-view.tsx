@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   BookOpen,
   DoorOpen,
@@ -200,22 +200,6 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
           : entity.data.type;
     }
   }, [entity, t]);
-
-  const heroIcon = useMemo((): ReactNode => {
-    const cls = "size-8 stroke-[1.5]";
-    switch (tab) {
-      case "levels":
-        return <Layers3 className={cls} aria-hidden />;
-      case "classes":
-        return <School className={cls} aria-hidden />;
-      case "subjects":
-        return <BookOpen className={cls} aria-hidden />;
-      case "groups":
-        return <Shapes className={cls} aria-hidden />;
-      case "rooms":
-        return <DoorOpen className={cls} aria-hidden />;
-    }
-  }, [tab]);
 
   const hydrateForm = useCallback((next: Entity) => {
     switch (next.kind) {
@@ -608,17 +592,14 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
       <section className="mx-auto flex w-full max-w-[560px] flex-col items-center text-center">
         <div
           className={cn(
-            "relative flex size-20 items-center justify-center rounded-full text-[18px] font-semibold tracking-[-0.02em]",
+            "flex size-20 items-center justify-center rounded-full text-[18px] font-semibold tracking-[-0.02em]",
             active
               ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_18%,transparent)]"
               : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
           )}
           aria-hidden
         >
-          <span className="absolute inset-0 flex items-center justify-center opacity-[0.18]">
-            {heroIcon}
-          </span>
-          <span className="relative">{avatarLabel}</span>
+          {avatarLabel}
         </div>
 
         <div className="mt-4 w-full overflow-hidden rounded-[var(--radius-md)] bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">

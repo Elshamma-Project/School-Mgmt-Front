@@ -1,31 +1,55 @@
-# Base d’aide SMELS (RAG / aide contextuelle)
+# Base d’aide SMELS (`docs/rag`)
 
-Ces fichiers Markdown alimentent le menu **?** de la barre supérieure.
+Source unique des textes du menu **?** (topbar).
 
-## Convention
+## Workflow
 
-Chaque article a un équivalent runtime dans `lib/help/catalog.ts` (bundle client).
+1. Éditer / ajouter un fichier `docs/rag/<id>.md` (sauf `README.md`).
+2. Lancer `npm run help:sync` (aussi en `predev` / `prebuild`).
+3. Le script écrit `lib/help/generated-catalog.ts`.
+4. Le menu **?** résout l’article selon la route courante.
 
-Frontmatter logique (reproduit dans le catalogue) :
+## Format Markdown
 
-| Champ | Rôle |
+```md
+---
+id: academic-class-detail
+priority: 50
+routes:
+  - path: /academic/classes/*
+    excludeLast:
+      - create
+title:
+  fr: Fiche classe
+  en: Class detail
+---
+
+## FR
+
+### Organisation
+
+Paragraphe…
+
+- Puce
+
+## EN
+
+### Organisation
+
+Paragraph…
+
+- Bullet
+```
+
+### Routes (chemin normalisé)
+
+Sans préfixe rôle (`/administration`, `/director`…).
+
+| Motif | Effet |
 |---|---|
-| `id` | Identifiant stable |
-| `priority` | Plus haut = gagne si plusieurs règles matchent |
-| `routes` | Chemins **normalisés** (sans `/administration`, `/director`…) |
-| `title` / sections | FR + EN |
+| `/academic` | exact |
+| `/academic/classes/*` | un segment (fiche) |
+| `/academic/**` | préfixe |
+| `/**` | fallback |
 
-### Chemins normalisés
-
-Exemples :
-
-- `/academic` — hub académique
-- `/academic?tab=subjects` — onglet matières
-- `/academic/classes/create` — création
-- `/academic/classes/*` — fiche classe
-
-## Ajouter une aide
-
-1. Créer `docs/rag/<id>.md` (documentation + futur RAG).
-2. Ajouter l’article dans `lib/help/catalog.ts` avec les mêmes `routes` / textes.
-3. Le menu **?** affiche automatiquement l’article le plus prioritaire pour la page courante.
+`excludeLast` ignore p.ex. `create`.

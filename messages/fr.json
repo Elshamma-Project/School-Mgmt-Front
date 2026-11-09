@@ -24,8 +24,9 @@
   },
   "help": {
     "open": "Aide de cette page",
-    "badge": "Aide",
-    "sourceHint": "Contenu issu de la base d’aide (docs/rag)."
+    "close": "Fermer",
+    "closeOverlay": "Fermer l’aide",
+    "badge": "Aide"
   },
   "auth": {
     "loginTitle": "Connexion",

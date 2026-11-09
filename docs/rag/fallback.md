@@ -2,23 +2,20 @@
 id: fallback
 priority: 0
 routes:
-  - /**
+  - path: /**
+title:
+  fr: Aide SMELS
+  en: SMELS help
 ---
-
-# Aide SMELS
 
 ## FR
 
-Utilisez le menu **?** pour afficher l’aide de la page en cours.
+### Menu d’aide
 
-Les consignes métier (coefficients, affectations, rôles) sont centralisées ici plutôt que sous chaque bloc de l’interface.
-
-Rôles courants : Administration et Direction gèrent la structure ; les enseignants saisissent les notes de leurs matières affectées.
+Le bouton ? affiche l’aide de la page en cours. Les consignes métier sont centralisées ici plutôt que sous chaque bloc de l’interface.
 
 ## EN
 
-Use the **?** menu for help on the current page.
+### Help menu
 
-Business guidance (coefficients, assignments, roles) lives here instead of under every UI block.
-
-Administration and Director manage structure; teachers enter grades for their assigned subjects.
+The ? button shows help for the current page. Business guidance lives here instead of under every UI block.

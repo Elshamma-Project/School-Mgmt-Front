@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "help:sync": "node scripts/sync-help-catalog.mjs",
+    "predev": "npm run help:sync",
+    "prebuild": "npm run help:sync",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
