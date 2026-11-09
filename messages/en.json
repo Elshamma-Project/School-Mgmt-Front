@@ -22,6 +22,11 @@
     "themeToLight": "Switch to light mode",
     "copyright": "© {year} {school}. {app} — All rights reserved."
   },
+  "help": {
+    "open": "Help for this page",
+    "badge": "Help",
+    "sourceHint": "Content from the help knowledge base (docs/rag)."
+  },
   "auth": {
     "loginTitle": "Sign in",
     "loginSubtitle": "Enter the workspace tailored to your role.",

@@ -22,6 +22,11 @@
     "themeToLight": "Passer en mode clair",
     "copyright": "© {year} {school}. {app} — Tous droits réservés."
   },
+  "help": {
+    "open": "Aide de cette page",
+    "badge": "Aide",
+    "sourceHint": "Contenu issu de la base d’aide (docs/rag)."
+  },
   "auth": {
     "loginTitle": "Connexion",
     "loginSubtitle": "Accédez à l’espace adapté à votre rôle.",

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { ArrowLeft, Menu, PanelLeftOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { HelpMenu } from "@/components/layout/help-menu";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -137,6 +138,9 @@ export function AppHeader() {
           </h1>
           <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
+            <Suspense fallback={null}>
+              <HelpMenu />
+            </Suspense>
             <LocaleToggle />
           </div>
         </div>

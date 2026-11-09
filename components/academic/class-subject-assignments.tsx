@@ -260,7 +260,6 @@ export function ClassSubjectAssignments({
     <>
       <GroupedList
         header={t("detail.subjectsSection")}
-        footer={t("detail.classSubjectsHint")}
         className="lg:col-span-2"
       >
         {canManage ? (

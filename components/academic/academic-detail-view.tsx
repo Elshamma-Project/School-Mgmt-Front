@@ -972,7 +972,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
           {entity.kind === "subjects" ? (
             <>
-              <GroupedList header={t("detail.identitySection")} footer={t("detail.subjectIdentityHint")}>
+              <GroupedList header={t("detail.identitySection")}>
                 <GroupedListItem>
                   <DetailRow
                     label={t("columns.code")}
@@ -1010,7 +1010,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                 </GroupedListItem>
               </GroupedList>
 
-              <GroupedList header={t("detail.teachingSection")} footer={t("detail.subjectTeachingHint")}>
+              <GroupedList header={t("detail.teachingSection")}>
                 <GroupedListItem>
                   <DetailRow
                     label={t("fields.kind")}
