@@ -205,7 +205,7 @@ export function validatePositiveInt(
   const n = Number.parseInt(value, 10);
   if (!Number.isFinite(n) || n < 0) return { ok: false, issue: "invalidCode" };
   if (options.max != null && n > options.max) {
-    return { ok: false, issue: "tooLong", max: options.max };
+    return { ok: false, issue: "invalidCode" };
   }
   return { ok: true, value: String(n) };
 }

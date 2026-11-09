@@ -448,6 +448,7 @@ export function ProfileView() {
                       onChange={(e) => setLastName(e.target.value)}
                       invalid={Boolean(identityErrors.lastName)}
                       autoComplete="family-name"
+                      maxLength={INPUT_LIMITS.personName}
                       disabled={savingIdentity || identityLoading}
                     />
                   </Field>
@@ -466,13 +467,18 @@ export function ProfileView() {
                       onChange={(e) => setFirstName(e.target.value)}
                       invalid={Boolean(identityErrors.firstName)}
                       autoComplete="given-name"
+                      maxLength={INPUT_LIMITS.personName}
                       disabled={savingIdentity || identityLoading}
                     />
                   </Field>
                 </GroupedListItem>
 
                 <GroupedListItem className="block py-3">
-                  <Field id="profile-phone" label={t("phone")}>
+                  <Field
+                    id="profile-phone"
+                    label={t("phone")}
+                    error={identityErrors.phone}
+                  >
                     <IconInput
                       id="profile-phone"
                       type="tel"
@@ -483,6 +489,8 @@ export function ProfileView() {
                       onChange={(e) => setPhone(toNationalPhone(e.target.value))}
                       placeholder="6XX XXX XXX"
                       autoComplete="tel-national"
+                      maxLength={15}
+                      invalid={Boolean(identityErrors.phone)}
                       disabled={savingIdentity || identityLoading}
                     />
                   </Field>
@@ -527,6 +535,7 @@ export function ProfileView() {
                   placeholder="••••••••"
                   invalid={Boolean(passwordErrors.currentPassword)}
                   autoComplete="current-password"
+                  maxLength={INPUT_LIMITS.passwordMax}
                 />
               </Field>
             </GroupedListItem>
@@ -546,6 +555,7 @@ export function ProfileView() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   invalid={Boolean(passwordErrors.newPassword)}
                   autoComplete="new-password"
+                  maxLength={INPUT_LIMITS.passwordMax}
                 />
               </Field>
             </GroupedListItem>
@@ -564,6 +574,7 @@ export function ProfileView() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   invalid={Boolean(passwordErrors.confirmPassword)}
                   autoComplete="new-password"
+                  maxLength={INPUT_LIMITS.passwordMax}
                 />
               </Field>
             </GroupedListItem>

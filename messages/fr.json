@@ -529,7 +529,7 @@
     "passwordSection": "Mot de passe",
     "passwordSectionHint": "Au moins 8 caractères. Appliqué immédiatement côté serveur.",
     "currentPasswordHint": "Un mot de passe est déjà défini (••••••••). Saisissez-le pour en choisir un nouveau — il n’est jamais affiché en clair.",
-    "passwordHint": "Au moins 8 caractères.",
+    "passwordHint": "Au moins 8 caractères, dont une lettre et un chiffre.",
     "invalidEmail": "Adresse e-mail invalide.",
     "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",

@@ -27,6 +27,14 @@ import {
 import { userHasCapability } from "@/lib/auth/permissions";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { notify } from "@/lib/ui/notify";
+import {
+  INPUT_LIMITS,
+  validateCode,
+  validateOptionalText,
+  validatePositiveInt,
+  validateRequiredText,
+  validationMessage,
+} from "@/lib/validation/input";
 import { useAuthStore } from "@/stores/auth-store";
 import { usePageHeadingStore } from "@/stores/page-heading-store";
 import { ApiError, isAuthFailure } from "@/types/api";
@@ -181,37 +189,83 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setSaving(true);
     setFormError(null);
+
     try {
       switch (tab) {
         case "levels": {
-          if (!code.trim() || !nameFr.trim()) {
-            setFormError(t("form.required"));
+          const codeResult = validateCode(code);
+          const nameFrResult = validateRequiredText(nameFr, INPUT_LIMITS.label);
+          const nameEnResult = validateOptionalText(nameEn, INPUT_LIMITS.label);
+          const orderResult = validatePositiveInt(order, { required: true, max: 999 });
+          const nextCodeResult = validateCode(nextLevelCode, { required: false });
+          if (!codeResult.ok) {
+            setFormError(validationMessage(tCommon, codeResult));
             return;
           }
+          if (!nameFrResult.ok) {
+            setFormError(validationMessage(tCommon, nameFrResult));
+            return;
+          }
+          if (!nameEnResult.ok) {
+            setFormError(validationMessage(tCommon, nameEnResult));
+            return;
+          }
+          if (!orderResult.ok) {
+            setFormError(validationMessage(tCommon, orderResult));
+            return;
+          }
+          if (!nextCodeResult.ok) {
+            setFormError(validationMessage(tCommon, nextCodeResult));
+            return;
+          }
+          setSaving(true);
           await createLevel({
-            code: code.trim().toUpperCase(),
-            name: { fr: nameFr.trim(), en: nameEn.trim() || nameFr.trim() },
+            code: codeResult.value,
+            name: {
+              fr: nameFrResult.value,
+              en: nameEnResult.value || nameFrResult.value,
+            },
             cycle,
             section,
-            order: Math.max(1, Number.parseInt(order, 10) || 1),
-            nextLevelCode: nextLevelCode.trim() || null,
+            order: Math.max(1, Number.parseInt(orderResult.value, 10) || 1),
+            nextLevelCode: nextCodeResult.value || null,
             schoolId,
           });
           break;
         }
         case "classes": {
-          if (!yearId || !levelId || !className.trim()) {
+          const classNameResult = validateRequiredText(className, INPUT_LIMITS.label);
+          const trackResult = validateOptionalText(trackCode, INPUT_LIMITS.shortCode);
+          const capacityResult = validatePositiveInt(capacity, {
+            required: false,
+            max: 500,
+          });
+          if (!yearId || !levelId) {
             setFormError(t("form.required"));
             return;
           }
+          if (!classNameResult.ok) {
+            setFormError(validationMessage(tCommon, classNameResult));
+            return;
+          }
+          if (!trackResult.ok) {
+            setFormError(validationMessage(tCommon, trackResult));
+            return;
+          }
+          if (!capacityResult.ok) {
+            setFormError(validationMessage(tCommon, capacityResult));
+            return;
+          }
+          setSaving(true);
           await createSchoolClass({
             academicYearId: yearId,
             levelId,
-            name: className.trim(),
-            trackCode: trackCode.trim() || null,
-            capacity: capacity.trim() ? Number.parseInt(capacity, 10) : null,
+            name: classNameResult.value,
+            trackCode: trackResult.value || null,
+            capacity: capacityResult.value
+              ? Number.parseInt(capacityResult.value, 10)
+              : null,
             defaultLanguage,
             availableLanguages: ["FR", "EN"],
             homeRoomId: homeRoomId || null,
@@ -220,16 +274,44 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
           break;
         }
         case "subjects": {
-          if (!code.trim() || !nameFr.trim()) {
-            setFormError(t("form.required"));
+          const codeResult = validateCode(code);
+          const nameFrResult = validateRequiredText(nameFr, INPUT_LIMITS.label);
+          const nameEnResult = validateOptionalText(nameEn, INPUT_LIMITS.label);
+          const shortFrResult = validateOptionalText(shortFr, INPUT_LIMITS.shortCode);
+          const shortEnResult = validateOptionalText(shortEn, INPUT_LIMITS.shortCode);
+          if (!codeResult.ok) {
+            setFormError(validationMessage(tCommon, codeResult));
             return;
           }
+          if (!nameFrResult.ok) {
+            setFormError(validationMessage(tCommon, nameFrResult));
+            return;
+          }
+          if (!nameEnResult.ok) {
+            setFormError(validationMessage(tCommon, nameEnResult));
+            return;
+          }
+          if (!shortFrResult.ok) {
+            setFormError(validationMessage(tCommon, shortFrResult));
+            return;
+          }
+          if (!shortEnResult.ok) {
+            setFormError(validationMessage(tCommon, shortEnResult));
+            return;
+          }
+          setSaving(true);
           await createSubject({
-            code: code.trim().toUpperCase(),
-            name: { fr: nameFr.trim(), en: nameEn.trim() || nameFr.trim() },
+            code: codeResult.value,
+            name: {
+              fr: nameFrResult.value,
+              en: nameEnResult.value || nameFrResult.value,
+            },
             shortName:
-              shortFr.trim() || shortEn.trim()
-                ? { fr: shortFr.trim() || null, en: shortEn.trim() || null }
+              shortFrResult.value || shortEnResult.value
+                ? {
+                    fr: shortFrResult.value || null,
+                    en: shortEnResult.value || null,
+                  }
                 : null,
             kind: subjectKind,
             schoolId,
@@ -237,27 +319,64 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
           break;
         }
         case "groups": {
-          if (!code.trim() || !nameFr.trim()) {
-            setFormError(t("form.required"));
+          const codeResult = validateCode(code);
+          const nameFrResult = validateRequiredText(nameFr, INPUT_LIMITS.label);
+          const nameEnResult = validateOptionalText(nameEn, INPUT_LIMITS.label);
+          const orderResult = validatePositiveInt(displayOrder, {
+            required: false,
+            max: 999,
+          });
+          if (!codeResult.ok) {
+            setFormError(validationMessage(tCommon, codeResult));
             return;
           }
+          if (!nameFrResult.ok) {
+            setFormError(validationMessage(tCommon, nameFrResult));
+            return;
+          }
+          if (!nameEnResult.ok) {
+            setFormError(validationMessage(tCommon, nameEnResult));
+            return;
+          }
+          if (!orderResult.ok) {
+            setFormError(validationMessage(tCommon, orderResult));
+            return;
+          }
+          setSaving(true);
           await createSubjectGroup({
-            code: code.trim().toUpperCase(),
-            name: { fr: nameFr.trim(), en: nameEn.trim() || nameFr.trim() },
-            displayOrder: Number.parseInt(displayOrder, 10) || 0,
+            code: codeResult.value,
+            name: {
+              fr: nameFrResult.value,
+              en: nameEnResult.value || nameFrResult.value,
+            },
+            displayOrder: orderResult.value
+              ? Number.parseInt(orderResult.value, 10)
+              : 0,
             schoolId,
           });
           break;
         }
         case "rooms": {
-          if (!roomName.trim()) {
-            setFormError(t("form.required"));
+          const nameResult = validateRequiredText(roomName, INPUT_LIMITS.label);
+          const capacityResult = validatePositiveInt(roomCapacity, {
+            required: false,
+            max: 2000,
+          });
+          if (!nameResult.ok) {
+            setFormError(validationMessage(tCommon, nameResult));
             return;
           }
+          if (!capacityResult.ok) {
+            setFormError(validationMessage(tCommon, capacityResult));
+            return;
+          }
+          setSaving(true);
           await createRoom({
-            name: roomName.trim(),
+            name: nameResult.value,
             type: roomType,
-            capacity: roomCapacity.trim() ? Number.parseInt(roomCapacity, 10) : null,
+            capacity: capacityResult.value
+              ? Number.parseInt(capacityResult.value, 10)
+              : null,
             schoolId,
           });
           break;
@@ -285,6 +404,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
       <form
         onSubmit={(e) => void onSubmit(e)}
         className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]"
+        noValidate
       >
         <div className="space-y-4 px-5 py-5 sm:px-6">
           {tab === "levels" ? (
@@ -298,6 +418,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     if (formError) setFormError(null);
                   }}
                   placeholder="6EME"
+                  maxLength={INPUT_LIMITS.shortCode}
                   autoFocus
                   invalid={Boolean(formError)}
                 />
@@ -309,6 +430,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     value={nameFr}
                     onChange={(e) => setNameFr(e.target.value)}
                     placeholder="6ème"
+                    maxLength={INPUT_LIMITS.label}
                   />
                 </Field>
                 <Field id="ac-level-en" label={t("fields.nameEn")}>
@@ -317,6 +439,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     value={nameEn}
                     onChange={(e) => setNameEn(e.target.value)}
                     placeholder="Form 1"
+                    maxLength={INPUT_LIMITS.label}
                   />
                 </Field>
               </div>
@@ -364,6 +487,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     value={nextLevelCode}
                     onChange={(e) => setNextLevelCode(e.target.value)}
                     placeholder="5EME"
+                    maxLength={INPUT_LIMITS.shortCode}
                   />
                 </Field>
               </div>
@@ -420,6 +544,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                       if (formError) setFormError(null);
                     }}
                     placeholder="6ème A"
+                    maxLength={INPUT_LIMITS.label}
                     autoFocus
                     invalid={Boolean(formError)}
                   />
@@ -431,6 +556,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                       value={trackCode}
                       onChange={(e) => setTrackCode(e.target.value)}
                       placeholder="A"
+                      maxLength={INPUT_LIMITS.shortCode}
                     />
                   </Field>
                   <Field id="ac-class-cap" label={t("fields.capacity")}>
@@ -484,6 +610,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     if (formError) setFormError(null);
                   }}
                   placeholder="MATH"
+                  maxLength={INPUT_LIMITS.shortCode}
                   autoFocus
                   invalid={Boolean(formError)}
                 />
@@ -495,6 +622,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     value={nameFr}
                     onChange={(e) => setNameFr(e.target.value)}
                     placeholder="Mathématiques"
+                    maxLength={INPUT_LIMITS.label}
                   />
                 </Field>
                 <Field id="ac-sub-en" label={t("fields.nameEn")}>
@@ -503,6 +631,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     value={nameEn}
                     onChange={(e) => setNameEn(e.target.value)}
                     placeholder="Mathematics"
+                    maxLength={INPUT_LIMITS.label}
                   />
                 </Field>
               </div>
@@ -513,6 +642,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     value={shortFr}
                     onChange={(e) => setShortFr(e.target.value)}
                     placeholder="Maths"
+                    maxLength={INPUT_LIMITS.shortCode}
                   />
                 </Field>
                 <Field id="ac-sub-short-en" label={t("fields.shortEn")}>
@@ -521,6 +651,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     value={shortEn}
                     onChange={(e) => setShortEn(e.target.value)}
                     placeholder="Maths"
+                    maxLength={INPUT_LIMITS.shortCode}
                   />
                 </Field>
               </div>
@@ -548,6 +679,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     if (formError) setFormError(null);
                   }}
                   placeholder="LANG_LIT"
+                  maxLength={INPUT_LIMITS.shortCode}
                   autoFocus
                   invalid={Boolean(formError)}
                 />
@@ -559,6 +691,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     value={nameFr}
                     onChange={(e) => setNameFr(e.target.value)}
                     placeholder="Langues et littératures"
+                    maxLength={INPUT_LIMITS.label}
                   />
                 </Field>
                 <Field id="ac-grp-en" label={t("fields.nameEn")}>
@@ -567,6 +700,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     value={nameEn}
                     onChange={(e) => setNameEn(e.target.value)}
                     placeholder="Languages and literature"
+                    maxLength={INPUT_LIMITS.label}
                   />
                 </Field>
               </div>
@@ -592,6 +726,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
                     if (formError) setFormError(null);
                   }}
                   placeholder="Salle 1"
+                  maxLength={INPUT_LIMITS.label}
                   autoFocus
                   invalid={Boolean(formError)}
                 />

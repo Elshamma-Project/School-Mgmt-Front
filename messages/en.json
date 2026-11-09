@@ -529,7 +529,7 @@
     "passwordSection": "Password",
     "passwordSectionHint": "At least 8 characters. Applied immediately on the server.",
     "currentPasswordHint": "A password is already set (••••••••). Enter it to choose a new one — it is never shown in clear text.",
-    "passwordHint": "At least 8 characters.",
+    "passwordHint": "At least 8 characters, including one letter and one digit.",
     "invalidEmail": "Invalid email address.",
     "passwordTooShort": "Password must be at least 8 characters.",
     "passwordMismatch": "Passwords do not match.",
