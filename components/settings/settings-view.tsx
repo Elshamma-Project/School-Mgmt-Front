@@ -6,11 +6,13 @@ import {
   CalendarRange,
   Check,
   ImagePlus,
+  Plus,
   ScrollText,
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { BrandMark } from "@/components/layout/brand-mark";
+import { DocumentHeaderPreview } from "@/components/settings/document-header-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -18,7 +20,12 @@ import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { listAcademicYears, type AcademicYearResponse } from "@/lib/api/academic";
+import {
+  buildDefaultTerms,
+  createAcademicYear,
+  listAcademicYears,
+  type AcademicYearResponse,
+} from "@/lib/api/academic";
 import {
   deleteSchoolLogo,
   setCurrentAcademicYear,
@@ -27,6 +34,7 @@ import {
   type OfficialHeaderDto,
   type SchoolResponse,
 } from "@/lib/api/school";
+import { Switch } from "@/components/ui/switch";
 import { userHasCapability } from "@/lib/auth/permissions";
 import { createMockLogin, listMockRoles } from "@/lib/auth/mock-users";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
@@ -38,15 +46,33 @@ import { useSchoolBrandStore } from "@/stores/school-brand-store";
 import { ApiError, isAuthFailure } from "@/types/api";
 import { primaryRole, type AppRole } from "@/types/auth";
 
-const CYCLES = [
-  "MATERNELLE",
-  "PRIMAIRE",
-  "SECONDAIRE_1ER_CYCLE",
-  "SECONDAIRE_2ND_CYCLE",
+/** Unités sélectionnables : le secondaire (1er + 2nd) = une seule entité d’en-tête. */
+const CYCLE_GROUPS = [
+  { id: "MATERNELLE", cycles: ["MATERNELLE"] },
+  { id: "PRIMAIRE", cycles: ["PRIMAIRE"] },
+  {
+    id: "SECONDAIRE",
+    cycles: ["SECONDAIRE_1ER_CYCLE", "SECONDAIRE_2ND_CYCLE"],
+  },
 ] as const;
+
+const SECONDARY_CYCLES = ["SECONDAIRE_1ER_CYCLE", "SECONDAIRE_2ND_CYCLE"] as const;
 
 const LOGO_MAX_BYTES = 2 * 1024 * 1024;
 const LOGO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
+
+function normalizeHeaderCycles(cycles: string[]): string[] {
+  const set = new Set(cycles);
+  const hasSecondary = SECONDARY_CYCLES.some((c) => set.has(c));
+  if (hasSecondary) {
+    SECONDARY_CYCLES.forEach((c) => set.add(c));
+  }
+  return [...set];
+}
+
+function headerHasGroup(cycles: string[], groupCycles: readonly string[]): boolean {
+  return groupCycles.every((c) => cycles.includes(c));
+}
 
 type SchoolForm = {
   nameFr: string;
@@ -70,7 +96,7 @@ type SchoolForm = {
 
 function emptyHeader(): OfficialHeaderDto {
   return {
-    cycles: ["SECONDAIRE_1ER_CYCLE"],
+    cycles: [...SECONDARY_CYCLES],
     republic: { fr: "", en: "" },
     motto: { fr: "", en: "" },
     ministry: { fr: "", en: "" },
@@ -85,7 +111,7 @@ function schoolToForm(school: SchoolResponse): SchoolForm {
     nameEn: school.name.en ?? "",
     shortName: school.shortName ?? "",
     email: school.contact.email ?? "",
-    phone: school.contact.phones[0] ?? "",
+    phone: school.contact.phones.join("/") || "",
     address: school.contact.address ?? "",
     city: school.contact.city ?? "",
     postalBox: school.postalBox ?? "",
@@ -100,7 +126,7 @@ function schoolToForm(school: SchoolResponse): SchoolForm {
     headers:
       school.officialHeaders.length > 0
         ? school.officialHeaders.map((h) => ({
-            cycles: [...h.cycles],
+            cycles: normalizeHeaderCycles([...h.cycles]),
             republic: { fr: h.republic.fr ?? "", en: h.republic.en ?? "" },
             motto: { fr: h.motto.fr ?? "", en: h.motto.en ?? "" },
             ministry: { fr: h.ministry.fr ?? "", en: h.ministry.en ?? "" },
@@ -151,10 +177,33 @@ export function SettingsView() {
   const [selectedYearId, setSelectedYearId] = useState("");
   const [yearsLoading, setYearsLoading] = useState(false);
   const [yearSaving, setYearSaving] = useState(false);
+  const [showCreateYear, setShowCreateYear] = useState(false);
+  const [newYearLabel, setNewYearLabel] = useState("");
+  const [newYearStart, setNewYearStart] = useState("");
+  const [newYearEnd, setNewYearEnd] = useState("");
+  const [newYearAsCurrent, setNewYearAsCurrent] = useState(false);
+  const [yearCreating, setYearCreating] = useState(false);
   const [form, setForm] = useState<SchoolForm | null>(null);
   const [saving, setSaving] = useState(false);
   const [logoBusy, setLogoBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  function suggestNextYearDefaults(list: AcademicYearResponse[]) {
+    const latest = [...list].sort((a, b) => b.startDate.localeCompare(a.startDate))[0];
+    if (latest) {
+      const startY = Number.parseInt(latest.endDate.slice(0, 4), 10);
+      if (Number.isFinite(startY)) {
+        setNewYearLabel(`${startY}-${startY + 1}`);
+        setNewYearStart(`${startY}-09-01`);
+        setNewYearEnd(`${startY + 1}-06-30`);
+        return;
+      }
+    }
+    const y = new Date().getFullYear();
+    setNewYearLabel(`${y}-${y + 1}`);
+    setNewYearStart(`${y}-09-01`);
+    setNewYearEnd(`${y + 1}-06-30`);
+  }
 
   const currentYear = useMemo(
     () => years.find((y) => y.current) ?? null,
@@ -206,13 +255,20 @@ export function SettingsView() {
     router.replace(getRoleHomePath(role));
   }
 
+  async function reloadYears() {
+    const page = await listAcademicYears({ size: 50, schoolId: user?.schoolId });
+    setYears(page.content);
+    const current = page.content.find((y) => y.current);
+    setSelectedYearId(current?.id ?? page.content[0]?.id ?? "");
+    return page.content;
+  }
+
   async function onSetCurrentYear() {
     if (!canEdit || !selectedYearId || yearSaving) return;
     setYearSaving(true);
     try {
       await setCurrentAcademicYear(selectedYearId, user?.schoolId);
-      const page = await listAcademicYears({ size: 50, schoolId: user?.schoolId });
-      setYears(page.content);
+      await reloadYears();
       notify.success(t("yearSetSuccess"));
     } catch (error) {
       if (isAuthFailure(error)) return;
@@ -220,6 +276,47 @@ export function SettingsView() {
       else notify.error(t("yearSetError"));
     } finally {
       setYearSaving(false);
+    }
+  }
+
+  async function onCreateYear() {
+    if (!canEdit || yearCreating) return;
+    const label = newYearLabel.trim();
+    if (!label || !newYearStart || !newYearEnd) {
+      notify.error(t("yearCreateRequired"));
+      return;
+    }
+    if (newYearEnd <= newYearStart) {
+      notify.error(t("yearCreateDatesInvalid"));
+      return;
+    }
+    const terms = buildDefaultTerms(newYearStart, newYearEnd);
+    if (!terms) {
+      notify.error(t("yearCreateDatesInvalid"));
+      return;
+    }
+    setYearCreating(true);
+    try {
+      const created = await createAcademicYear({
+        label,
+        startDate: newYearStart,
+        endDate: newYearEnd,
+        current: newYearAsCurrent,
+        status: newYearAsCurrent ? "ACTIVE" : "PLANNED",
+        terms,
+        schoolId: user?.schoolId,
+      });
+      await reloadYears();
+      setSelectedYearId(created.id);
+      setShowCreateYear(false);
+      setNewYearAsCurrent(false);
+      notify.success(t("yearCreateSuccess"));
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("yearCreateError"));
+    } finally {
+      setYearCreating(false);
     }
   }
 
@@ -238,7 +335,10 @@ export function SettingsView() {
         },
         shortName: form.shortName.trim() || null,
         contact: {
-          phones: form.phone.trim() ? [form.phone.trim()] : [],
+          phones: form.phone
+            .split(/[/;,]+/)
+            .map((p) => p.trim())
+            .filter(Boolean),
           email: form.email.trim() || null,
           address: form.address.trim() || null,
           city: form.city.trim() || null,
@@ -252,7 +352,7 @@ export function SettingsView() {
         officialHeaders: form.headers
           .filter((h) => h.cycles.length > 0)
           .map((h) => ({
-            cycles: h.cycles,
+            cycles: normalizeHeaderCycles(h.cycles),
             republic: {
               fr: h.republic.fr?.trim() || h.republic.en?.trim() || "",
               en: h.republic.en?.trim() || h.republic.fr?.trim() || "",
@@ -345,17 +445,41 @@ export function SettingsView() {
     });
   }
 
-  function toggleHeaderCycle(index: number, cycle: string) {
+  function toggleHeaderGroup(index: number, groupCycles: readonly string[]) {
     setForm((prev) => {
       if (!prev) return prev;
       const headers = prev.headers.map((h, i) => {
         if (i !== index) return h;
-        const has = h.cycles.includes(cycle);
-        const cycles = has ? h.cycles.filter((c) => c !== cycle) : [...h.cycles, cycle];
-        return { ...h, cycles: cycles.length ? cycles : h.cycles };
+        const active = headerHasGroup(h.cycles, groupCycles);
+        let next = active
+          ? h.cycles.filter((c) => !groupCycles.includes(c))
+          : normalizeHeaderCycles([...h.cycles, ...groupCycles]);
+        if (next.length === 0) next = h.cycles;
+        return { ...h, cycles: next };
       });
       return { ...prev, headers };
     });
+  }
+
+  function cycleGroupLabel(groupId: string): string {
+    if (groupId === "SECONDAIRE") return t("cycleGroupSecondary");
+    return tAcademic.has(`cycles.${groupId}`)
+      ? tAcademic(`cycles.${groupId}`)
+      : groupId;
+  }
+
+  function previewCycleLabels(cycles: string[]): string[] {
+    const labels: string[] = [];
+    if (cycles.includes("MATERNELLE")) {
+      labels.push(tAcademic("cycles.MATERNELLE"));
+    }
+    if (cycles.includes("PRIMAIRE")) {
+      labels.push(tAcademic("cycles.PRIMAIRE"));
+    }
+    if (SECONDARY_CYCLES.some((c) => cycles.includes(c))) {
+      labels.push(t("cycleGroupSecondary"));
+    }
+    return labels;
   }
 
   const readOnly = !canEdit;
@@ -368,10 +492,7 @@ export function SettingsView() {
         </p>
       ) : null}
 
-      <GroupedList
-        header={t("yearSection")}
-        footer={canEdit ? t("yearHint") : undefined}
-      >
+      <GroupedList header={t("yearSection")}>
         <GroupedListItem className="flex-col items-stretch gap-3 py-3 sm:flex-row sm:items-end">
           <div className="flex min-w-0 flex-1 items-start gap-3">
             <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)]">
@@ -410,24 +531,115 @@ export function SettingsView() {
             </div>
           </div>
           {canEdit ? (
-            <Button
-              type="button"
-              size="sm"
-              disabled={
-                yearSaving ||
-                yearsLoading ||
-                !selectedYearId ||
-                selectedYearId === currentYear?.id
-              }
-              onClick={() => void onSetCurrentYear()}
-            >
-              {yearSaving ? tCommon("loading") : t("yearSetAction")}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedYearId && selectedYearId === currentYear?.id ? (
+                <Badge tone="success">{t("yearAlreadyCurrent")}</Badge>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={yearSaving || yearsLoading || !selectedYearId || years.length === 0}
+                  onClick={() => void onSetCurrentYear()}
+                >
+                  {yearSaving ? tCommon("loading") : t("yearSetAction")}
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                leadingIcon={<Plus className="size-3.5" aria-hidden />}
+                disabled={yearsLoading || yearCreating}
+                onClick={() => {
+                  const next = !showCreateYear;
+                  setShowCreateYear(next);
+                  if (next) suggestNextYearDefaults(years);
+                }}
+              >
+                {t("yearCreateAction")}
+              </Button>
+            </div>
           ) : null}
         </GroupedListItem>
+        {canEdit && showCreateYear ? (
+          <GroupedListItem className="block space-y-3 py-3">
+            <p className="text-[12px] leading-snug text-[var(--ios-secondary-label)]">
+              {t("yearCreateHint")}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Field id="new-year-label" label={t("fields.yearLabel")}>
+                <Input
+                  id="new-year-label"
+                  value={newYearLabel}
+                  disabled={yearCreating}
+                  placeholder="2026-2027"
+                  onChange={(e) => setNewYearLabel(e.target.value)}
+                />
+              </Field>
+              <Field id="new-year-start" label={t("fields.yearStart")}>
+                <Input
+                  id="new-year-start"
+                  type="date"
+                  value={newYearStart}
+                  disabled={yearCreating}
+                  onChange={(e) => setNewYearStart(e.target.value)}
+                />
+              </Field>
+              <Field id="new-year-end" label={t("fields.yearEnd")}>
+                <Input
+                  id="new-year-end"
+                  type="date"
+                  value={newYearEnd}
+                  disabled={yearCreating}
+                  onChange={(e) => setNewYearEnd(e.target.value)}
+                />
+              </Field>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label
+                htmlFor="new-year-current"
+                className="flex cursor-pointer items-center justify-between gap-3 sm:justify-start"
+              >
+                <div>
+                  <p className="text-[13px] font-medium text-[var(--ios-label)]">
+                    {t("yearCreateAsCurrent")}
+                  </p>
+                  <p className="text-[11px] text-[var(--ios-secondary-label)]">
+                    {t("yearCreateAsCurrentHint")}
+                  </p>
+                </div>
+                <Switch
+                  id="new-year-current"
+                  checked={newYearAsCurrent}
+                  disabled={yearCreating}
+                  onCheckedChange={setNewYearAsCurrent}
+                />
+              </label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghostDestructive"
+                  disabled={yearCreating}
+                  onClick={() => setShowCreateYear(false)}
+                >
+                  {tCommon("cancel")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={yearCreating}
+                  onClick={() => void onCreateYear()}
+                >
+                  {yearCreating ? tCommon("loading") : t("yearCreateConfirm")}
+                </Button>
+              </div>
+            </div>
+          </GroupedListItem>
+        ) : null}
       </GroupedList>
 
-      <GroupedList header={t("logoSection")} footer={t("logoHint")}>
+      <GroupedList header={t("logoSection")}>
         <GroupedListItem className="flex-col items-stretch gap-3 py-3 sm:flex-row sm:items-center">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <BrandMark size="lg" alt={school?.shortName ?? tCommon("schoolName")} />
@@ -564,7 +776,7 @@ export function SettingsView() {
             </GroupedListItem>
           </GroupedList>
 
-          <GroupedList header={t("documentsSection")} footer={t("documentsHint")}>
+          <GroupedList header={t("documentsSection")}>
             <GroupedListItem className="block space-y-3 py-3">
               <div className="mb-1 flex items-center gap-2 text-[var(--ios-secondary-label)]">
                 <ScrollText className="size-3.5 stroke-[1.75]" aria-hidden />
@@ -659,14 +871,14 @@ export function SettingsView() {
                   ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {CYCLES.map((cycle) => {
-                    const active = header.cycles.includes(cycle);
+                  {CYCLE_GROUPS.map((group) => {
+                    const active = headerHasGroup(header.cycles, group.cycles);
                     return (
                       <button
-                        key={cycle}
+                        key={group.id}
                         type="button"
                         disabled={readOnly || saving}
-                        onClick={() => toggleHeaderCycle(index, cycle)}
+                        onClick={() => toggleHeaderGroup(index, group.cycles)}
                         className={cn(
                           "rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
                           active
@@ -675,10 +887,26 @@ export function SettingsView() {
                           (readOnly || saving) && "opacity-60",
                         )}
                       >
-                        {tAcademic(`cycles.${cycle}`)}
+                        {cycleGroupLabel(group.id)}
                       </button>
                     );
                   })}
+                </div>
+                <div>
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--ios-secondary-label)]">
+                    {t("headerPreview")}
+                  </p>
+                  <DocumentHeaderPreview
+                    header={header}
+                    schoolNameFr={form.nameFr}
+                    schoolNameEn={form.nameEn}
+                    postalBox={form.postalBox}
+                    phones={form.phone
+                      .split(/[/;,]+/)
+                      .map((p) => p.trim())
+                      .filter(Boolean)}
+                    cycleLabels={previewCycleLabels(header.cycles)}
+                  />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field
@@ -863,25 +1091,6 @@ export function SettingsView() {
         <p className="text-[13px] text-[var(--ios-secondary-label)]">{tCommon("loading")}</p>
       ) : null}
 
-      <GroupedList header={t("sessionSection")}>
-        <GroupedListItem>
-          <div className="min-w-0">
-            <p className="truncate text-[var(--text-body)] text-[var(--ios-label)]">
-              {user?.displayName ?? user?.username ?? "—"}
-            </p>
-            {currentRole ? (
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <Badge tone="blue">{tRoles(`${currentRole}.label`)}</Badge>
-                {isMock ? <Badge tone="neutral">{tCommon("demoBadge")}</Badge> : null}
-              </div>
-            ) : null}
-          </div>
-          <Button variant="destructive" size="sm" onClick={() => setConfirmLogout(true)}>
-            {tAuth("logout")}
-          </Button>
-        </GroupedListItem>
-      </GroupedList>
-
       {isMock ? (
         <GroupedList header={t("switchRoleSection")}>
           {listMockRoles().map((role) => {
@@ -921,17 +1130,6 @@ export function SettingsView() {
           })}
         </GroupedList>
       ) : null}
-
-      <ConfirmDialog
-        open={confirmLogout}
-        onOpenChange={setConfirmLogout}
-        title={tAuth("logoutConfirmTitle")}
-        description={tAuth("logoutConfirmDescription")}
-        confirmLabel={tAuth("logout")}
-        cancelLabel={tCommon("cancel")}
-        tone="destructive"
-        onConfirm={performLogout}
-      />
     </div>
   );
 }

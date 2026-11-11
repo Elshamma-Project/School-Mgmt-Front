@@ -168,6 +168,71 @@ export async function listAcademicYears(options: {
   return apiRequest<PageResponse<AcademicYearResponse>>(`/api/v1/academic-years?${qs}`);
 }
 
+export type CreateAcademicYearPayload = {
+  label: string;
+  startDate: string;
+  endDate: string;
+  current?: boolean;
+  status?: AcademicYearResponse["status"];
+  terms: AcademicYearResponse["terms"];
+  schoolId?: string | null;
+};
+
+export async function createAcademicYear(
+  payload: CreateAcademicYearPayload,
+): Promise<AcademicYearResponse> {
+  return apiRequest<AcademicYearResponse>("/api/v1/academic-years", {
+    method: "POST",
+    body: {
+      label: payload.label.trim(),
+      startDate: payload.startDate,
+      endDate: payload.endDate,
+      current: payload.current ?? false,
+      status: payload.status ?? "PLANNED",
+      terms: payload.terms,
+      schoolId: payload.schoolId?.trim() || null,
+    },
+  });
+}
+
+/** Découpe une année scolaire en 3 trimestres (approximatif, ajustable ensuite). */
+export function buildDefaultTerms(startDate: string, endDate: string) {
+  const start = new Date(`${startDate}T12:00:00`);
+  const end = new Date(`${endDate}T12:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    return null;
+  }
+  const span = end.getTime() - start.getTime();
+  const t1End = new Date(start.getTime() + span / 3);
+  const t2End = new Date(start.getTime() + (2 * span) / 3);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const nextDay = (d: Date) => {
+    const n = new Date(d);
+    n.setDate(n.getDate() + 1);
+    return n;
+  };
+  return [
+    {
+      number: 1,
+      name: { fr: "1er trimestre", en: "1st term" },
+      startDate: iso(start),
+      endDate: iso(t1End),
+    },
+    {
+      number: 2,
+      name: { fr: "2e trimestre", en: "2nd term" },
+      startDate: iso(nextDay(t1End)),
+      endDate: iso(t2End),
+    },
+    {
+      number: 3,
+      name: { fr: "3e trimestre", en: "3rd term" },
+      startDate: iso(nextDay(t2End)),
+      endDate: iso(end),
+    },
+  ];
+}
+
 export async function listLevels(options: {
   page?: number;
   size?: number;
