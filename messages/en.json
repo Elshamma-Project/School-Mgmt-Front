@@ -277,6 +277,10 @@
   },
   "staff": {
     "add": "Add",
+    "addFull": "Add a staff member",
+    "cardTitle": "School staff",
+    "cardHint": "Teachers, leadership and support — HR profiles and login accounts.",
+    "cardManageHint": "Create and edit are reserved for administration / leadership.",
     "searchPlaceholder": "Name, email, staff number…",
     "emptyTitle": "No staff yet",
     "emptyDescription": "Add a teacher or admin staff member to get started.",
