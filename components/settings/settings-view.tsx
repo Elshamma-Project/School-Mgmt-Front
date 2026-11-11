@@ -13,14 +13,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { listAcademicYears, type AcademicYearResponse } from "@/lib/api/academic";
-import { logout as apiLogout } from "@/lib/api/auth";
 import {
   deleteSchoolLogo,
   setCurrentAcademicYear,
@@ -132,7 +130,6 @@ function localizedTextOrNull(fr: string, en: string) {
 
 export function SettingsView() {
   const t = useTranslations("settings");
-  const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
   const tRoles = useTranslations("roles");
   const tAcademic = useTranslations("academic");
@@ -141,7 +138,6 @@ export function SettingsView() {
   const user = useAuthStore((s) => s.user);
   const isMock = useAuthStore((s) => s.isMock);
   const setSession = useAuthStore((s) => s.setSession);
-  const clearSession = useAuthStore((s) => s.clearSession);
   const currentRole = primaryRole(user);
   const canEdit = userHasCapability(user?.roles, "manageSchoolSettings");
 
@@ -151,7 +147,6 @@ export function SettingsView() {
   const hydrate = useSchoolBrandStore((s) => s.hydrate);
   const brandLoading = useSchoolBrandStore((s) => s.loading);
 
-  const [confirmLogout, setConfirmLogout] = useState(false);
   const [years, setYears] = useState<AcademicYearResponse[]>([]);
   const [selectedYearId, setSelectedYearId] = useState("");
   const [yearsLoading, setYearsLoading] = useState(false);
@@ -197,18 +192,6 @@ export function SettingsView() {
       cancelled = true;
     };
   }, [t, user?.schoolId]);
-
-  async function performLogout() {
-    if (!isMock) {
-      try {
-        await apiLogout();
-      } catch {
-        /* purge locale même si l’API est down */
-      }
-    }
-    clearSession();
-    router.replace("/login");
-  }
 
   function switchRole(role: AppRole) {
     const response = createMockLogin(role);
