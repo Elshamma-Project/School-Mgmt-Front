@@ -112,8 +112,6 @@ export function BulletinTemplatePreview({
     : fr
       ? "01/07/2027 à 10:15"
       : "01/07/2027 at 10:15";
-  const verifyUrl = fr ? "exemple.cm/verif" : "example.cm/verify";
-  const verifyLabel = fr ? "Vérification" : "Check";
   const disclaimerLine = fr
     ? `Bulletin délivré sans rature ni surcharge · Imprimé le ${printedAt}`
     : isTerm
@@ -218,7 +216,7 @@ export function BulletinTemplatePreview({
 
         {/* Z2 — Identité 3×3 + photo scolaire (≠ avatar compte) */}
         <div
-          className="grid grid-cols-[1fr_68px] overflow-hidden rounded-[5px] border"
+          className="grid grid-cols-[1fr_84px] overflow-hidden rounded-[5px] border"
           style={{ borderColor: C.line }}
         >
           <div className="grid grid-cols-3">
@@ -247,10 +245,11 @@ export function BulletinTemplatePreview({
             ))}
           </div>
           <div
-            className="flex items-center justify-center p-1"
+            className="self-stretch p-0.5"
             style={{
               borderLeft: `1px solid ${C.line}`,
               backgroundColor: C.tint,
+              minHeight: 88,
             }}
             title={fr ? "Photo scolaire" : "School photo"}
           >
@@ -258,8 +257,7 @@ export function BulletinTemplatePreview({
             <img
               src="/mock/sample-student-school-photo.png"
               alt=""
-              className="h-[62px] w-[52px] object-cover object-top"
-              style={{ border: `1px solid ${C.line}` }}
+              className="h-full w-full object-cover object-top"
             />
           </div>
         </div>
@@ -556,9 +554,15 @@ export function BulletinTemplatePreview({
           <div className="min-w-0">
             <p style={{ fontSize: "5.5pt", color: C.ink, lineHeight: 1.35 }}>
               {fr ? "Développé par " : "Developed by "}
-              <span className="font-bold" style={{ color: C.amber }}>
+              <a
+                href={fr ? "https://www.kobecorporation.com/fr" : "https://www.kobecorporation.com/en"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold underline-offset-2 hover:underline"
+                style={{ color: C.amber }}
+              >
                 KOBE Corporation
-              </span>
+              </a>
             </p>
             <p style={{ fontSize: "5pt", color: C.muted, lineHeight: 1.35, marginTop: 2 }}>
               {disclaimerLine}
@@ -574,9 +578,6 @@ export function BulletinTemplatePreview({
               style={{ fontSize: "5.2pt", color: C.muted, letterSpacing: "0.04em" }}
             >
               {verificationCodeDisplay}
-            </p>
-            <p style={{ fontSize: "4.8pt", color: C.muted }}>
-              {verifyLabel} : {verifyUrl}
             </p>
           </div>
         </div>
