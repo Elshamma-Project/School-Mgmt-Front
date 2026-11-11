@@ -14,7 +14,10 @@ type BulletinTemplatePreviewProps = {
   postalBox: string;
   phones: string[];
   header: OfficialHeaderDto | null;
+  /** Libellé année scolaire courante (API academic-years). */
   yearLabel?: string;
+  /** Numéro de trimestre courant (1–3) pour le gabarit TERM. */
+  termNumber?: number;
 };
 
 /** Palette maquette KOBE — docs/maquette-bulletins-kobe.pdf */
@@ -62,67 +65,115 @@ export function BulletinTemplatePreview({
   postalBox,
   phones,
   header,
-  yearLabel = "2026-2027",
+  yearLabel,
+  termNumber = 1,
 }: BulletinTemplatePreviewProps) {
   const isTerm = template.periodType === "TERM";
   const fr = language === "FR";
   const cols = template.sequenceColumns;
-  const phoneLine = phones.filter(Boolean).join(" / ") || "670 00 00 00";
-  const bp = postalBox.trim() || "Yaoundé";
+  const phoneLine = phones.filter(Boolean).join(" / ");
+  const bp = postalBox.trim();
+  const year = yearLabel?.trim() || "—";
+  const termN = Math.min(3, Math.max(1, termNumber));
 
-  const titleFr = isTerm ? "BULLETIN DE TRIMESTRE 1" : "BULLETIN ANNUEL DE NOTES";
-  const titleEn = isTerm ? "TERM 1 REPORT CARD" : "ANNUAL REPORT CARD";
-  const bannerTitle = `${titleFr}  ·  ${titleEn}`;
+  const bannerTitle = isTerm
+    ? fr
+      ? "BULLETIN DE TRIMESTRE · REPORT CARD"
+      : "REPORT CARD · BULLETIN DE TRIMESTRE"
+    : fr
+      ? "BULLETIN ANNUEL DE NOTES · ANNUAL REPORT CARD"
+      : "ANNUAL REPORT CARD · BULLETIN ANNUEL DE NOTES";
+  const termLabelFr =
+    termN === 1 ? "1er TRIMESTRE" : termN === 2 ? "2e TRIMESTRE" : "3e TRIMESTRE";
+  const termLabelEn =
+    termN === 1 ? "FIRST TERM" : termN === 2 ? "SECOND TERM" : "THIRD TERM";
+  const bannerRight = isTerm
+    ? fr
+      ? `${termLabelFr} · ${year}`
+      : `${termLabelEn} · ${year}`
+    : fr
+      ? `Année scolaire ${year}`
+      : `School year ${year}`;
 
   const groups = demoGroups(isTerm, fr, cols);
   const legendRaw =
     (fr ? template.legend?.fr : template.legend?.en) ||
-    "A ≥ 16 · B+ ≥ 14 · B ≥ 12 · C < 12";
+    (isTerm
+      ? fr
+        ? "A+ parfaitement acquis · A acquis ≥ 14 · ECA en cours 10–14 · NA non acquis < 10"
+        : "A+ perfectly acquired · A acquired ≥ 14 · ECA in progress 10–14 · NA not acquired < 10"
+      : "A ≥ 16 · B+ ≥ 14 · B ≥ 12 · C < 12");
   const verificationCode = "2027060100123";
   const verificationCodeDisplay = formatVerificationCode(verificationCode);
-  const printedAt = fr ? "01/07/2027 à 10:15" : "01/07/2027 at 10:15";
-  const verifyUrl = "exemple.cm/verif";
+  const printedAt = isTerm
+    ? fr
+      ? "17/12/2026 à 09:40"
+      : "17/12/2026 at 09:40"
+    : fr
+      ? "01/07/2027 à 10:15"
+      : "01/07/2027 at 10:15";
+  const verifyUrl = fr ? "exemple.cm/verif" : "example.cm/verify";
+  const verifyLabel = fr ? "Vérification" : "Check";
+  const disclaimerLine = fr
+    ? `Bulletin délivré sans rature ni surcharge · Imprimé le ${printedAt}`
+    : isTerm
+      ? `Issued without erasure or alteration · Printed on ${printedAt}`
+      : `Report card issued without alteration · Printed on ${printedAt}`;
+
+  /** En-tête : uniquement données école (API / Paramètres), sans inventer CENTRE/MFOUNDI. */
+  const contactFr = [bp && `B.P. : ${bp}`, phoneLine && `Tél. : ${phoneLine}`]
+    .filter(Boolean)
+    .join("  ·  ");
+  const contactEn = [bp && `P.O. Box : ${bp}`, phoneLine && `Tel. : ${phoneLine}`]
+    .filter(Boolean)
+    .join("  ·  ");
 
   const frLines = [
-    header?.republic.fr || "RÉPUBLIQUE DU CAMEROUN",
-    header?.motto.fr || "Paix – Travail – Patrie",
-    header?.ministry.fr || "MINISTÈRE DES ENSEIGNEMENTS SECONDAIRES",
-    header?.regionalDelegation?.fr || "DÉLÉGATION RÉGIONALE DU CENTRE",
-    header?.divisionalDelegation?.fr || "DÉLÉGATION DÉPARTEMENTALE DU MFOUNDI",
-    schoolNameFr || "NOM DE L'ÉTABLISSEMENT",
-    `B.P. : ${bp}  ·  Tél. : ${phoneLine}`,
-  ];
+    header?.republic.fr?.trim(),
+    header?.motto.fr?.trim(),
+    header?.ministry.fr?.trim(),
+    header?.regionalDelegation?.fr?.trim(),
+    header?.divisionalDelegation?.fr?.trim(),
+    schoolNameFr.trim() || undefined,
+    contactFr || undefined,
+  ].filter((line): line is string => Boolean(line));
 
   const enLines = [
-    header?.republic.en || "REPUBLIC OF CAMEROON",
-    header?.motto.en || "Peace – Work – Fatherland",
-    header?.ministry.en || "MINISTRY OF SECONDARY EDUCATION",
-    header?.regionalDelegation?.en || "REGIONAL DELEGATION OF THE CENTRE",
-    header?.divisionalDelegation?.en || "DIVISIONAL DELEGATION OF MFOUNDI",
-    schoolNameEn || "NAME OF THE SCHOOL",
-    `P.O. Box : ${bp}  ·  Tel. : ${phoneLine}`,
-  ];
+    header?.republic.en?.trim(),
+    header?.motto.en?.trim(),
+    header?.ministry.en?.trim(),
+    header?.regionalDelegation?.en?.trim(),
+    header?.divisionalDelegation?.en?.trim(),
+    schoolNameEn.trim() || undefined,
+    contactEn || undefined,
+  ].filter((line): line is string => Boolean(line));
 
   const identity = [
     {
       label: fr ? "NOMS ET PRÉNOMS" : "FULL NAMES",
-      value: "NOM Prénoms",
+      value: fr ? "NOM Prénoms" : "Surname First names",
     },
-    { label: fr ? "CLASSE" : "CLASS", value: fr ? "6ème" : "Form 1" },
-    { label: fr ? "MATRICULE" : "MATRICULE", value: "26A0001" },
     {
-      label: fr ? "NÉ(E) LE / À" : "DATE / PLACE OF BIRTH",
-      value: fr ? "01/01/2015 — Yaoundé" : "01/01/2015 — Yaoundé",
+      label: fr ? "CLASSE" : "CLASS",
+      value: isTerm ? (fr ? "6ème" : "Form 1") : fr ? "6ème" : "Form 1",
+    },
+    {
+      label: fr ? "MATRICULE" : "REGISTRATION NUMBER",
+      value: "26A0001",
+    },
+    {
+      label: fr ? "NÉ(E) LE / À" : "DATE AND PLACE OF BIRTH",
+      value: "01/01/2015 — Yaoundé",
     },
     { label: fr ? "SEXE" : "SEX", value: fr ? "Féminin" : "Female" },
     { label: fr ? "REDOUBLANT(E)" : "REPEATER", value: fr ? "Non" : "No" },
     {
-      label: fr ? "PROFESSEUR PRINCIPAL" : "CLASS MASTER",
+      label: fr ? "PROFESSEUR PRINCIPAL" : "CLASS MASTER / MISTRESS",
       value: "Mme T1",
     },
     {
       label: fr ? "EFFECTIF DE LA CLASSE" : "N° ON ROLL",
-      value: "21",
+      value: isTerm ? "14" : "21",
     },
     {
       label: fr ? "LANGUE DU BULLETIN" : "REPORT LANGUAGE",
@@ -161,7 +212,7 @@ export function BulletinTemplatePreview({
             {bannerTitle}
           </p>
           <p className="shrink-0 whitespace-nowrap" style={{ fontSize: "7pt", color: "#D7E6EA" }}>
-            {fr ? "Année scolaire" : "School year"} {yearLabel}
+            {bannerRight}
           </p>
         </div>
 
@@ -173,19 +224,22 @@ export function BulletinTemplatePreview({
           {identity.map((cell, i) => (
             <div
               key={cell.label}
-              className="px-2 py-1.5"
+              className="px-1.5 py-[2px]"
               style={{
                 borderRight: i % 3 !== 2 ? `1px solid ${C.line}` : undefined,
                 borderBottom: i < 6 ? `1px solid ${C.line}` : undefined,
               }}
             >
               <p
-                className="uppercase tracking-[0.05em]"
-                style={{ fontSize: "5.2pt", color: C.muted }}
+                className="uppercase leading-none tracking-[0.04em]"
+                style={{ fontSize: "4.8pt", color: C.muted }}
               >
                 {cell.label}
               </p>
-              <p className="font-bold" style={{ fontSize: "7.5pt", color: C.ink }}>
+              <p
+                className="font-bold leading-tight"
+                style={{ fontSize: "7pt", color: C.ink, marginTop: "1px" }}
+              >
                 {cell.value}
               </p>
             </div>
@@ -213,20 +267,28 @@ export function BulletinTemplatePreview({
           <thead>
             <tr style={{ backgroundColor: C.header, color: C.white }}>
               <Th left>
-                {fr ? "DISCIPLINES / ENS." : "SUBJECTS / TCH."}
+                {isTerm
+                  ? fr
+                    ? "DISCIPLINES / ENS. / COMPÉTENCE"
+                    : "SUBJECTS / TEACHER / COMPETENCY"
+                  : fr
+                    ? "DISCIPLINES / ENS."
+                    : "SUBJECTS / TCH."}
               </Th>
               {cols.map((n, i) => (
-                <Th key={n}>{isTerm ? `E${i + 1}` : `D${n}`}</Th>
+                <Th key={n}>{isTerm ? `EVAL ${i + 1}` : `D${n}`}</Th>
               ))}
-              <Th>{fr ? "MOY" : "AV"}</Th>
+              <Th>{fr ? "MOY/20" : "AV/20"}</Th>
               <Th>COEF</Th>
-              <Th>{isTerm ? "×COEF" : "TOT"}</Th>
-              {template.showSubjectRank ? <Th>POS</Th> : null}
+              <Th>{isTerm ? (fr ? "MOY×COEF" : "AV×COEF") : "TOT"}</Th>
+              {template.showSubjectRank ? <Th>POS.</Th> : null}
               {template.showSubjectClassAverage ? (
-                <Th>{fr ? "CL." : "CL."}</Th>
+                <Th>{fr ? "MOY. CL." : "CLASS AV."}</Th>
               ) : null}
-              {template.showSubjectPassedCount ? <Th>≥10</Th> : null}
-              <Th>{fr ? "APP." : "REM."}</Th>
+              {template.showSubjectPassedCount ? (
+                <Th>{fr ? "MOY ≥ 10" : "AV ≥ 10"}</Th>
+              ) : null}
+              <Th>{isTerm ? (fr ? "APPRÉC." : "REMARK") : fr ? "APP." : "REM."}</Th>
             </tr>
           </thead>
           <tbody>
@@ -236,47 +298,109 @@ export function BulletinTemplatePreview({
           </tbody>
         </table>
 
-        {/* Z5–Z7 — 3 cadres résultats (maquette KOBE) */}
-        <div className="grid grid-cols-3 gap-[5px]">
-          <Frame title={fr ? "RÉSULTAT ANNUEL" : "ANNUAL RESULT"}>
-            <div
-              className="flex items-baseline justify-between gap-1 border-b border-dotted pb-1"
-              style={{ borderColor: C.line }}
-            >
-              <span style={{ fontSize: "6.2pt", color: C.ink }}>
-                {fr ? "Moyenne de l'élève" : "Student average"}
-              </span>
-              <span
-                className="font-bold tabular-nums"
-                style={{ fontSize: "14pt", color: C.ink, lineHeight: 1 }}
+        {/* Z5–Z7 — 3 cadres (annuel ≠ trimestre, maquette KOBE) */}
+        {isTerm ? (
+          <div className="grid grid-cols-3 gap-[5px]">
+            <Frame title={fr ? "RÉSULTAT DU TRIMESTRE" : "TERM RESULT"}>
+              <DottedStat label={fr ? "Total points" : "Total points"} value="317,50 / 560" />
+              <div
+                className="flex items-baseline justify-between gap-1 border-b border-dotted py-[3px]"
+                style={{ borderColor: C.line }}
               >
-                10,80
-                <span style={{ fontSize: "8pt", fontWeight: 700 }}> /20</span>
-              </span>
-            </div>
-            <div
-              className="mt-1 flex items-baseline justify-between gap-1 border-b border-dotted pb-1"
-              style={{ borderColor: C.line }}
-            >
-              <span style={{ fontSize: "6.5pt", color: C.ink }}>{fr ? "Rang" : "Rank"}</span>
-              <span className="font-bold tabular-nums" style={{ fontSize: "8.5pt", color: C.ink }}>
-                4 / 21
-              </span>
-            </div>
-            {/* Pastille mention : rectangle à coins légèrement arrondis (maquette, pas pill) */}
-            <span
-              className="mt-1.5 inline-block px-3.5 py-[4px] font-bold uppercase tracking-wide text-white"
-              style={{
-                backgroundColor: C.amber,
-                fontSize: "7pt",
-                borderRadius: "4px",
-              }}
-            >
-              {fr ? "PASSABLE" : "FAIR"}
-            </span>
-          </Frame>
+                <span style={{ fontSize: "6.2pt", color: C.ink }}>
+                  {fr ? "Moyenne du trimestre" : "Term average"}
+                </span>
+                <span
+                  className="font-bold tabular-nums"
+                  style={{ fontSize: "14pt", color: C.ink, lineHeight: 1 }}
+                >
+                  11,34
+                  <span style={{ fontSize: "8pt", fontWeight: 700 }}> /20</span>
+                </span>
+              </div>
+              <DottedStat label={fr ? "Rang" : "Position"} value="6 / 14" />
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <span
+                  className="inline-block px-3.5 py-[4px] font-bold uppercase tracking-wide text-white"
+                  style={{ backgroundColor: C.amber, fontSize: "7pt", borderRadius: "4px" }}
+                >
+                  {fr ? "PASSABLE" : "FAIR"}
+                </span>
+                <span style={{ fontSize: "5.5pt", color: C.ink }}>
+                  {fr ? "Admis en 10 / 11 matières" : "Passed in 10 / 11 subjects"}
+                </span>
+              </div>
+            </Frame>
 
-          {template.showTermRecap ? (
+            <Frame title={fr ? "PROFIL DE LA CLASSE" : "CLASS PROFILE"}>
+              <DottedStat
+                label={
+                  fr
+                    ? `Moyenne ≥ ${template.classProfileThreshold ?? 10}`
+                    : `Average ≥ ${template.classProfileThreshold ?? 10}`
+                }
+                value="10"
+              />
+              <DottedStat label={fr ? "Moyenne de la classe" : "Class average"} value="11,92" />
+              <DottedStat label={fr ? "% de réussite" : "Success rate"} value="71,43 %" />
+              <DottedStat label={fr ? "Max · min" : "Max · min"} value="15,10 · 7,21" />
+            </Frame>
+
+            <Frame title={fr ? "À RENFORCER" : "MAKE EFFORT IN"}>
+              {template.showEffortSubjects ? (
+                <>
+                  <p
+                    className="font-bold uppercase"
+                    style={{ fontSize: "11pt", color: C.ink, lineHeight: 1.15 }}
+                  >
+                    {fr ? "FRANÇAIS" : "FRENCH"}
+                  </p>
+                  <p style={{ fontSize: "5pt", color: C.muted, marginTop: 4, lineHeight: 1.3 }}>
+                    {fr
+                      ? "(matières avec moyenne < 10 · seuil = paramètre, Q-28)"
+                      : "(subjects with average below 10 · threshold = parameter, Q-28)"}
+                  </p>
+                </>
+              ) : (
+                <p style={{ fontSize: "6pt", color: C.muted }}>—</p>
+              )}
+            </Frame>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-[5px]">
+            <Frame title={fr ? "RÉSULTAT ANNUEL" : "ANNUAL RESULT"}>
+              <div
+                className="flex items-baseline justify-between gap-1 border-b border-dotted pb-1"
+                style={{ borderColor: C.line }}
+              >
+                <span style={{ fontSize: "6.2pt", color: C.ink }}>
+                  {fr ? "Moyenne de l'élève" : "Student average"}
+                </span>
+                <span
+                  className="font-bold tabular-nums"
+                  style={{ fontSize: "14pt", color: C.ink, lineHeight: 1 }}
+                >
+                  10,80
+                  <span style={{ fontSize: "8pt", fontWeight: 700 }}> /20</span>
+                </span>
+              </div>
+              <div
+                className="mt-1 flex items-baseline justify-between gap-1 border-b border-dotted pb-1"
+                style={{ borderColor: C.line }}
+              >
+                <span style={{ fontSize: "6.5pt", color: C.ink }}>{fr ? "Rang" : "Rank"}</span>
+                <span className="font-bold tabular-nums" style={{ fontSize: "8.5pt", color: C.ink }}>
+                  4 / 21
+                </span>
+              </div>
+              <span
+                className="mt-1.5 inline-block px-3.5 py-[4px] font-bold uppercase tracking-wide text-white"
+                style={{ backgroundColor: C.amber, fontSize: "7pt", borderRadius: "4px" }}
+              >
+                {fr ? "PASSABLE" : "FAIR"}
+              </span>
+            </Frame>
+
             <Frame title={fr ? "RAPPELS DES MOYENNES" : "TERM AVERAGES"}>
               <table
                 className="w-full border-collapse"
@@ -289,19 +413,16 @@ export function BulletinTemplatePreview({
                 </colgroup>
                 <thead>
                   <tr>
-                    <th
-                      className="border p-[3px]"
-                      style={{ borderColor: C.line, backgroundColor: C.white }}
-                    />
+                    <th className="border p-[3px]" style={{ borderColor: C.line }} />
                     <th
                       className="border p-[3px] text-center font-bold"
-                      style={{ borderColor: C.line, color: C.ink, backgroundColor: C.white }}
+                      style={{ borderColor: C.line, color: C.ink }}
                     >
                       MOY.
                     </th>
                     <th
                       className="border p-[3px] text-center font-bold"
-                      style={{ borderColor: C.line, color: C.ink, backgroundColor: C.white }}
+                      style={{ borderColor: C.line, color: C.ink }}
                     >
                       {fr ? "RANG" : "RANK"}
                     </th>
@@ -323,23 +444,19 @@ export function BulletinTemplatePreview({
                     <tr key={t}>
                       <td
                         className="border p-[3px] text-center font-bold"
-                        style={{
-                          borderColor: C.line,
-                          color: C.ink,
-                          backgroundColor: C.tint,
-                        }}
+                        style={{ borderColor: C.line, color: C.ink, backgroundColor: C.tint }}
                       >
                         {t}
                       </td>
                       <td
                         className="border p-[3px] text-center tabular-nums"
-                        style={{ borderColor: C.line, color: C.ink, backgroundColor: C.white }}
+                        style={{ borderColor: C.line, color: C.ink }}
                       >
                         {m}
                       </td>
                       <td
                         className="border p-[3px] text-center tabular-nums"
-                        style={{ borderColor: C.line, color: C.ink, backgroundColor: C.white }}
+                        style={{ borderColor: C.line, color: C.ink }}
                       >
                         {r}
                       </td>
@@ -348,18 +465,7 @@ export function BulletinTemplatePreview({
                 </tbody>
               </table>
             </Frame>
-          ) : (
-            <Frame title={fr ? "TOTAL POINTS" : "TOTAL POINTS"}>
-              <p className="font-bold" style={{ fontSize: "12pt" }}>
-                88,75 / 140
-              </p>
-              <p style={{ fontSize: "6.5pt", color: C.muted, marginTop: 4 }}>
-                {fr ? "ADMIS EN 12/16" : "PASSED IN 12/16"}
-              </p>
-            </Frame>
-          )}
 
-          {template.showClassProfile ? (
             <Frame title={fr ? "PROFIL DE LA CLASSE" : "CLASS PROFILE"}>
               <DottedStat
                 label={
@@ -373,43 +479,54 @@ export function BulletinTemplatePreview({
               <DottedStat label={fr ? "% de réussite" : "Pass rate"} value="28,57 %" />
               <DottedStat label={fr ? "Moyenne max - min" : "Max - min average"} value="14,62 - 6,38" />
             </Frame>
-          ) : (
-            <Frame title={fr ? "PROFIL DE LA CLASSE" : "CLASS PROFILE"}>
-              <p style={{ fontSize: "6pt", color: C.muted }}>—</p>
-            </Frame>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Z8–Z9 */}
-        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-          <Frame title={fr ? "Travail de l'élève" : "Student's work"}>
+        <div className="grid grid-cols-2 gap-[5px]">
+          <Frame title={fr ? "TRAVAIL DE L'ÉLÈVE" : "WORK"}>
             <DotRow label={fr ? "Tableau d'honneur" : "Honour roll"} value={fr ? "Non" : "No"} />
             <DotRow
-              label={fr ? "T.H. + encouragements — félicitations" : "H.R. + encouragement — congratulations"}
+              label={
+                fr
+                  ? "T.H. + encouragements — félicitations"
+                  : "H.R. + encouragement — congratulation"
+              }
               value="—"
             />
             <DotRow
-              label={fr ? "Avertissement — blâme travail" : "Warning — blame (work)"}
+              label={fr ? "Avertissement — blâme travail" : "Academic warning"}
               value="—"
             />
           </Frame>
-          <Frame title={fr ? "Conduite de l'élève" : "Student's conduct"}>
-            <DotRow label={fr ? "Absences (h)" : "Absences (h)"} value="4" />
-            <DotRow label={fr ? "Retards" : "Lates"} value="2" />
+          <Frame title={fr ? "CONDUITE DE L'ÉLÈVE" : "CONDUCT"}>
             <DotRow
-              label={fr ? "Avertissement — blâme conduite" : "Warning — blame (conduct)"}
+              label={fr ? "Absences (h) — non justifiées" : "Absences (h) — unjustified"}
+              value={fr ? "4 · 1" : "4 · 1"}
+            />
+            <DotRow label={fr ? "Retards / Absentéisme" : "Absenteeism"} value={fr ? "2" : "2"} />
+            <DotRow
+              label={fr ? "Avertissement — blâme conduite" : "Warning — blame"}
               value="—"
             />
           </Frame>
         </div>
 
         {/* Z10 — Visas */}
-        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
-          <VisaBox title={fr ? "VISA DU PARENT" : "PARENT VISA"} />
+        <div className="grid grid-cols-3 gap-[5px]">
+          <VisaBox title={fr ? "VISA DU PARENT" : "PARENT'S SIGNATURE"} />
           <VisaBox title={fr ? "DÉCISION DU CONSEIL DE CLASSE" : "CLASS COUNCIL DECISION"} />
           <VisaBox
             title={fr ? "LE CHEF D'ÉTABLISSEMENT" : "THE PRINCIPAL"}
-            footer={fr ? "Yaoundé, le … / … / 2027" : "Yaoundé, … / … / 2027"}
+            footer={
+              isTerm
+                ? fr
+                  ? "Yaoundé, le … / … / 2026"
+                  : "Yaoundé, … / … / 2026"
+                : fr
+                  ? "Yaoundé, le … / … / 2027"
+                  : "Yaoundé, … / … / 2027"
+            }
           />
         </div>
 
@@ -426,12 +543,10 @@ export function BulletinTemplatePreview({
               </span>
             </p>
             <p style={{ fontSize: "5pt", color: C.muted, lineHeight: 1.35, marginTop: 2 }}>
-              {fr
-                ? `Bulletin délivré sans rature ni surcharge · Imprimé le ${printedAt}`
-                : `Report card issued without alteration · Printed on ${printedAt}`}
+              {disclaimerLine}
             </p>
           </div>
-          <div className="text-center" style={{ fontSize: "5.4pt", color: C.ink }}>
+          <div className="text-center" style={{ fontSize: "5.2pt", color: C.ink }}>
             <LegendLine text={legendRaw} />
           </div>
           <div className="justify-self-end text-right">
@@ -443,7 +558,7 @@ export function BulletinTemplatePreview({
               {verificationCodeDisplay}
             </p>
             <p style={{ fontSize: "4.8pt", color: C.muted }}>
-              {fr ? "Vérification" : "Verification"} : {verifyUrl}
+              {verifyLabel} : {verifyUrl}
             </p>
           </div>
         </div>
@@ -734,13 +849,13 @@ function VisaBox({ title, footer }: { title: string; footer?: string }) {
   );
 }
 
-/** Légende : lettres en gras (A, B+, B, C). */
+/** Légende : codes en gras (A+, A, ECA, NA, B+, …). */
 function LegendLine({ text }: { text: string }) {
-  const parts = text.split(/(A\+|A|B\+|B|C|D|E)/g).filter(Boolean);
+  const parts = text.split(/(A\+|ECA|NA|B\+|A|B|C|D|E)(?=\s|$|·)/g).filter(Boolean);
   return (
     <p className="leading-snug">
       {parts.map((part, i) =>
-        /^(A\+|A|B\+|B|C|D|E)$/.test(part) ? (
+        /^(A\+|ECA|NA|B\+|A|B|C|D|E)$/.test(part) ? (
           <span key={`${part}-${i}`} className="font-bold">
             {part}
           </span>
@@ -798,51 +913,154 @@ function fmtCompact(n: number): string {
 
 function demoGroups(isTerm: boolean, fr: boolean, cols: number[]): DemoGroup[] {
   if (isTerm) {
+    const t = (
+      name: string,
+      teacher: string,
+      competency: string,
+      marks: number[],
+      coef: number,
+      app: string,
+      rank: number,
+      classAvg: number,
+      passed: number,
+    ): DemoSubject => {
+      const avg = Math.round((marks.reduce((a, b) => a + b, 0) / marks.length) * 100) / 100;
+      return {
+        name,
+        teacher,
+        competency,
+        marks: padMarks(marks, cols.length),
+        avg,
+        coef,
+        total: Math.round(avg * coef * 100) / 100,
+        app,
+        rank,
+        classAvg,
+        passed,
+      };
+    };
     return [
       {
-        name: fr ? "SCIENCES" : "SCIENCES",
-        avg: 12.25,
-        coef: 4,
-        total: 49,
+        name: fr ? "LANGUES ET LITTÉRATURES" : "LANGUAGE AND LITERATURE",
+        avg: 10.85,
+        coef: 10,
+        total: 108.5,
         subjects: [
-          {
-            name: fr ? "Mathématiques" : "Mathematics",
-            teacher: "Mme T1",
-            competency: fr
-              ? "Résoudre des problèmes du 1er degré"
-              : "Solve first-degree problems",
-            marks: padMarks([11, 13.5], cols.length),
-            avg: 12.25,
-            coef: 4,
-            total: 49,
-            app: "B",
-            rank: 6,
-            classAvg: 10.8,
-            passed: 18,
-          },
+          t(
+            fr ? "Français" : "French",
+            "Mme T2",
+            fr ? "Rédiger un texte argumentatif" : "Write an argumentative text",
+            [7.5, 9.75],
+            4,
+            "NA",
+            11,
+            10.2,
+            8,
+          ),
+          t(
+            "English",
+            "Mr T3",
+            fr ? "Comprendre un texte narratif" : "Understand a narrative text",
+            [14, 12.5],
+            3,
+            "A",
+            3,
+            11.2,
+            12,
+          ),
+          t(
+            fr ? "Langues nationales" : "National languages",
+            "M. T4",
+            fr ? "Communiquer en contexte" : "Communicate in context",
+            [11, 12],
+            3,
+            "ECA",
+            7,
+            10.5,
+            9,
+          ),
         ],
       },
       {
-        name: fr ? "LANGUES" : "LANGUAGES",
-        avg: 13.25,
-        coef: 3,
-        total: 39.75,
+        name: fr ? "SCIENCES HUMAINES ET SOCIALES" : "HUMAN AND SOCIAL SCIENCES",
+        avg: 11.4,
+        coef: 8,
+        total: 91.2,
         subjects: [
-          {
-            name: "English",
-            teacher: "Mr T3",
-            competency: fr
-              ? "Comprendre un texte narratif"
-              : "Understand a narrative text",
-            marks: padMarks([14, 12.5], cols.length),
-            avg: 13.25,
-            coef: 3,
-            total: 39.75,
-            app: "B+",
-            rank: 3,
-            classAvg: 11.2,
-            passed: 22,
-          },
+          t(
+            fr ? "Histoire" : "History",
+            "Mme T8",
+            fr ? "Situer un fait dans le temps" : "Place an event in time",
+            [10, 11.5],
+            3,
+            "ECA",
+            5,
+            10.8,
+            10,
+          ),
+          t(
+            fr ? "Géographie" : "Geography",
+            "Mme T8",
+            fr ? "Lire une carte" : "Read a map",
+            [12, 13],
+            3,
+            "A",
+            4,
+            11.5,
+            11,
+          ),
+          t(
+            fr ? "Citoyenneté" : "Citizenship",
+            "M. T5",
+            fr ? "Respecter les règles de vie" : "Respect living rules",
+            [14, 13.5],
+            2,
+            "A+",
+            2,
+            12.1,
+            13,
+          ),
+        ],
+      },
+      {
+        name: fr ? "SCIENCES ET TECHNOLOGIE" : "SCIENCE AND TECHNOLOGY",
+        avg: 11.8,
+        coef: 10,
+        total: 118,
+        subjects: [
+          t(
+            fr ? "Mathématiques" : "Mathematics",
+            "Mme T1",
+            fr ? "Résoudre des problèmes du 1er degré" : "Solve first-degree problems",
+            [11, 13.5],
+            4,
+            "A",
+            6,
+            10.8,
+            10,
+          ),
+          t(
+            "SVTEEHB",
+            "M. T6",
+            fr ? "Observer un phénomène" : "Observe a phenomenon",
+            [12, 11],
+            3,
+            "ECA",
+            8,
+            11,
+            9,
+          ),
+          t(
+            fr ? "Informatique" : "ICT",
+            "M. T7",
+            fr ? "Utiliser un outil numérique" : "Use a digital tool",
+            [13, 14],
+            3,
+            "A",
+            3,
+            12.4,
+            12,
+          ),
         ],
       },
     ];

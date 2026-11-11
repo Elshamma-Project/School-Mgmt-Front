@@ -8,12 +8,13 @@ import { BulletinTemplatePreview } from "@/components/reporting/bulletin-templat
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { localizedLabel } from "@/lib/api/academic";
+import { listAcademicYears, localizedLabel } from "@/lib/api/academic";
 import {
   downloadReportTemplateSamplePdf,
   getReportTemplate,
   type ReportTemplateResponse,
 } from "@/lib/api/reporting";
+import { getMySchool, type SchoolResponse } from "@/lib/api/school";
 import { moduleListPath } from "@/lib/modules/tabs";
 import { notify } from "@/lib/ui/notify";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
@@ -33,24 +34,45 @@ export function ReportTemplateDetailView({ code }: ReportTemplateDetailViewProps
   const schoolId = useAuthStore((s) => s.user?.schoolId);
   const role = primaryRole(useAuthStore((s) => s.user));
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
-  const school = useSchoolBrandStore((s) => s.school);
-  const hydrate = useSchoolBrandStore((s) => s.hydrate);
+  const setSchool = useSchoolBrandStore((s) => s.setSchool);
+  const refreshLogo = useSchoolBrandStore((s) => s.refreshLogo);
 
   const [template, setTemplate] = useState<ReportTemplateResponse | null>(null);
+  const [school, setLocalSchool] = useState<SchoolResponse | null>(null);
+  const [yearLabel, setYearLabel] = useState<string | null>(null);
+  const [termNumber, setTermNumber] = useState(1);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<"FR" | "EN">("FR");
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    void hydrate(schoolId ?? null, locale);
-  }, [hydrate, locale, schoolId]);
-
-  useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    void getReportTemplate(code, schoolId)
-      .then((row) => {
-        if (!cancelled) setTemplate(row);
+    void Promise.all([
+      getReportTemplate(code, schoolId),
+      getMySchool(schoolId),
+      listAcademicYears({ page: 0, size: 20, schoolId }),
+    ])
+      .then(([row, schoolRow, years]) => {
+        if (cancelled) return;
+        setTemplate(row);
+        setLocalSchool(schoolRow);
+        if (schoolRow) {
+          setSchool(schoolRow);
+          void refreshLogo();
+        }
+        const year =
+          years.content.find((y) => y.current) ??
+          years.content.find((y) => y.status === "ACTIVE") ??
+          years.content[0] ??
+          null;
+        setYearLabel(year?.label ?? null);
+        const today = new Date().toISOString().slice(0, 10);
+        const activeTerm =
+          year?.terms.find((term) => term.startDate <= today && today <= term.endDate) ??
+          year?.terms[0] ??
+          null;
+        setTermNumber(activeTerm?.number ?? 1);
       })
       .catch((error) => {
         if (cancelled || isAuthFailure(error)) return;
@@ -64,12 +86,18 @@ export function ReportTemplateDetailView({ code }: ReportTemplateDetailViewProps
     return () => {
       cancelled = true;
     };
-  }, [code, schoolId, t]);
+  }, [code, schoolId, refreshLogo, setSchool, t]);
 
-  const header = useMemo(
-    () => school?.officialHeaders?.[0] ?? null,
-    [school],
-  );
+  /** En-tête officiel école (cycle secondaire en priorité). */
+  const header = useMemo(() => {
+    const headers = school?.officialHeaders ?? [];
+    if (headers.length === 0) return null;
+    return (
+      headers.find((h) => h.cycles.some((c) => c === "SECONDARY" || c === "SECONDARY_GENERAL")) ??
+      headers[0] ??
+      null
+    );
+  }, [school]);
 
   async function onDownloadPdf() {
     if (!template || downloading) return;
@@ -163,11 +191,13 @@ export function ReportTemplateDetailView({ code }: ReportTemplateDetailViewProps
         <BulletinTemplatePreview
           template={template}
           language={language}
-          schoolNameFr={school?.name.fr || school?.shortName || "École"}
-          schoolNameEn={school?.name.en || school?.shortName || "School"}
+          schoolNameFr={school?.name.fr || school?.shortName || ""}
+          schoolNameEn={school?.name.en || school?.shortName || ""}
           postalBox={school?.postalBox || ""}
           phones={school?.contact.phones || []}
           header={header}
+          yearLabel={yearLabel ?? undefined}
+          termNumber={termNumber}
         />
       )}
     </div>
