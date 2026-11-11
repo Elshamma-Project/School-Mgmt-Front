@@ -404,6 +404,22 @@
       "groups": "Nouveau groupe",
       "rooms": "Nouvelle salle"
     },
+    "addShort": "Ajouter",
+    "cardTitle": {
+      "levels": "Niveaux scolaires",
+      "classes": "Classes de l’année",
+      "subjects": "Catalogue des matières",
+      "groups": "Groupes de bulletin",
+      "rooms": "Salles"
+    },
+    "cardHint": {
+      "levels": "Codes, cycles et sections (francophone / anglophone) du référentiel.",
+      "classes": "Classes de l’année scolaire courante, liées à un niveau et une langue.",
+      "subjects": "Matières bilingues utilisées pour les notes et l’emploi du temps.",
+      "groups": "Blocs de sous-total imprimés sur les bulletins (LANG_LIT, SCI_TECH…).",
+      "rooms": "Salles disponibles pour l’affectation des classes et l’emploi du temps."
+    },
+    "cardManageHint": "Création et modification réservées à l’administration / direction.",
     "search": {
       "levels": "Code, nom, cycle…",
       "classes": "Classe, niveau, série…",

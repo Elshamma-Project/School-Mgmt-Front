@@ -39,6 +39,13 @@ type PersistedAuth = {
   isMock: boolean;
 };
 
+function expireCookie(name: string) {
+  // Sans et avec Secure : un cookie posé en HTTPS (Secure) ne part pas
+  // si on l’expire seulement sans l’attribut Secure.
+  document.cookie = `${name}=; path=/; Max-Age=0; SameSite=Lax`;
+  document.cookie = `${name}=; path=/; Max-Age=0; SameSite=Lax; Secure`;
+}
+
 export function syncAuthCookie(hasSession: boolean) {
   if (typeof document === "undefined") return;
   const secure =
@@ -46,12 +53,12 @@ export function syncAuthCookie(hasSession: boolean) {
       ? "; Secure"
       : "";
 
-  document.cookie = `${AUTH_COOKIE_LEGACY_NAME}=; path=/; Max-Age=0; SameSite=Lax`;
+  expireCookie(AUTH_COOKIE_LEGACY_NAME);
 
   if (hasSession) {
     document.cookie = `${AUTH_COOKIE_NAME}=${AUTH_COOKIE_PRESENT}; path=/; Max-Age=${AUTH_COOKIE_MAX_AGE_SEC}; SameSite=Lax${secure}`;
   } else {
-    document.cookie = `${AUTH_COOKIE_NAME}=; path=/; Max-Age=0; SameSite=Lax`;
+    expireCookie(AUTH_COOKIE_NAME);
   }
 }
 
@@ -169,6 +176,11 @@ export const useAuthStore = create<AuthState>()(
           mustChangePassword: false,
           isMock: false,
         });
+        // Purge immédiate : évite qu’un rehydrate concurrent restaure l’ancienne session.
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(AUTH_STORAGE_KEY);
+          window.sessionStorage.removeItem(AUTH_STORAGE_KEY);
+        }
       },
       setMustChangePassword: (mustChangePassword) => set({ mustChangePassword }),
     }),

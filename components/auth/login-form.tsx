@@ -72,6 +72,20 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
     if (remembered) setEmail(remembered);
   }, []);
 
+  // bfcache : une page login figée avec submitting=true réapparaissait à la déconnexion.
+  useEffect(() => {
+    const resetLoader = () => setSubmitting(false);
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) resetLoader();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("popstate", resetLoader);
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("popstate", resetLoader);
+    };
+  }, []);
+
   function applyRememberPreference(emailValue: string) {
     writeRememberMe(rememberMe);
     if (rememberMe) {

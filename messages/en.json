@@ -404,6 +404,22 @@
       "groups": "New group",
       "rooms": "New room"
     },
+    "addShort": "Add",
+    "cardTitle": {
+      "levels": "School levels",
+      "classes": "Year classes",
+      "subjects": "Subject catalogue",
+      "groups": "Report-card groups",
+      "rooms": "Rooms"
+    },
+    "cardHint": {
+      "levels": "Codes, cycles and sections (francophone / anglophone) in the directory.",
+      "classes": "Classes for the current school year, tied to a level and language.",
+      "subjects": "Bilingual subjects used for grades and the timetable.",
+      "groups": "Subtotal blocks printed on report cards (LANG_LIT, SCI_TECH…).",
+      "rooms": "Rooms available for class assignment and the timetable."
+    },
+    "cardManageHint": "Create and edit are reserved for administration / leadership.",
     "search": {
       "levels": "Code, name, cycle…",
       "classes": "Class, level, track…",

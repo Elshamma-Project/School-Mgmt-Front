@@ -29,6 +29,18 @@ export function LoginLoading({ open, roleLabel }: LoginLoadingProps) {
     };
   }, [open]);
 
+  // Si la page est restaurée depuis le bfcache pendant un loader, ne pas rester bloqué.
+  useEffect(() => {
+    if (!open) return;
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        document.body.style.overflow = "";
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [open]);
+
   if (!open || !mounted) return null;
 
   return createPortal(

@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { LogOut } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { logout as apiLogout } from "@/lib/api/auth";
+import { performClientLogout } from "@/lib/auth/logout-client";
 import { useRouter } from "@/i18n/navigation";
-import { clearAvatarCache } from "@/lib/profile/avatar-cache";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
@@ -20,25 +19,23 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
   const tRoles = useTranslations("roles");
+  const locale = useLocale();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const isMock = useAuthStore((s) => s.isMock);
-  const clearSession = useAuthStore((s) => s.clearSession);
   const role = primaryRole(user);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   async function performLogout() {
-    const { isMock: mock, user: current } = useAuthStore.getState();
-    if (!mock) {
-      try {
-        await apiLogout();
-      } catch {
-        /* purge locale même si le serveur est injoignable */
-      }
+    if (loggingOut) return;
+    setLoggingOut(true);
+    setConfirmLogout(false);
+    try {
+      await performClientLogout(locale);
+    } catch {
+      setLoggingOut(false);
     }
-    clearAvatarCache(current?.id);
-    clearSession();
-    router.replace("/login");
   }
 
   const name = user?.displayName?.trim() || user?.username || "—";
@@ -52,13 +49,17 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
   const logoutDialog = (
     <ConfirmDialog
       open={confirmLogout}
-      onOpenChange={setConfirmLogout}
+      onOpenChange={(open) => {
+        if (!loggingOut) setConfirmLogout(open);
+      }}
       title={t("logoutConfirmTitle")}
       description={t("logoutConfirmDescription")}
       confirmLabel={t("logout")}
       cancelLabel={tCommon("cancel")}
       tone="destructive"
-      onConfirm={performLogout}
+      onConfirm={() => {
+        void performLogout();
+      }}
     />
   );
 
@@ -83,7 +84,8 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
             onClick={() => setConfirmLogout(true)}
             title={t("logout")}
             aria-label={t("logout")}
-            className="pressable flex size-9 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-danger)] hover:bg-[var(--ios-danger)]/10 focus-visible:shadow-[var(--focus-ring)]"
+            disabled={loggingOut}
+            className="pressable flex size-9 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-danger)] hover:bg-[var(--ios-danger)]/10 focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <LogOut className="size-4 stroke-[1.75]" aria-hidden />
           </button>
@@ -128,9 +130,11 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
         <button
           type="button"
           onClick={() => setConfirmLogout(true)}
+          disabled={loggingOut}
           className={cn(
             "pressable flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-[11px] font-medium",
             "text-[var(--ios-danger)] hover:bg-[var(--ios-danger)]/10 focus-visible:shadow-[var(--focus-ring)]",
+            "disabled:cursor-not-allowed disabled:opacity-50",
           )}
         >
           <LogOut className="size-3.5 stroke-[1.75]" aria-hidden />

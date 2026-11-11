@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { LoginBrand } from "@/components/auth/login-brand";
 import { LoginForm } from "@/components/auth/login-form";
@@ -16,7 +17,9 @@ export default async function LoginPage() {
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-[var(--ios-bg)]">
-      <SessionRestorer />
+      <Suspense fallback={null}>
+        <SessionRestorer />
+      </Suspense>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_color-mix(in_srgb,var(--ios-blue)_12%,transparent),_transparent_55%)]"

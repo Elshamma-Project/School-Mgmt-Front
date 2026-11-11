@@ -16,6 +16,12 @@ export const AUTH_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 30;
 /** Clé de persistance zustand. */
 export const AUTH_STORAGE_KEY = "smels-auth";
 
+/** Query string posée après déconnexion volontaire (proxy + login). */
+export const LOGOUT_QUERY = "loggedOut";
+
+/** Flag sessionStorage anti-restauration de session juste après logout. */
+export const LOGOUT_FLAG_KEY = "smels_logged_out";
+
 /**
  * Persistance :
  * - access/refresh scellés (token-vault) dans localStorage (survivent à F5)

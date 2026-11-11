@@ -5,6 +5,7 @@ import {
   AUTH_COOKIE_NAME,
   AUTH_COOKIE_PRESENT,
 } from "@/lib/auth/constants";
+import { LOGOUT_QUERY } from "@/lib/auth/constants";
 import { routing } from "@/i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
@@ -28,6 +29,11 @@ function hasSessionCookie(request: NextRequest): boolean {
   return Boolean(legacy);
 }
 
+function clearSessionCookies(response: NextResponse) {
+  response.cookies.set(AUTH_COOKIE_NAME, "", { path: "/", maxAge: 0 });
+  response.cookies.set(AUTH_COOKIE_LEGACY_NAME, "", { path: "/", maxAge: 0 });
+}
+
 /**
  * Proxy léger (i18n).
  * Ne redirige PLUS vers /login si le cookie manque : les jetons vivent en localStorage
@@ -37,6 +43,14 @@ export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { locale, path } = stripLocale(pathname);
   const hasSession = hasSessionCookie(request);
+  const justLoggedOut = request.nextUrl.searchParams.get(LOGOUT_QUERY) === "1";
+
+  // Après déconnexion : rester sur /login même si le cookie opaque n’est pas encore parti.
+  if (path === "/login" && justLoggedOut) {
+    const response = intlMiddleware(request);
+    clearSessionCookies(response);
+    return response;
+  }
 
   // Cookie opaque présent + page login → évite le formulaire inutile.
   if (hasSession && path === "/login") {
