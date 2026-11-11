@@ -26,7 +26,9 @@ export type StudentResponse = {
   dateOfBirth: string | null;
   placeOfBirth: string | null;
   nationality: string | null;
+  /** Photo scolaire bulletin (≠ avatar compte). */
   photoFileId: string | null;
+  hasSchoolPhoto: boolean;
   contact: StudentContactDto;
   guardians: unknown[];
   active: boolean;

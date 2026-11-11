@@ -216,34 +216,52 @@ export function BulletinTemplatePreview({
           </p>
         </div>
 
-        {/* Z2 — Identité 3×3 */}
+        {/* Z2 — Identité 3×3 + photo scolaire (≠ avatar compte) */}
         <div
-          className="grid grid-cols-3 overflow-hidden rounded-[5px] border"
+          className="grid grid-cols-[1fr_68px] overflow-hidden rounded-[5px] border"
           style={{ borderColor: C.line }}
         >
-          {identity.map((cell, i) => (
-            <div
-              key={cell.label}
-              className="px-1.5 py-[2px]"
-              style={{
-                borderRight: i % 3 !== 2 ? `1px solid ${C.line}` : undefined,
-                borderBottom: i < 6 ? `1px solid ${C.line}` : undefined,
-              }}
-            >
-              <p
-                className="uppercase leading-none tracking-[0.04em]"
-                style={{ fontSize: "4.8pt", color: C.muted }}
+          <div className="grid grid-cols-3">
+            {identity.map((cell, i) => (
+              <div
+                key={cell.label}
+                className="px-1.5 py-[2px]"
+                style={{
+                  borderRight: i % 3 !== 2 ? `1px solid ${C.line}` : undefined,
+                  borderBottom: i < 6 ? `1px solid ${C.line}` : undefined,
+                }}
               >
-                {cell.label}
-              </p>
-              <p
-                className="font-bold leading-tight"
-                style={{ fontSize: "7pt", color: C.ink, marginTop: "1px" }}
-              >
-                {cell.value}
-              </p>
-            </div>
-          ))}
+                <p
+                  className="uppercase leading-none tracking-[0.04em]"
+                  style={{ fontSize: "4.8pt", color: C.muted }}
+                >
+                  {cell.label}
+                </p>
+                <p
+                  className="font-bold leading-tight"
+                  style={{ fontSize: "7pt", color: C.ink, marginTop: "1px" }}
+                >
+                  {cell.value}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div
+            className="flex items-center justify-center p-1"
+            style={{
+              borderLeft: `1px solid ${C.line}`,
+              backgroundColor: C.tint,
+            }}
+            title={fr ? "Photo scolaire" : "School photo"}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/mock/sample-student-school-photo.png"
+              alt=""
+              className="h-[62px] w-[52px] object-cover object-top"
+              style={{ border: `1px solid ${C.line}` }}
+            />
+          </div>
         </div>
 
         {/* Z3 + Z4 — Tableau (largeur A4 fixe, jamais de scroll horizontal) */}
