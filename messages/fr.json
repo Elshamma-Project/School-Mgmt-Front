@@ -277,6 +277,10 @@
   },
   "staff": {
     "add": "Ajouter",
+    "addFull": "Ajouter un membre du personnel",
+    "cardTitle": "Personnel de l’établissement",
+    "cardHint": "Enseignants, direction et soutien — fiches RH et comptes de connexion.",
+    "cardManageHint": "Création et modification réservées à l’administration / direction.",
     "searchPlaceholder": "Nom, e-mail, matricule…",
     "emptyTitle": "Aucun personnel",
     "emptyDescription": "Ajoutez un enseignant ou un membre administratif pour commencer.",

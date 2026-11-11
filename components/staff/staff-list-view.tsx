@@ -27,6 +27,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconInput } from "@/components/ui/icon-input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HubToolbar } from "@/components/workspace/hub-chrome";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import {
@@ -472,58 +473,90 @@ export function StaffListView(_props: { descriptionKey?: "adminStaff" | "directo
         />
       </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-        <nav
-          aria-label={t("tabsNav")}
-          className="flex min-w-0 items-stretch gap-0 overflow-x-auto border-b border-[var(--ios-separator)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {visibleTabs.map((key) => {
-            const active = tab === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => selectTab(key)}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "relative shrink-0 px-3 py-2.5 text-[12px] font-medium tracking-[-0.01em] transition-colors duration-[var(--duration-fast)] focus-visible:shadow-[var(--focus-ring)] sm:px-3.5",
-                  active
-                    ? "text-[var(--ios-label)]"
-                    : "text-[var(--ios-secondary-label)] hover:text-[var(--ios-label)]",
-                )}
-              >
-                {t(`tabs.${key}`)}
-                {active ? (
-                  <span
-                    className="absolute inset-x-2 bottom-[-1px] h-[2px] rounded-full bg-[var(--ios-blue)]"
-                    aria-hidden
-                  />
-                ) : null}
-              </button>
-            );
-          })}
-        </nav>
+      <HubToolbar
+        tabs={visibleTabs.map((key) => ({ key, label: t(`tabs.${key}`) }))}
+        activeTab={tab}
+        onTabChange={(key) => {
+          const next = parseStaffListTab(key);
+          if (next) selectTab(next);
+        }}
+        tabsAriaLabel={t("tabsNav")}
+        searchValue={query}
+        onSearchChange={setQuery}
+        searchPlaceholder={t("searchPlaceholder")}
+        hideSearch
+      />
 
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <div className="min-w-0 flex-1 lg:w-[220px] lg:flex-none">
-            <IconInput
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("searchPlaceholder")}
-              icon={<Search className="size-4 stroke-[1.75]" />}
-              aria-label={tCommon("search")}
-            />
-          </div>
-          {canAddStaff ? (
-            <Button
-              type="button"
-              className="shrink-0"
-              leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
-              onClick={openCreate}
+      <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+        <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <span
+              className={cn(
+                "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)]",
+                tab === "teachers" && "bg-[var(--ios-success-soft)] text-[var(--ios-success)]",
+                tab === "leadership" && "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]",
+                tab === "support" && "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
+                (tab === "all" || tab === "other") &&
+                  "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]",
+              )}
+              aria-hidden
             >
-              {t("add")}
-            </Button>
-          ) : null}
+              {tab === "teachers" ? (
+                <UserRound className="size-[18px] stroke-[1.75]" />
+              ) : tab === "leadership" ? (
+                <Shield className="size-[18px] stroke-[1.75]" />
+              ) : tab === "support" ? (
+                <Briefcase className="size-[18px] stroke-[1.75]" />
+              ) : (
+                <Users className="size-[18px] stroke-[1.75]" />
+              )}
+            </span>
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                  {t("cardTitle")}
+                </p>
+                <Badge
+                  tone={
+                    tab === "teachers"
+                      ? "success"
+                      : tab === "leadership"
+                        ? "warning"
+                        : tab === "support"
+                          ? "neutral"
+                          : "blue"
+                  }
+                >
+                  {t(`tabs.${tab}`)}
+                </Badge>
+              </div>
+              <p className="text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                {canAddStaff ? t("cardHint") : t("cardManageHint")}
+              </p>
+            </div>
+          </div>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5">
+            <div className="min-w-0 w-full sm:w-[220px]">
+              <IconInput
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+                icon={<Search className="size-4 stroke-[1.75]" />}
+                aria-label={tCommon("search")}
+              />
+            </div>
+            {canAddStaff ? (
+              <Button
+                type="button"
+                className="w-full shrink-0 sm:w-auto"
+                leadingIcon={<Plus className="size-3.5" aria-hidden />}
+                aria-label={t("addFull")}
+                onClick={openCreate}
+              >
+                {t("add")}
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
 
