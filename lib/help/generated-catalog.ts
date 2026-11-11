@@ -503,6 +503,18 @@ export const HELP_CATALOG: HelpArticle[] = [
             "en": "Report cards are produced in both languages; the section language comes first. A report card fits on one A4 page."
           }
         ]
+      },
+      {
+        "heading": {
+          "fr": "Aperçu d’un gabarit",
+          "en": "Template preview"
+        },
+        "paragraphs": [
+          {
+            "fr": "Cliquez un gabarit (annuel ou trimestriel) pour ouvrir son aperçu A4 (une page) selon la maquette KOBE : en-tête bilingue, tableau des notes, bandeaux et visas. Les données affichées sont des données démo anonymisées. Téléchargez le PDF pour valider le rendu réel.",
+            "en": "Click a template (annual or term) to open the A4 one-page preview per the KOBE mockup: bilingual header, marks table, footers and visas. Anonymized demo data is shown. Download the PDF to validate the real render."
+          }
+        ]
       }
     ]
   },

@@ -973,7 +973,7 @@
     "empty": {
       "templates": {
         "title": "Aucun gabarit",
-        "description": "Configurez les ReportTemplate pour générer les bulletins."
+        "description": "Les gabarits annuel et trimestriel sont créés automatiquement à l’ouverture du module."
       },
       "bulletins": {
         "title": "Aucun bulletin",
@@ -983,6 +983,15 @@
         "title": "Revues à brancher",
         "description": "Les revues / validations de bulletins arriveront ensuite."
       }
+    },
+    "templates": {
+      "back": "Retour aux gabarits",
+      "loadError": "Impossible de charger le gabarit.",
+      "notFound": "Gabarit introuvable",
+      "downloadPdf": "Télécharger le PDF",
+      "pdfSuccess": "PDF téléchargé",
+      "pdfError": "Téléchargement PDF impossible.",
+      "fontRange": "Police {min}–{max} pt"
     },
     "cardsCount": "{count, plural, one {# bulletin} other {# bulletins}}",
     "generate": {

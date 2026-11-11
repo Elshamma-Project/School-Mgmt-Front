@@ -973,7 +973,7 @@
     "empty": {
       "templates": {
         "title": "No templates",
-        "description": "Configure ReportTemplate records to generate report cards."
+        "description": "Annual and term templates are created automatically when you open this module."
       },
       "bulletins": {
         "title": "No report cards",
@@ -983,6 +983,15 @@
         "title": "Reviews coming next",
         "description": "Report-card review / validation will follow."
       }
+    },
+    "templates": {
+      "back": "Back to templates",
+      "loadError": "Could not load the template.",
+      "notFound": "Template not found",
+      "downloadPdf": "Download PDF",
+      "pdfSuccess": "PDF downloaded",
+      "pdfError": "Could not download the PDF.",
+      "fontRange": "Font {min}–{max} pt"
     },
     "cardsCount": "{count, plural, one {# report card} other {# report cards}}",
     "generate": {

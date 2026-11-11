@@ -12,6 +12,17 @@ export type ReportTemplateResponse = {
   periodType: string;
   sequenceColumns: number[];
   appreciationScaleCode: string;
+  showCompetency?: boolean;
+  showSubjectRank?: boolean;
+  showSubjectClassAverage?: boolean;
+  showSubjectPassedCount?: boolean;
+  showGroupTotals?: boolean;
+  showTermRecap?: boolean;
+  showClassProfile?: boolean;
+  showEffortSubjects?: boolean;
+  showTotalPointsOverMax?: boolean;
+  classProfileThreshold?: string | number | null;
+  legend?: LocalizedTextDto | null;
   minFontSizePt: number;
   maxFontSizePt: number;
   active: boolean;
@@ -53,6 +64,37 @@ export async function listReportTemplates(
   return apiRequest<ReportTemplateResponse[]>(
     `/api/v1/report-templates${schoolQuery(schoolId)}`,
   );
+}
+
+export async function getReportTemplate(
+  code: string,
+  schoolId?: string | null,
+): Promise<ReportTemplateResponse> {
+  return apiRequest<ReportTemplateResponse>(
+    `/api/v1/report-templates/${encodeURIComponent(code)}${schoolQuery(schoolId)}`,
+  );
+}
+
+export async function downloadReportTemplateSamplePdf(
+  code: string,
+  options: { schoolId?: string | null; language?: "FR" | "EN" } = {},
+): Promise<Blob> {
+  const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "") || "http://localhost:8090";
+  const token = openSecret(useAuthStore.getState().accessToken);
+  const qs = new URLSearchParams();
+  if (options.schoolId?.trim()) qs.set("schoolId", options.schoolId.trim());
+  if (options.language) qs.set("language", options.language);
+  const q = qs.toString() ? `?${qs}` : "";
+  const response = await fetch(
+    `${baseUrl}/api/v1/report-templates/${encodeURIComponent(code)}/sample-pdf${q}`,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`PDF ${response.status}`);
+  }
+  return response.blob();
 }
 
 export async function generateReportCards(

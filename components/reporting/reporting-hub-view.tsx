@@ -15,7 +15,7 @@ import {
   HubToolbar,
   HubYearBanner,
 } from "@/components/workspace/hub-chrome";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import {
   listAcademicYears,
   listClasses,
@@ -385,25 +385,27 @@ export function ReportingHubView() {
         <>
           <ul className="space-y-2.5 md:hidden">
             {filteredTemplates.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
-                      {localizedLabel(item.name, locale)}
-                    </p>
-                    <p className="mt-0.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                      {item.code} · {item.periodType}
-                    </p>
+              <li key={item.id}>
+                <Link
+                  href={`${workspaceHome}/reporting/${encodeURIComponent(item.code)}`}
+                  className="block rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)] pressable"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
+                        {localizedLabel(item.name, locale)}
+                      </p>
+                      <p className="mt-0.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
+                        {item.code} · {item.periodType}
+                      </p>
+                    </div>
+                    <HubStatusPill
+                      active={item.active}
+                      activeLabel={t("statusActive")}
+                      inactiveLabel={t("inactive")}
+                    />
                   </div>
-                  <HubStatusPill
-                    active={item.active}
-                    activeLabel={t("statusActive")}
-                    inactiveLabel={t("inactive")}
-                  />
-                </div>
+                </Link>
               </li>
             ))}
           </ul>
@@ -426,34 +428,46 @@ export function ReportingHubView() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTemplates.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    className={cn(
-                      "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                      index % 2 === 1 &&
-                        "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                      !item.active && "opacity-70",
-                    )}
-                  >
-                    <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
-                      {localizedLabel(item.name, locale)}
-                    </td>
-                    <td className="px-3 py-3.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                      {item.code}
-                    </td>
-                    <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
-                      {item.periodType}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <HubStatusPill
-                        active={item.active}
-                        activeLabel={t("statusActive")}
-                        inactiveLabel={t("inactive")}
-                      />
-                    </td>
-                  </tr>
-                ))}
+                {filteredTemplates.map((item, index) => {
+                  const href = `${workspaceHome}/reporting/${encodeURIComponent(item.code)}`;
+                  return (
+                    <tr
+                      key={item.id}
+                      tabIndex={0}
+                      role="link"
+                      onClick={() => router.push(href)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          router.push(href);
+                        }
+                      }}
+                      className={cn(
+                        "cursor-pointer border-b border-[var(--ios-separator)]/55 last:border-b-0 transition-colors hover:bg-[color-mix(in_srgb,var(--ios-blue)_6%,transparent)] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
+                        index % 2 === 1 &&
+                          "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
+                        !item.active && "opacity-70",
+                      )}
+                    >
+                      <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
+                        {localizedLabel(item.name, locale)}
+                      </td>
+                      <td className="px-3 py-3.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
+                        {item.code}
+                      </td>
+                      <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
+                        {item.periodType}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <HubStatusPill
+                          active={item.active}
+                          activeLabel={t("statusActive")}
+                          inactiveLabel={t("inactive")}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </HubTableShell>

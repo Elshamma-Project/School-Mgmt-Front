@@ -93,6 +93,14 @@ export function reportingTabFromLocation(
   pathname: string,
   searchParams: { get: (key: string) => string | null },
 ): ReportingTab | null {
+  const marker = "/reporting";
+  const idx = pathname.indexOf(marker);
+  if (idx < 0) return null;
+  const rest = pathname.slice(idx + marker.length);
+  // /reporting/ANNUAL_STANDARD → détail gabarit
+  if (rest.length > 1 && rest.startsWith("/") && !rest.slice(1).includes("/")) {
+    return "templates";
+  }
   return moduleTabFromLocation(
     pathname,
     searchParams,
