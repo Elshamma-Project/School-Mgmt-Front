@@ -11,14 +11,12 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { BrandMark } from "@/components/layout/brand-mark";
-import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
 import { Input } from "@/components/ui/input";
-import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { listAcademicYears, type AcademicYearResponse } from "@/lib/api/academic";
@@ -381,22 +379,11 @@ export function SettingsView() {
 
   return (
     <div className="space-y-6 slide-up">
-      <PageHeader description={t("description")} />
-
       {!canEdit ? (
         <p className="rounded-[var(--radius-md)] bg-[var(--ios-info-soft)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[var(--ios-blue)]">
           {t("readOnlyHint")}
         </p>
       ) : null}
-
-      <GroupedList header={t("languageSection")}>
-        <GroupedListItem>
-          <span className="text-[var(--text-body)] text-[var(--ios-label)]">
-            {tCommon("language")}
-          </span>
-          <LocaleSwitcher />
-        </GroupedListItem>
-      </GroupedList>
 
       <GroupedList
         header={t("yearSection")}
