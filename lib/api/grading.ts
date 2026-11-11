@@ -59,6 +59,18 @@ export type CreateGradingSchemePayload = {
   schoolId?: string | null;
 };
 
+export type ScoreBandWritePayload = {
+  code: string;
+  label?: LocalizedTextDto | null;
+  minInclusive: number | string;
+  maxExclusive?: number | string | null;
+};
+
+export type AppreciationScaleWritePayload = {
+  code: string;
+  bands: ScoreBandWritePayload[];
+};
+
 export type UpdateGradingSchemePayload = {
   name?: LocalizedTextDto;
   maxScore?: number | string;
@@ -73,6 +85,8 @@ export type UpdateGradingSchemePayload = {
   reportSheetDeadlineBlocking?: boolean;
   reportSheetMaxRowsPerPage?: number;
   reportSheetAppreciationScaleCode?: string;
+  appreciationScales?: AppreciationScaleWritePayload[];
+  overallMentionBands?: ScoreBandWritePayload[];
   active?: boolean;
   schoolId?: string | null;
 };

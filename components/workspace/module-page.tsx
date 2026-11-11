@@ -35,7 +35,6 @@ const MODULE_ICONS = {
   directorAcademic: BookOpen,
   directorSequences: Shield,
   directorReporting: FileSpreadsheet,
-  directorAdminAccounts: UserRound,
   directorTimetable: CalendarDays,
   superSchools: Building2,
   superPlatform: Shield,

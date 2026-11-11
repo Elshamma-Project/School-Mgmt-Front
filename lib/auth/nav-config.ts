@@ -11,7 +11,6 @@ import {
   LayoutDashboard,
   Settings,
   Shield,
-  UserRound,
   Users,
 } from "lucide-react";
 import {
@@ -48,7 +47,6 @@ export type NavItemKey =
   | "sequences"
   | "reporting"
   | "audit"
-  | "adminAccounts"
   | "schools"
   | "platform"
   | "notifications"
@@ -186,7 +184,12 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
         item(`${home}/students`, "students", GraduationCap, studentsNavChildren(home)),
         item(`${home}/staff`, "staff", Users, staffNavChildren(home, role)),
         item(`${home}/academic`, "academic", BookOpen, academicNavChildren(home)),
-        item(`${home}/grades`, "grades", ClipboardList, gradesNavChildren(home, "grades")),
+        item(
+          `${home}/grades`,
+          "sequences",
+          ClipboardList,
+          gradesNavChildren(home, "grades"),
+        ),
         item(`${home}/reporting`, "reporting", FileSpreadsheet, reportingNavChildren(home)),
         item(`${home}/timetable`, "timetable", CalendarDays, timetableNavChildren(home)),
         ...sharedTail,
@@ -204,7 +207,6 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
           gradesNavChildren(home, "sequences"),
         ),
         item(`${home}/reporting`, "reporting", FileSpreadsheet, reportingNavChildren(home)),
-        item(`${home}/admin-accounts`, "adminAccounts", UserRound),
         item(`${home}/timetable`, "timetable", CalendarDays, timetableNavChildren(home)),
         ...sharedTail,
       ];

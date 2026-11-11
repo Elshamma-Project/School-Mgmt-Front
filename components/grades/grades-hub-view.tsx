@@ -5,8 +5,10 @@ import { createPortal } from "react-dom";
 import {
   CalendarDays,
   ClipboardList,
+  Layers3,
   Lock,
   LockOpen,
+  Pencil,
   Scale,
   Shield,
   Unlock,
@@ -338,6 +340,13 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
             ? () => setSchemePanel({ mode: "create", schemeId: null })
             : undefined
         }
+        trailing={
+          tab === "schemes" && !canManageSchemes ? (
+            <p className="hidden max-w-[220px] text-right text-[11px] leading-snug text-[var(--ios-secondary-label)] sm:block">
+              {t("schemeManageHint")}
+            </p>
+          ) : undefined
+        }
       />
 
       {loading ? (
@@ -484,11 +493,14 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
         <>
           <ul className="space-y-2.5 md:hidden">
             {filteredSchemes.map((item) => (
-              <li key={item.id}>
+              <li
+                key={item.id}
+                className="rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
+              >
                 <button
                   type="button"
                   onClick={() => setSchemePanel({ mode: "view", schemeId: item.id })}
-                  className="pressable flex w-full items-start justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 text-left shadow-[var(--ios-shadow)]"
+                  className="pressable flex w-full items-start justify-between gap-3 text-left"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
@@ -504,6 +516,19 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                     inactiveLabel={t("inactive")}
                   />
                 </button>
+                {canManageSchemes ? (
+                  <div className="mt-2.5 flex justify-end border-t border-[var(--ios-separator)]/45 pt-2.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      leadingIcon={<Pencil className="size-3.5" aria-hidden />}
+                      onClick={() => setSchemePanel({ mode: "edit", schemeId: item.id })}
+                    >
+                      {tCommon("edit")}
+                    </Button>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -520,9 +545,14 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                   <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                     {t("columns.passMark")}
                   </th>
-                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                     {t("columns.status")}
                   </th>
+                  {canManageSchemes ? (
+                    <th className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                      {t("columns.actions")}
+                    </th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody>
@@ -553,13 +583,30 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                     <td className="px-3 py-3.5 text-[12px] tabular-nums text-[var(--ios-label)]">
                       {String(item.passMark)} / {String(item.maxScore)}
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-3 py-3.5">
                       <HubStatusPill
                         active={item.active}
                         activeLabel={t("statusActive")}
                         inactiveLabel={t("inactive")}
                       />
                     </td>
+                    {canManageSchemes ? (
+                      <td className="px-5 py-3.5 text-right">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          leadingIcon={<Pencil className="size-3.5" aria-hidden />}
+                          aria-label={tCommon("edit")}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSchemePanel({ mode: "edit", schemeId: item.id });
+                          }}
+                        >
+                          {tCommon("edit")}
+                        </Button>
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -706,64 +753,87 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                 </div>
 
                 <div className="space-y-4 px-5 py-4">
-                  <div className="rounded-[var(--radius-md)] border border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_28%,var(--ios-card))] px-4 py-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                  <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+                    <div className="flex items-center gap-3.5 px-4 py-3.5">
+                      <div
+                        className={cn(
+                          "flex size-14 shrink-0 flex-col items-center justify-center rounded-[var(--radius-md)] text-center ring-1",
+                          pending.session.status === "OPEN" &&
+                            "bg-[var(--ios-success-soft)] text-[var(--ios-success)] ring-[color-mix(in_srgb,var(--ios-success)_20%,transparent)]",
+                          pending.session.status === "CLOSED" &&
+                            "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)] ring-[color-mix(in_srgb,var(--ios-separator)_70%,transparent)]",
+                          pending.session.status === "PLANNED" &&
+                            "bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-[color-mix(in_srgb,var(--ios-blue)_20%,transparent)]",
+                        )}
+                        aria-hidden
+                      >
+                        <span className="text-[14px] font-semibold tracking-[-0.02em]">
                           {pending.session.shortLabel}
-                        </p>
-                        <p className="mt-0.5 text-[12px] text-[var(--ios-secondary-label)]">
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--ios-label)]">
                           {localizedLabel(pending.session.name, locale)}
                         </p>
+                        <p className="mt-0.5 text-[11px] text-[var(--ios-tertiary-label)]">
+                          {pending.session.shortLabel}
+                          {yearLabel ? ` · ${yearLabel}` : ""}
+                        </p>
+                        <div className="mt-2">
+                          <Badge
+                            tone={
+                              pending.session.status === "OPEN"
+                                ? "success"
+                                : pending.session.status === "CLOSED"
+                                  ? "neutral"
+                                  : "blue"
+                            }
+                          >
+                            {t.has(`sessionStatus.${pending.session.status}`)
+                              ? t(`sessionStatus.${pending.session.status}`)
+                              : pending.session.status}
+                          </Badge>
+                        </div>
                       </div>
-                      <Badge
-                        tone={
-                          pending.session.status === "OPEN"
-                            ? "success"
-                            : pending.session.status === "CLOSED"
-                              ? "neutral"
-                              : "blue"
-                        }
-                      >
-                        {t.has(`sessionStatus.${pending.session.status}`)
-                          ? t(`sessionStatus.${pending.session.status}`)
-                          : pending.session.status}
-                      </Badge>
                     </div>
-                    <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
-                      <div>
-                        <dt className="text-[var(--ios-tertiary-label)]">
-                          {t("sessionAction.statusLabel")}
-                        </dt>
-                        <dd className="mt-0.5 font-medium text-[var(--ios-label)]">
-                          {t.has(`sessionStatus.${pending.session.status}`)
-                            ? t(`sessionStatus.${pending.session.status}`)
-                            : pending.session.status}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-[var(--ios-tertiary-label)]">
-                          {t("columns.term")}
-                        </dt>
-                        <dd className="mt-0.5 font-medium text-[var(--ios-label)]">
-                          {t("sessionAction.termLabel", {
-                            term: pending.session.termNumber,
-                          })}
-                        </dd>
-                      </div>
-                      <div className="col-span-2 flex items-center gap-1.5">
-                        <CalendarDays
-                          className="size-3.5 text-[var(--ios-tertiary-label)]"
-                          aria-hidden
-                        />
-                        <span className="text-[var(--ios-tertiary-label)]">
-                          {t("sessionAction.examLabel")}
+                    <div className="grid grid-cols-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_22%,var(--ios-card))]">
+                      <div className="flex items-start gap-2.5 border-r border-[var(--ios-separator)]/55 px-4 py-3">
+                        <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--ios-card)] text-[var(--ios-blue)] ring-1 ring-[var(--ios-separator)]/50">
+                          <Layers3 className="size-3.5 stroke-[1.75]" aria-hidden />
                         </span>
-                        <span className="font-medium text-[var(--ios-label)]">
-                          {pending.session.examDate ?? "—"}
-                        </span>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--ios-tertiary-label)]">
+                            {t("columns.term")}
+                          </p>
+                          <p className="mt-0.5 text-[13px] font-semibold tabular-nums text-[var(--ios-label)]">
+                            {t("sessionAction.termLabel", {
+                              term: pending.session.termNumber,
+                            })}
+                          </p>
+                        </div>
                       </div>
-                    </dl>
+                      <div className="flex items-start gap-2.5 px-4 py-3">
+                        <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--ios-card)] text-[var(--ios-warning)] ring-1 ring-[var(--ios-separator)]/50">
+                          <CalendarDays className="size-3.5 stroke-[1.75]" aria-hidden />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--ios-tertiary-label)]">
+                            {t("sessionAction.examLabel")}
+                          </p>
+                          <p className="mt-0.5 text-[13px] font-semibold tabular-nums text-[var(--ios-label)]">
+                            {pending.session.examDate
+                              ? new Date(
+                                  `${pending.session.examDate}T12:00:00`,
+                                ).toLocaleDateString(locale, {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <p className="text-[13px] leading-relaxed text-[var(--ios-secondary-label)]">

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { Scale, X } from "lucide-react";
+import { Plus, Scale, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,10 @@ import {
   createGradingScheme,
   getGradingScheme,
   updateGradingScheme,
+  type AppreciationScaleDto,
   type GradingSchemeResponse,
+  type ScoreBandDto,
+  type ScoreBandWritePayload,
 } from "@/lib/api/grading";
 import { notify } from "@/lib/ui/notify";
 import { cn } from "@/lib/utils/cn";
@@ -32,6 +35,25 @@ type GradingSchemePanelProps = {
   onClose: () => void;
   onSaved: (scheme: GradingSchemeResponse) => void;
 };
+
+type BandDraft = {
+  key: string;
+  code: string;
+  labelFr: string;
+  labelEn: string;
+  minInclusive: string;
+  maxExclusive: string;
+};
+
+type ScaleDraft = {
+  key: string;
+  code: string;
+  bands: BandDraft[];
+};
+
+function newKey() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 function asInputNumber(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "";
@@ -52,6 +74,60 @@ function formatBandRange(
   const min = String(minInclusive);
   if (maxExclusive === null || maxExclusive === undefined) return `≥ ${min}`;
   return `[${min} ; ${String(maxExclusive)}[`;
+}
+
+function emptyBand(partial?: Partial<BandDraft>): BandDraft {
+  return {
+    key: newKey(),
+    code: "",
+    labelFr: "",
+    labelEn: "",
+    minInclusive: "0",
+    maxExclusive: "",
+    ...partial,
+  };
+}
+
+function toBandDraft(band: ScoreBandDto): BandDraft {
+  return emptyBand({
+    code: band.code,
+    labelFr: band.label?.fr ?? "",
+    labelEn: band.label?.en ?? "",
+    minInclusive: asInputNumber(band.minInclusive),
+    maxExclusive: band.maxExclusive == null ? "" : asInputNumber(band.maxExclusive),
+  });
+}
+
+function toScaleDraft(scale: AppreciationScaleDto): ScaleDraft {
+  return {
+    key: newKey(),
+    code: scale.code,
+    bands: scale.bands.length > 0 ? scale.bands.map(toBandDraft) : [emptyBand()],
+  };
+}
+
+function parseBandDrafts(drafts: BandDraft[]): ScoreBandWritePayload[] | "invalid" {
+  const out: ScoreBandWritePayload[] = [];
+  for (const draft of drafts) {
+    const code = draft.code.trim();
+    if (!code) return "invalid";
+    const min = parseDecimal(draft.minInclusive);
+    if (min === null) return "invalid";
+    const maxRaw = draft.maxExclusive.trim();
+    const max = maxRaw ? parseDecimal(maxRaw) : null;
+    if (maxRaw && max === null) return "invalid";
+    if (max !== null && max <= min) return "invalid";
+    out.push({
+      code,
+      label: {
+        fr: draft.labelFr.trim() || null,
+        en: draft.labelEn.trim() || null,
+      },
+      minInclusive: min,
+      maxExclusive: max,
+    });
+  }
+  return out;
 }
 
 export function GradingSchemePanel({
@@ -88,7 +164,51 @@ export function GradingSchemePanel({
   const [reportSheetAppreciationScaleCode, setReportSheetAppreciationScaleCode] =
     useState("LETTER");
   const [active, setActive] = useState(true);
+  const [scalesDraft, setScalesDraft] = useState<ScaleDraft[]>([]);
+  const [mentionsDraft, setMentionsDraft] = useState<BandDraft[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const hydrateBands = (row: GradingSchemeResponse) => {
+    setScalesDraft(
+      row.appreciationScales.length > 0
+        ? row.appreciationScales.map(toScaleDraft)
+        : [
+            {
+              key: newKey(),
+              code: "LETTER",
+              bands: [
+                emptyBand({ code: "A", labelFr: "A", labelEn: "A", minInclusive: "16", maxExclusive: "" }),
+                emptyBand({
+                  code: "B+",
+                  labelFr: "B+",
+                  labelEn: "B+",
+                  minInclusive: "14",
+                  maxExclusive: "16",
+                }),
+                emptyBand({
+                  code: "B",
+                  labelFr: "B",
+                  labelEn: "B",
+                  minInclusive: "12",
+                  maxExclusive: "14",
+                }),
+                emptyBand({
+                  code: "C",
+                  labelFr: "C",
+                  labelEn: "C",
+                  minInclusive: "0",
+                  maxExclusive: "12",
+                }),
+              ],
+            },
+          ],
+    );
+    setMentionsDraft(
+      row.overallMentionBands.length > 0
+        ? row.overallMentionBands.map(toBandDraft)
+        : [emptyBand({ code: "PASSABLE", minInclusive: "10", maxExclusive: "12" })],
+    );
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -116,6 +236,8 @@ export function GradingSchemePanel({
       setReportSheetMaxRowsPerPage("45");
       setReportSheetAppreciationScaleCode("LETTER");
       setActive(true);
+      setScalesDraft([]);
+      setMentionsDraft([]);
       return;
     }
 
@@ -141,6 +263,7 @@ export function GradingSchemePanel({
         setReportSheetMaxRowsPerPage(String(row.reportSheetMaxRowsPerPage));
         setReportSheetAppreciationScaleCode(row.reportSheetAppreciationScaleCode);
         setActive(row.active);
+        hydrateBands(row);
       })
       .catch((error) => {
         if (cancelled || isAuthFailure(error)) return;
@@ -166,13 +289,16 @@ export function GradingSchemePanel({
         : t("schemePanel.viewTitle");
 
   const scaleOptions = useMemo(() => {
-    const codes = scheme?.appreciationScales.map((s) => s.code) ?? [];
+    const codes =
+      panelMode === "edit"
+        ? scalesDraft.map((s) => s.code.trim().toUpperCase()).filter(Boolean)
+        : (scheme?.appreciationScales.map((s) => s.code) ?? []);
     if (reportSheetAppreciationScaleCode && !codes.includes(reportSheetAppreciationScaleCode)) {
       codes.push(reportSheetAppreciationScaleCode);
     }
     if (codes.length === 0) return ["LETTER"];
     return codes;
-  }, [reportSheetAppreciationScaleCode, scheme?.appreciationScales]);
+  }, [panelMode, reportSheetAppreciationScaleCode, scalesDraft, scheme?.appreciationScales]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -242,6 +368,30 @@ export function GradingSchemePanel({
       return;
     }
 
+    if (scalesDraft.length === 0) {
+      setFormError(t("schemePanel.scaleRequired"));
+      return;
+    }
+    const appreciationScales = [];
+    for (const scale of scalesDraft) {
+      const scaleCode = scale.code.trim().toUpperCase();
+      if (!scaleCode) {
+        setFormError(t("schemePanel.scaleCodeRequired"));
+        return;
+      }
+      const bands = parseBandDrafts(scale.bands);
+      if (bands === "invalid" || bands.length === 0) {
+        setFormError(t("schemePanel.bandsInvalid"));
+        return;
+      }
+      appreciationScales.push({ code: scaleCode, bands });
+    }
+    const overallMentionBands = parseBandDrafts(mentionsDraft);
+    if (overallMentionBands === "invalid") {
+      setFormError(t("schemePanel.bandsInvalid"));
+      return;
+    }
+
     setSaving(true);
     try {
       const updated = await updateGradingScheme(schemeId, {
@@ -258,12 +408,15 @@ export function GradingSchemePanel({
         reportSheetDeadlineBlocking,
         reportSheetMaxRowsPerPage: rowsN,
         reportSheetAppreciationScaleCode,
+        appreciationScales,
+        overallMentionBands,
         active,
         schoolId,
       });
       notify.success(t("schemePanel.updateSuccess"));
       onSaved(updated);
       setScheme(updated);
+      hydrateBands(updated);
       setPanelMode("view");
     } catch (error) {
       if (isAuthFailure(error)) return;
@@ -473,35 +626,167 @@ export function GradingSchemePanel({
                     </div>
                   </div>
 
-                  <div className="space-y-3 rounded-[var(--radius-md)] border border-[var(--ios-separator)]/55 px-3.5 py-3">
-                    <Switch
-                      id="scheme-active"
-                      checked={active}
-                      onCheckedChange={setActive}
-                      disabled={!editable || saving}
-                      label={t("schemePanel.active")}
-                    />
-                    <Switch
-                      id="scheme-honour-block"
-                      checked={honourRollBlockedBySanction}
-                      onCheckedChange={setHonourRollBlockedBySanction}
-                      disabled={!editable || saving}
-                      label={t("schemePanel.honourBlocked")}
-                    />
-                    <Switch
-                      id="scheme-deadline-block"
-                      checked={reportSheetDeadlineBlocking}
-                      onCheckedChange={setReportSheetDeadlineBlocking}
-                      disabled={!editable || saving}
-                      label={t("schemePanel.deadlineBlocking")}
-                    />
+                  <div>
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                      {t("schemePanel.optionsSection")}
+                    </p>
+                    <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_22%,var(--ios-card))]">
+                      {(
+                        [
+                          {
+                            id: "scheme-active",
+                            checked: active,
+                            onChange: setActive,
+                            title: t("schemePanel.active"),
+                            hint: t("schemePanel.activeHint"),
+                          },
+                          {
+                            id: "scheme-honour-block",
+                            checked: honourRollBlockedBySanction,
+                            onChange: setHonourRollBlockedBySanction,
+                            title: t("schemePanel.honourBlocked"),
+                            hint: t("schemePanel.honourBlockedHint"),
+                          },
+                          {
+                            id: "scheme-deadline-block",
+                            checked: reportSheetDeadlineBlocking,
+                            onChange: setReportSheetDeadlineBlocking,
+                            title: t("schemePanel.deadlineBlocking"),
+                            hint: t("schemePanel.deadlineBlockingHint"),
+                          },
+                        ] as const
+                      ).map((option, index, list) => (
+                        <div
+                          key={option.id}
+                          className={cn(
+                            "flex items-center justify-between gap-4 px-3.5 py-3",
+                            index < list.length - 1 &&
+                              "border-b border-[var(--ios-separator)]/55",
+                          )}
+                        >
+                          <label
+                            htmlFor={option.id}
+                            className={cn(
+                              "min-w-0 flex-1",
+                              editable && !saving ? "cursor-pointer" : "opacity-70",
+                            )}
+                          >
+                            <p className="text-[13px] font-medium tracking-[-0.01em] text-[var(--ios-label)]">
+                              {option.title}
+                            </p>
+                            <p className="mt-0.5 text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                              {option.hint}
+                            </p>
+                          </label>
+                          <Switch
+                            id={option.id}
+                            checked={option.checked}
+                            onCheckedChange={option.onChange}
+                            disabled={!editable || saving}
+                            className="shrink-0"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {scheme && scheme.appreciationScales.length > 0 ? (
-                    <div>
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
                         {t("schemePanel.scalesSection")}
                       </p>
+                      {panelMode === "edit" ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          leadingIcon={<Plus className="size-3.5" aria-hidden />}
+                          disabled={saving}
+                          onClick={() =>
+                            setScalesDraft((prev) => [
+                              ...prev,
+                              {
+                                key: newKey(),
+                                code: "",
+                                bands: [emptyBand()],
+                              },
+                            ])
+                          }
+                        >
+                          {t("schemePanel.addScale")}
+                        </Button>
+                      ) : null}
+                    </div>
+                    <p className="mb-2 text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                      {t("schemePanel.bandsHint")}
+                    </p>
+                    {panelMode === "edit" ? (
+                      <div className="space-y-3">
+                        {scalesDraft.map((scale, scaleIndex) => (
+                          <div
+                            key={scale.key}
+                            className="rounded-[var(--radius-md)] border border-[var(--ios-separator)]/55 px-3 py-3"
+                          >
+                            <div className="mb-2 flex items-end gap-2">
+                              <Field
+                                id={`scale-code-${scale.key}`}
+                                label={t("schemePanel.scaleCode")}
+                                className="flex-1"
+                              >
+                                <Input
+                                  id={`scale-code-${scale.key}`}
+                                  value={scale.code}
+                                  onChange={(e) =>
+                                    setScalesDraft((prev) =>
+                                      prev.map((row, i) =>
+                                        i === scaleIndex
+                                          ? { ...row, code: e.target.value.toUpperCase() }
+                                          : row,
+                                      ),
+                                    )
+                                  }
+                                  disabled={saving}
+                                  placeholder="LETTER"
+                                />
+                              </Field>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                aria-label={t("schemePanel.removeScale")}
+                                disabled={saving || scalesDraft.length <= 1}
+                                leadingIcon={<Trash2 className="size-3.5" aria-hidden />}
+                                onClick={() =>
+                                  setScalesDraft((prev) =>
+                                    prev.filter((_, i) => i !== scaleIndex),
+                                  )
+                                }
+                              />
+                            </div>
+                            <BandDraftEditor
+                              bands={scale.bands}
+                              disabled={saving}
+                              onChange={(bands) =>
+                                setScalesDraft((prev) =>
+                                  prev.map((row, i) =>
+                                    i === scaleIndex ? { ...row, bands } : row,
+                                  ),
+                                )
+                              }
+                              labels={{
+                                code: t("schemePanel.bandCode"),
+                                labelFr: t("schemePanel.bandLabelFr"),
+                                labelEn: t("schemePanel.bandLabelEn"),
+                                min: t("schemePanel.bandMin"),
+                                max: t("schemePanel.bandMax"),
+                                add: t("schemePanel.addBand"),
+                                remove: t("schemePanel.removeBand"),
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : scheme && scheme.appreciationScales.length > 0 ? (
                       <div className="space-y-2">
                         {scheme.appreciationScales.map((scale) => (
                           <div
@@ -532,14 +817,40 @@ export function GradingSchemePanel({
                           </div>
                         ))}
                       </div>
-                    </div>
-                  ) : null}
+                    ) : (
+                      <p className="text-[12px] text-[var(--ios-secondary-label)]">
+                        {t("schemePanel.noScales")}
+                      </p>
+                    )}
+                  </div>
 
-                  {scheme && scheme.overallMentionBands.length > 0 ? (
-                    <div>
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
                         {t("schemePanel.mentionsSection")}
                       </p>
+                    </div>
+                    <p className="mb-2 text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                      {t("schemePanel.mentionsHint")}
+                    </p>
+                    {panelMode === "edit" ? (
+                      <div className="rounded-[var(--radius-md)] border border-[var(--ios-separator)]/55 px-3 py-3">
+                        <BandDraftEditor
+                          bands={mentionsDraft}
+                          disabled={saving}
+                          onChange={setMentionsDraft}
+                          labels={{
+                            code: t("schemePanel.bandCode"),
+                            labelFr: t("schemePanel.bandLabelFr"),
+                            labelEn: t("schemePanel.bandLabelEn"),
+                            min: t("schemePanel.bandMin"),
+                            max: t("schemePanel.bandMax"),
+                            add: t("schemePanel.addBand"),
+                            remove: t("schemePanel.removeBand"),
+                          }}
+                        />
+                      </div>
+                    ) : scheme && scheme.overallMentionBands.length > 0 ? (
                       <ul className="space-y-1 rounded-[var(--radius-md)] border border-[var(--ios-separator)]/55 px-3 py-2.5">
                         {scheme.overallMentionBands.map((band) => (
                           <li
@@ -556,8 +867,12 @@ export function GradingSchemePanel({
                           </li>
                         ))}
                       </ul>
-                    </div>
-                  ) : null}
+                    ) : (
+                      <p className="text-[12px] text-[var(--ios-secondary-label)]">
+                        {t("schemePanel.noMentions")}
+                      </p>
+                    )}
+                  </div>
                 </>
               ) : (
                 <p className="text-[12px] leading-relaxed text-[var(--ios-secondary-label)]">
@@ -587,7 +902,10 @@ export function GradingSchemePanel({
               type="button"
               variant="secondary"
               disabled={loading || saving}
-              onClick={() => setPanelMode("edit")}
+              onClick={() => {
+                if (scheme) hydrateBands(scheme);
+                setPanelMode("edit");
+              }}
             >
               {tCommon("edit")}
             </Button>
@@ -601,5 +919,128 @@ export function GradingSchemePanel({
       </form>
     </div>,
     document.body,
+  );
+}
+
+function BandDraftEditor({
+  bands,
+  disabled,
+  onChange,
+  labels,
+}: {
+  bands: BandDraft[];
+  disabled?: boolean;
+  onChange: (bands: BandDraft[]) => void;
+  labels: {
+    code: string;
+    labelFr: string;
+    labelEn: string;
+    min: string;
+    max: string;
+    add: string;
+    remove: string;
+  };
+}) {
+  return (
+    <div className="space-y-2.5">
+      {bands.map((band, index) => (
+        <div
+          key={band.key}
+          className="rounded-[var(--radius-sm)] bg-[color-mix(in_srgb,var(--ios-fill)_35%,transparent)] px-2.5 py-2.5"
+        >
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Field label={labels.code}>
+              <Input
+                value={band.code}
+                disabled={disabled}
+                onChange={(e) =>
+                  onChange(
+                    bands.map((row, i) =>
+                      i === index ? { ...row, code: e.target.value.toUpperCase() } : row,
+                    ),
+                  )
+                }
+              />
+            </Field>
+            <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+              <Field label={labels.min}>
+                <Input
+                  inputMode="decimal"
+                  value={band.minInclusive}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    onChange(
+                      bands.map((row, i) =>
+                        i === index ? { ...row, minInclusive: e.target.value } : row,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+              <Field label={labels.max}>
+                <Input
+                  inputMode="decimal"
+                  value={band.maxExclusive}
+                  disabled={disabled}
+                  placeholder="∞"
+                  onChange={(e) =>
+                    onChange(
+                      bands.map((row, i) =>
+                        i === index ? { ...row, maxExclusive: e.target.value } : row,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                aria-label={labels.remove}
+                disabled={disabled || bands.length <= 1}
+                leadingIcon={<Trash2 className="size-3.5" aria-hidden />}
+                onClick={() => onChange(bands.filter((_, i) => i !== index))}
+              />
+            </div>
+            <Field label={labels.labelFr}>
+              <Input
+                value={band.labelFr}
+                disabled={disabled}
+                onChange={(e) =>
+                  onChange(
+                    bands.map((row, i) =>
+                      i === index ? { ...row, labelFr: e.target.value } : row,
+                    ),
+                  )
+                }
+              />
+            </Field>
+            <Field label={labels.labelEn}>
+              <Input
+                value={band.labelEn}
+                disabled={disabled}
+                onChange={(e) =>
+                  onChange(
+                    bands.map((row, i) =>
+                      i === index ? { ...row, labelEn: e.target.value } : row,
+                    ),
+                  )
+                }
+              />
+            </Field>
+          </div>
+        </div>
+      ))}
+      <Button
+        type="button"
+        size="sm"
+        variant="secondary"
+        disabled={disabled}
+        leadingIcon={<Plus className="size-3.5" aria-hidden />}
+        onClick={() => onChange([...bands, emptyBand()])}
+      >
+        {labels.add}
+      </Button>
+    </div>
   );
 }
