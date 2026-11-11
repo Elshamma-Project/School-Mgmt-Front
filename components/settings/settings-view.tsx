@@ -1,34 +1,204 @@
 "use client";
 
-import { useState } from "react";
-import { Check } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  Building2,
+  CalendarRange,
+  Check,
+  ImagePlus,
+  ScrollText,
+  Trash2,
+} from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { BrandMark } from "@/components/layout/brand-mark";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Field } from "@/components/ui/field";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { listAcademicYears, type AcademicYearResponse } from "@/lib/api/academic";
 import { logout as apiLogout } from "@/lib/api/auth";
+import {
+  deleteSchoolLogo,
+  setCurrentAcademicYear,
+  updateSchool,
+  uploadSchoolLogo,
+  type OfficialHeaderDto,
+  type SchoolResponse,
+} from "@/lib/api/school";
+import { userHasCapability } from "@/lib/auth/permissions";
 import { createMockLogin, listMockRoles } from "@/lib/auth/mock-users";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { useRouter } from "@/i18n/navigation";
+import { notify } from "@/lib/ui/notify";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
+import { useSchoolBrandStore } from "@/stores/school-brand-store";
+import { ApiError, isAuthFailure } from "@/types/api";
 import { primaryRole, type AppRole } from "@/types/auth";
+
+const CYCLES = [
+  "MATERNELLE",
+  "PRIMAIRE",
+  "SECONDAIRE_1ER_CYCLE",
+  "SECONDAIRE_2ND_CYCLE",
+] as const;
+
+const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+const LOGO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
+
+type SchoolForm = {
+  nameFr: string;
+  nameEn: string;
+  shortName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalBox: string;
+  timezone: string;
+  signaturePlace: string;
+  headTitleFr: string;
+  headTitleEn: string;
+  noticeFr: string;
+  noticeEn: string;
+  disclaimerFr: string;
+  disclaimerEn: string;
+  headers: OfficialHeaderDto[];
+};
+
+function emptyHeader(): OfficialHeaderDto {
+  return {
+    cycles: ["SECONDAIRE_1ER_CYCLE"],
+    republic: { fr: "", en: "" },
+    motto: { fr: "", en: "" },
+    ministry: { fr: "", en: "" },
+    regionalDelegation: { fr: "", en: "" },
+    divisionalDelegation: { fr: "", en: "" },
+  };
+}
+
+function schoolToForm(school: SchoolResponse): SchoolForm {
+  return {
+    nameFr: school.name.fr ?? "",
+    nameEn: school.name.en ?? "",
+    shortName: school.shortName ?? "",
+    email: school.contact.email ?? "",
+    phone: school.contact.phones[0] ?? "",
+    address: school.contact.address ?? "",
+    city: school.contact.city ?? "",
+    postalBox: school.postalBox ?? "",
+    timezone: school.timezone || "Africa/Douala",
+    signaturePlace: school.signaturePlace ?? "",
+    headTitleFr: school.headTitle?.fr ?? "",
+    headTitleEn: school.headTitle?.en ?? "",
+    noticeFr: school.reportCardNotice?.fr ?? "",
+    noticeEn: school.reportCardNotice?.en ?? "",
+    disclaimerFr: school.reportCardDisclaimer?.fr ?? "",
+    disclaimerEn: school.reportCardDisclaimer?.en ?? "",
+    headers:
+      school.officialHeaders.length > 0
+        ? school.officialHeaders.map((h) => ({
+            cycles: [...h.cycles],
+            republic: { fr: h.republic.fr ?? "", en: h.republic.en ?? "" },
+            motto: { fr: h.motto.fr ?? "", en: h.motto.en ?? "" },
+            ministry: { fr: h.ministry.fr ?? "", en: h.ministry.en ?? "" },
+            regionalDelegation: h.regionalDelegation
+              ? {
+                  fr: h.regionalDelegation.fr ?? "",
+                  en: h.regionalDelegation.en ?? "",
+                }
+              : { fr: "", en: "" },
+            divisionalDelegation: h.divisionalDelegation
+              ? {
+                  fr: h.divisionalDelegation.fr ?? "",
+                  en: h.divisionalDelegation.en ?? "",
+                }
+              : { fr: "", en: "" },
+          }))
+        : [emptyHeader()],
+  };
+}
+
+function localizedTextOrNull(fr: string, en: string) {
+  const f = fr.trim();
+  const e = en.trim();
+  if (!f && !e) return null;
+  return { fr: f || e, en: e || f };
+}
 
 export function SettingsView() {
   const t = useTranslations("settings");
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
   const tRoles = useTranslations("roles");
+  const tAcademic = useTranslations("academic");
+  const locale = useLocale();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const isMock = useAuthStore((s) => s.isMock);
   const setSession = useAuthStore((s) => s.setSession);
   const clearSession = useAuthStore((s) => s.clearSession);
   const currentRole = primaryRole(user);
+  const canEdit = userHasCapability(user?.roles, "manageSchoolSettings");
+
+  const school = useSchoolBrandStore((s) => s.school);
+  const setSchool = useSchoolBrandStore((s) => s.setSchool);
+  const refreshLogo = useSchoolBrandStore((s) => s.refreshLogo);
+  const hydrate = useSchoolBrandStore((s) => s.hydrate);
+  const brandLoading = useSchoolBrandStore((s) => s.loading);
+
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [years, setYears] = useState<AcademicYearResponse[]>([]);
+  const [selectedYearId, setSelectedYearId] = useState("");
+  const [yearsLoading, setYearsLoading] = useState(false);
+  const [yearSaving, setYearSaving] = useState(false);
+  const [form, setForm] = useState<SchoolForm | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const currentYear = useMemo(
+    () => years.find((y) => y.current) ?? null,
+    [years],
+  );
+
+  useEffect(() => {
+    if (user?.schoolId || user) {
+      void hydrate(user?.schoolId ?? null, locale);
+    }
+  }, [hydrate, locale, user]);
+
+  useEffect(() => {
+    if (school) setForm(schoolToForm(school));
+  }, [school]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setYearsLoading(true);
+    void listAcademicYears({ size: 50, schoolId: user?.schoolId })
+      .then((page) => {
+        if (cancelled) return;
+        setYears(page.content);
+        const current = page.content.find((y) => y.current);
+        setSelectedYearId(current?.id ?? page.content[0]?.id ?? "");
+      })
+      .catch((error) => {
+        if (cancelled || isAuthFailure(error)) return;
+        notify.error(t("yearLoadError"));
+      })
+      .finally(() => {
+        if (!cancelled) setYearsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [t, user?.schoolId]);
 
   async function performLogout() {
     if (!isMock) {
@@ -55,9 +225,169 @@ export function SettingsView() {
     router.replace(getRoleHomePath(role));
   }
 
+  async function onSetCurrentYear() {
+    if (!canEdit || !selectedYearId || yearSaving) return;
+    setYearSaving(true);
+    try {
+      await setCurrentAcademicYear(selectedYearId, user?.schoolId);
+      const page = await listAcademicYears({ size: 50, schoolId: user?.schoolId });
+      setYears(page.content);
+      notify.success(t("yearSetSuccess"));
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("yearSetError"));
+    } finally {
+      setYearSaving(false);
+    }
+  }
+
+  async function onSaveSchool() {
+    if (!canEdit || !school || !form || saving) return;
+    if (!form.nameFr.trim() && !form.nameEn.trim()) {
+      notify.error(t("nameRequired"));
+      return;
+    }
+    setSaving(true);
+    try {
+      const updated = await updateSchool(school.id, {
+        name: {
+          fr: form.nameFr.trim() || form.nameEn.trim(),
+          en: form.nameEn.trim() || form.nameFr.trim(),
+        },
+        shortName: form.shortName.trim() || null,
+        contact: {
+          phones: form.phone.trim() ? [form.phone.trim()] : [],
+          email: form.email.trim() || null,
+          address: form.address.trim() || null,
+          city: form.city.trim() || null,
+        },
+        postalBox: form.postalBox.trim() || null,
+        signaturePlace: form.signaturePlace.trim() || null,
+        headTitle: localizedTextOrNull(form.headTitleFr, form.headTitleEn),
+        reportCardNotice: localizedTextOrNull(form.noticeFr, form.noticeEn),
+        reportCardDisclaimer: localizedTextOrNull(form.disclaimerFr, form.disclaimerEn),
+        timezone: form.timezone.trim() || "Africa/Douala",
+        officialHeaders: form.headers
+          .filter((h) => h.cycles.length > 0)
+          .map((h) => ({
+            cycles: h.cycles,
+            republic: {
+              fr: h.republic.fr?.trim() || h.republic.en?.trim() || "",
+              en: h.republic.en?.trim() || h.republic.fr?.trim() || "",
+            },
+            motto: {
+              fr: h.motto.fr?.trim() || h.motto.en?.trim() || "",
+              en: h.motto.en?.trim() || h.motto.fr?.trim() || "",
+            },
+            ministry: {
+              fr: h.ministry.fr?.trim() || h.ministry.en?.trim() || "",
+              en: h.ministry.en?.trim() || h.ministry.fr?.trim() || "",
+            },
+            regionalDelegation: localizedTextOrNull(
+              h.regionalDelegation?.fr ?? "",
+              h.regionalDelegation?.en ?? "",
+            ),
+            divisionalDelegation: localizedTextOrNull(
+              h.divisionalDelegation?.fr ?? "",
+              h.divisionalDelegation?.en ?? "",
+            ),
+          })),
+        active: school.active,
+        headOfSchoolStaffId: school.headOfSchoolStaffId,
+      });
+      setSchool(updated);
+      setForm(schoolToForm(updated));
+      notify.success(t("schoolSaved"));
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("schoolSaveError"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onLogoSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !school || !canEdit) return;
+    if (!LOGO_TYPES.has(file.type)) {
+      notify.error(t("logoBadType"));
+      return;
+    }
+    if (file.size > LOGO_MAX_BYTES) {
+      notify.error(t("logoTooLarge"));
+      return;
+    }
+    setLogoBusy(true);
+    try {
+      const updated = await uploadSchoolLogo(school.id, file);
+      setSchool(updated);
+      await refreshLogo();
+      notify.success(t("logoSaved"));
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("logoSaveError"));
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
+  async function onDeleteLogo() {
+    if (!school || !canEdit || logoBusy) return;
+    setLogoBusy(true);
+    try {
+      const updated = await deleteSchoolLogo(school.id);
+      setSchool(updated);
+      await refreshLogo();
+      notify.success(t("logoRemoved"));
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("logoSaveError"));
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
+  function patchForm(patch: Partial<SchoolForm>) {
+    setForm((prev) => (prev ? { ...prev, ...patch } : prev));
+  }
+
+  function patchHeader(index: number, patch: Partial<OfficialHeaderDto>) {
+    setForm((prev) => {
+      if (!prev) return prev;
+      const headers = prev.headers.map((h, i) => (i === index ? { ...h, ...patch } : h));
+      return { ...prev, headers };
+    });
+  }
+
+  function toggleHeaderCycle(index: number, cycle: string) {
+    setForm((prev) => {
+      if (!prev) return prev;
+      const headers = prev.headers.map((h, i) => {
+        if (i !== index) return h;
+        const has = h.cycles.includes(cycle);
+        const cycles = has ? h.cycles.filter((c) => c !== cycle) : [...h.cycles, cycle];
+        return { ...h, cycles: cycles.length ? cycles : h.cycles };
+      });
+      return { ...prev, headers };
+    });
+  }
+
+  const readOnly = !canEdit;
+
   return (
     <div className="space-y-6 slide-up">
       <PageHeader description={t("description")} />
+
+      {!canEdit ? (
+        <p className="rounded-[var(--radius-md)] bg-[var(--ios-info-soft)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[var(--ios-blue)]">
+          {t("readOnlyHint")}
+        </p>
+      ) : null}
 
       <GroupedList header={t("languageSection")}>
         <GroupedListItem>
@@ -67,6 +397,501 @@ export function SettingsView() {
           <LocaleSwitcher />
         </GroupedListItem>
       </GroupedList>
+
+      <GroupedList
+        header={t("yearSection")}
+        footer={canEdit ? t("yearHint") : undefined}
+      >
+        <GroupedListItem className="flex-col items-stretch gap-3 py-3 sm:flex-row sm:items-end">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)]">
+              <CalendarRange className="size-4 stroke-[1.75]" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-[13px] font-semibold text-[var(--ios-label)]">
+                  {t("yearCurrentLabel")}
+                </p>
+                {currentYear ? (
+                  <Badge tone="success">{currentYear.label}</Badge>
+                ) : (
+                  <Badge tone="neutral">{t("yearNone")}</Badge>
+                )}
+              </div>
+              <Field id="settings-year" label={t("yearSelect")}>
+                <Select
+                  id="settings-year"
+                  value={selectedYearId}
+                  disabled={yearsLoading || readOnly || yearSaving || years.length === 0}
+                  onChange={(e) => setSelectedYearId(e.target.value)}
+                >
+                  {years.length === 0 ? (
+                    <option value="">{t("yearEmpty")}</option>
+                  ) : (
+                    years.map((year) => (
+                      <option key={year.id} value={year.id}>
+                        {year.label}
+                        {year.current ? ` · ${t("yearBadgeCurrent")}` : ""}
+                      </option>
+                    ))
+                  )}
+                </Select>
+              </Field>
+            </div>
+          </div>
+          {canEdit ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={
+                yearSaving ||
+                yearsLoading ||
+                !selectedYearId ||
+                selectedYearId === currentYear?.id
+              }
+              onClick={() => void onSetCurrentYear()}
+            >
+              {yearSaving ? tCommon("loading") : t("yearSetAction")}
+            </Button>
+          ) : null}
+        </GroupedListItem>
+      </GroupedList>
+
+      <GroupedList header={t("logoSection")} footer={t("logoHint")}>
+        <GroupedListItem className="flex-col items-stretch gap-3 py-3 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <BrandMark size="lg" alt={school?.shortName ?? tCommon("schoolName")} />
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold text-[var(--ios-label)]">
+                {t("logoTitle")}
+              </p>
+              <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
+                {school?.hasLogo ? t("logoDefined") : t("logoFallback")}
+              </p>
+            </div>
+          </div>
+          {canEdit ? (
+            <div className="flex flex-wrap gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={(e) => void onLogoSelected(e)}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                leadingIcon={<ImagePlus className="size-3.5" aria-hidden />}
+                disabled={logoBusy || brandLoading || !school}
+                onClick={() => fileRef.current?.click()}
+              >
+                {logoBusy ? tCommon("loading") : t("logoUpload")}
+              </Button>
+              {school?.hasLogo ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghostDestructive"
+                  leadingIcon={<Trash2 className="size-3.5" aria-hidden />}
+                  disabled={logoBusy}
+                  onClick={() => void onDeleteLogo()}
+                >
+                  {t("logoRemove")}
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+        </GroupedListItem>
+      </GroupedList>
+
+      {form && school ? (
+        <>
+          <GroupedList header={t("identitySection")}>
+            <GroupedListItem className="block space-y-3 py-3">
+              <div className="mb-1 flex items-center gap-2 text-[var(--ios-secondary-label)]">
+                <Building2 className="size-3.5 stroke-[1.75]" aria-hidden />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.04em]">
+                  {school.code}
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field id="sch-name-fr" label={t("fields.nameFr")}>
+                  <Input
+                    id="sch-name-fr"
+                    value={form.nameFr}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ nameFr: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-name-en" label={t("fields.nameEn")}>
+                  <Input
+                    id="sch-name-en"
+                    value={form.nameEn}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ nameEn: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-short" label={t("fields.shortName")}>
+                  <Input
+                    id="sch-short"
+                    value={form.shortName}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ shortName: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-tz" label={t("fields.timezone")}>
+                  <Input
+                    id="sch-tz"
+                    value={form.timezone}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ timezone: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-email" label={t("fields.email")}>
+                  <Input
+                    id="sch-email"
+                    type="email"
+                    value={form.email}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ email: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-phone" label={t("fields.phone")}>
+                  <Input
+                    id="sch-phone"
+                    value={form.phone}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ phone: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-address" label={t("fields.address")}>
+                  <Input
+                    id="sch-address"
+                    value={form.address}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ address: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-city" label={t("fields.city")}>
+                  <Input
+                    id="sch-city"
+                    value={form.city}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ city: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-bp" label={t("fields.postalBox")}>
+                  <Input
+                    id="sch-bp"
+                    value={form.postalBox}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ postalBox: e.target.value })}
+                  />
+                </Field>
+              </div>
+            </GroupedListItem>
+          </GroupedList>
+
+          <GroupedList header={t("documentsSection")} footer={t("documentsHint")}>
+            <GroupedListItem className="block space-y-3 py-3">
+              <div className="mb-1 flex items-center gap-2 text-[var(--ios-secondary-label)]">
+                <ScrollText className="size-3.5 stroke-[1.75]" aria-hidden />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.04em]">
+                  {t("documentsSubhead")}
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field id="sch-sign-place" label={t("fields.signaturePlace")}>
+                  <Input
+                    id="sch-sign-place"
+                    value={form.signaturePlace}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ signaturePlace: e.target.value })}
+                  />
+                </Field>
+                <div className="hidden sm:block" />
+                <Field id="sch-head-fr" label={t("fields.headTitleFr")}>
+                  <Input
+                    id="sch-head-fr"
+                    value={form.headTitleFr}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ headTitleFr: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-head-en" label={t("fields.headTitleEn")}>
+                  <Input
+                    id="sch-head-en"
+                    value={form.headTitleEn}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ headTitleEn: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-notice-fr" label={t("fields.noticeFr")}>
+                  <Textarea
+                    id="sch-notice-fr"
+                    rows={2}
+                    value={form.noticeFr}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ noticeFr: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-notice-en" label={t("fields.noticeEn")}>
+                  <Textarea
+                    id="sch-notice-en"
+                    rows={2}
+                    value={form.noticeEn}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ noticeEn: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-disc-fr" label={t("fields.disclaimerFr")}>
+                  <Textarea
+                    id="sch-disc-fr"
+                    rows={2}
+                    value={form.disclaimerFr}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ disclaimerFr: e.target.value })}
+                  />
+                </Field>
+                <Field id="sch-disc-en" label={t("fields.disclaimerEn")}>
+                  <Textarea
+                    id="sch-disc-en"
+                    rows={2}
+                    value={form.disclaimerEn}
+                    disabled={readOnly || saving}
+                    onChange={(e) => patchForm({ disclaimerEn: e.target.value })}
+                  />
+                </Field>
+              </div>
+            </GroupedListItem>
+
+            {form.headers.map((header, index) => (
+              <GroupedListItem key={`hdr-${index}`} className="block space-y-3 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[12px] font-semibold text-[var(--ios-label)]">
+                    {t("headerBlock", { n: index + 1 })}
+                  </p>
+                  {canEdit && form.headers.length > 1 ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghostDestructive"
+                      onClick={() =>
+                        patchForm({
+                          headers: form.headers.filter((_, i) => i !== index),
+                        })
+                      }
+                    >
+                      {t("headerRemove")}
+                    </Button>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {CYCLES.map((cycle) => {
+                    const active = header.cycles.includes(cycle);
+                    return (
+                      <button
+                        key={cycle}
+                        type="button"
+                        disabled={readOnly || saving}
+                        onClick={() => toggleHeaderCycle(index, cycle)}
+                        className={cn(
+                          "rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
+                          active
+                            ? "bg-[var(--ios-blue)] text-white"
+                            : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
+                          (readOnly || saving) && "opacity-60",
+                        )}
+                      >
+                        {tAcademic(`cycles.${cycle}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    id={`hdr-rep-fr-${index}`}
+                    label={t("fields.republicFr")}
+                  >
+                    <Input
+                      id={`hdr-rep-fr-${index}`}
+                      value={header.republic.fr ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          republic: { ...header.republic, fr: e.target.value },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    id={`hdr-rep-en-${index}`}
+                    label={t("fields.republicEn")}
+                  >
+                    <Input
+                      id={`hdr-rep-en-${index}`}
+                      value={header.republic.en ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          republic: { ...header.republic, en: e.target.value },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field id={`hdr-motto-fr-${index}`} label={t("fields.mottoFr")}>
+                    <Input
+                      id={`hdr-motto-fr-${index}`}
+                      value={header.motto.fr ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          motto: { ...header.motto, fr: e.target.value },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field id={`hdr-motto-en-${index}`} label={t("fields.mottoEn")}>
+                    <Input
+                      id={`hdr-motto-en-${index}`}
+                      value={header.motto.en ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          motto: { ...header.motto, en: e.target.value },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field id={`hdr-min-fr-${index}`} label={t("fields.ministryFr")}>
+                    <Input
+                      id={`hdr-min-fr-${index}`}
+                      value={header.ministry.fr ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          ministry: { ...header.ministry, fr: e.target.value },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field id={`hdr-min-en-${index}`} label={t("fields.ministryEn")}>
+                    <Input
+                      id={`hdr-min-en-${index}`}
+                      value={header.ministry.en ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          ministry: { ...header.ministry, en: e.target.value },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    id={`hdr-reg-fr-${index}`}
+                    label={t("fields.regionalFr")}
+                  >
+                    <Input
+                      id={`hdr-reg-fr-${index}`}
+                      value={header.regionalDelegation?.fr ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          regionalDelegation: {
+                            fr: e.target.value,
+                            en: header.regionalDelegation?.en ?? "",
+                          },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    id={`hdr-reg-en-${index}`}
+                    label={t("fields.regionalEn")}
+                  >
+                    <Input
+                      id={`hdr-reg-en-${index}`}
+                      value={header.regionalDelegation?.en ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          regionalDelegation: {
+                            fr: header.regionalDelegation?.fr ?? "",
+                            en: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    id={`hdr-div-fr-${index}`}
+                    label={t("fields.divisionalFr")}
+                  >
+                    <Input
+                      id={`hdr-div-fr-${index}`}
+                      value={header.divisionalDelegation?.fr ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          divisionalDelegation: {
+                            fr: e.target.value,
+                            en: header.divisionalDelegation?.en ?? "",
+                          },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    id={`hdr-div-en-${index}`}
+                    label={t("fields.divisionalEn")}
+                  >
+                    <Input
+                      id={`hdr-div-en-${index}`}
+                      value={header.divisionalDelegation?.en ?? ""}
+                      disabled={readOnly || saving}
+                      onChange={(e) =>
+                        patchHeader(index, {
+                          divisionalDelegation: {
+                            fr: header.divisionalDelegation?.fr ?? "",
+                            en: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </Field>
+                </div>
+              </GroupedListItem>
+            ))}
+
+            {canEdit ? (
+              <GroupedListItem className="justify-between gap-2 py-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={saving}
+                  onClick={() =>
+                    patchForm({ headers: [...form.headers, emptyHeader()] })
+                  }
+                >
+                  {t("headerAdd")}
+                </Button>
+                <Button
+                  type="button"
+                  disabled={saving || brandLoading}
+                  onClick={() => void onSaveSchool()}
+                >
+                  {saving ? tCommon("loading") : tCommon("save")}
+                </Button>
+              </GroupedListItem>
+            ) : null}
+          </GroupedList>
+        </>
+      ) : brandLoading ? (
+        <p className="text-[13px] text-[var(--ios-secondary-label)]">{tCommon("loading")}</p>
+      ) : null}
 
       <GroupedList header={t("sessionSection")}>
         <GroupedListItem>

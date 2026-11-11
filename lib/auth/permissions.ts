@@ -21,6 +21,7 @@ export type UiCapability =
   | "reopenClosedSequence"
   | "manageAdminAccounts"
   | "manageGradeTemplates"
+  | "manageSchoolSettings"
   | "viewAuditJournal"
   | "managePlatform";
 
@@ -56,6 +57,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
     "reopenClosedSequence",
     "manageAdminAccounts",
     "manageGradeTemplates",
+    "manageSchoolSettings",
     "viewAuditJournal",
   ],
   SUPER_ADMIN: [
@@ -70,6 +72,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
     "reopenClosedSequence",
     "manageAdminAccounts",
     "manageGradeTemplates",
+    "manageSchoolSettings",
     "viewAuditJournal",
     "managePlatform",
   ],

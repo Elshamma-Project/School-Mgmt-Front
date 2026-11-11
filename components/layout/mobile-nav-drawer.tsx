@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -11,6 +11,7 @@ import { isNavChildActive, isNavItemActive } from "@/lib/auth/nav-active";
 import { getNavItemsForRole, type NavChildItem, type NavItem } from "@/lib/auth/nav-config";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
+import { useSchoolBrandStore } from "@/stores/school-brand-store";
 import { primaryRole } from "@/types/auth";
 
 type MobileNavDrawerProps = {
@@ -30,9 +31,11 @@ export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
   const tGrades = useTranslations("gradesHub");
   const tTimetable = useTranslations("timetableHub");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
+  const schoolName = useSchoolBrandStore((s) => s.displayName(locale));
   const items = getNavItemsForRole(primaryRole(user));
   const titleId = useId();
 
@@ -87,13 +90,13 @@ export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
         className="absolute inset-y-0 left-0 flex w-[min(320px,88vw)] flex-col bg-[var(--ios-card)] shadow-[var(--ios-shadow-lg)] slide-up"
       >
         <div className="flex h-[var(--app-topbar-height)] shrink-0 items-center gap-2.5 border-b border-[var(--ios-separator)] px-3 pt-[env(safe-area-inset-top)]">
-          <BrandMark size="sm" />
+          <BrandMark size="sm" alt={schoolName || tCommon("schoolName")} />
           <div className="min-w-0 flex-1 leading-tight">
             <p
               id={titleId}
               className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--ios-secondary-label)]"
             >
-              {tCommon("schoolName")}
+              {schoolName || tCommon("schoolName")}
             </p>
             <p className="truncate text-[12px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
               {tCommon("appName")}

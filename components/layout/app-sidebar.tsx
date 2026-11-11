@@ -2,18 +2,21 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { PanelLeftClose } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { SidebarNav } from "@/components/layout/app-nav";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { SidebarAccount } from "@/components/layout/sidebar-account";
 import { cn } from "@/lib/utils/cn";
+import { useSchoolBrandStore } from "@/stores/school-brand-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 
 export function AppSidebar() {
   const t = useTranslations("common");
   const tNav = useTranslations("nav");
+  const locale = useLocale();
   const collapsed = useSidebarStore((s) => s.collapsed);
   const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
+  const schoolName = useSchoolBrandStore((s) => s.displayName(locale));
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -52,10 +55,10 @@ export function AppSidebar() {
           </button>
         ) : (
           <>
-            <BrandMark size="sm" />
+            <BrandMark size="sm" alt={schoolName || t("schoolName")} />
             <div className="min-w-0 flex-1 leading-tight">
               <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--ios-secondary-label)]">
-                {t("schoolName")}
+                {schoolName || t("schoolName")}
               </p>
               <p className="truncate text-[12px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
                 {t("appName")}

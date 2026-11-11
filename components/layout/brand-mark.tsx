@@ -1,4 +1,12 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils/cn";
+import {
+  peekSchoolLogoUrl,
+  subscribeSchoolLogoCache,
+} from "@/lib/school/logo-cache";
+import { useSchoolBrandStore } from "@/stores/school-brand-store";
 
 type BrandMarkProps = {
   className?: string;
@@ -13,20 +21,28 @@ const SIZE_CLASS = {
   xl: "size-24",
 } as const;
 
+const FALLBACK =
+  process.env.NEXT_PUBLIC_SCHOOL_LOGO_URL?.trim() || "/brand/el-shammah-logo.svg";
+
 /**
- * Logo école. Chemin : `NEXT_PUBLIC_SCHOOL_LOGO_URL` ou `/brand/el-shammah-logo.svg`.
- * Remplacer le fichier dans `public/brand/` par le logo officiel dès qu’il est disponible.
+ * Logo école : logo paramétré (blob cache) sinon fichier de marque local.
  */
 export function BrandMark({
   className,
   size = "md",
   alt = "El Shammah",
 }: BrandMarkProps) {
-  const src =
-    process.env.NEXT_PUBLIC_SCHOOL_LOGO_URL?.trim() || "/brand/el-shammah-logo.svg";
+  const schoolId = useSchoolBrandStore((s) => s.school?.id ?? null);
+  const storeLogoUrl = useSchoolBrandStore((s) => s.logoUrl);
+  const cached = useSyncExternalStore(
+    subscribeSchoolLogoCache,
+    () => peekSchoolLogoUrl(schoolId),
+    () => null,
+  );
+  const src = storeLogoUrl || cached || FALLBACK;
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- SVG / URL branding déployable sans config remote
+    // eslint-disable-next-line @next/next/no-img-element -- blob / SVG branding sans config remote
     <img
       src={src}
       alt={alt}
