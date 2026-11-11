@@ -153,7 +153,6 @@
     "sequences": "Sequences",
     "reporting": "Reporting",
     "audit": "Audit",
-    "adminAccounts": "Admin accounts",
     "schools": "Schools",
     "platform": "Platform",
     "notifications": "Notifications",
@@ -739,10 +738,6 @@
       "description": "Report cards, templates and scales.",
       "empty": "Reporting module (director)."
     },
-    "directorAdminAccounts": {
-      "description": "School administration accounts.",
-      "empty": "Admin accounts module — foundation ready."
-    },
     "directorTimetable": {
       "description": "School timetable.",
       "empty": "Timetable module (director)."
@@ -991,13 +986,15 @@
       "createTitle": "New grading scheme",
       "editTitle": "Edit grading scheme",
       "viewTitle": "Grading scheme",
-      "createHint": "Director only. Default thresholds apply after creation.",
-      "createDefaultsHint": "After creation, open the scheme to adjust thresholds, honour roll and report-sheet settings.",
+      "createHint": "Fill identity, thresholds, options and scales before saving.",
       "nameFr": "Name (FR)",
       "nameEn": "Name (EN)",
       "nameRequired": "Provide at least one name (FR or EN).",
       "codeRequired": "Code is required.",
       "thresholdsSection": "Calculation thresholds",
+      "thresholdsHint": "These values drive marks, mentions and honour roll (docs/04).",
+      "scoringGroup": "Scoring",
+      "classGroup": "Class & merit",
       "reportSheetSection": "Report sheet",
       "scalesSection": "Appreciation scales",
       "bandsHint": "Each band: min inclusive, max exclusive (empty = no ceiling). E.g. A ≥ 16, B+ [14 ; 16[.",
@@ -1019,11 +1016,17 @@
       "scaleCodeRequired": "Each scale needs a code.",
       "bandsInvalid": "Check band codes and bounds (min < max).",
       "maxScore": "Max score",
+      "maxScoreHint": "Upper bound of a mark (usually 20).",
       "passMark": "Pass mark",
-      "classSuccess": "Class success threshold",
+      "passMarkHint": "Subject passed from this threshold.",
+      "classSuccess": "Class success",
+      "classSuccessHint": "Class profile / success rate.",
       "decimals": "Decimals",
-      "honourRoll": "Honour roll (min)",
+      "decimalsHint": "Display precision for averages.",
+      "honourRoll": "Honour roll",
+      "honourRollHint": "Minimum average to qualify.",
       "effortThreshold": "Effort threshold",
+      "effortThresholdHint": "Subjects listed as needing effort below this.",
       "effortEmpty": "Empty = disabled",
       "deadlineHours": "Sheet deadline (h)",
       "maxRows": "Rows / PDF page",
@@ -1036,6 +1039,7 @@
       "deadlineBlocking": "Blocking sheet deadline",
       "deadlineBlockingHint": "Reject late submissions; otherwise warn only.",
       "rounding": "Rounding {policy}",
+      "roundingLabel": "Rounding",
       "createSuccess": "Scheme created",
       "updateSuccess": "Scheme saved",
       "loadError": "Unable to load the scheme.",
@@ -1100,16 +1104,6 @@
         "title": "No rooms",
         "description": "Add rooms in the Academic module."
       }
-    }
-  },
-  "adminAccountsHub": {
-    "stats": {
-      "accounts": "Accounts",
-      "active": "Active"
-    },
-    "empty": {
-      "title": "Account list coming next",
-      "description": "Paginated UserAccount listing is not available yet; create and get-by-id only."
     }
   }
 }

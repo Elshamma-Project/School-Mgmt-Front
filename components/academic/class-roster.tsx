@@ -983,7 +983,7 @@ export function ClassRoster({
                 <div className="flex justify-end gap-2 border-t border-[var(--ios-separator)]/55 px-4 py-3">
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="ghostDestructive"
                     size="sm"
                     onClick={() => setEditorOpen(false)}
                     disabled={saving}

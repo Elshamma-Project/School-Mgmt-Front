@@ -1278,67 +1278,69 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
 
           {entity.kind === "levels" ? (
             <>
-              <GroupedList header={t("detail.identitySection")}>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("columns.code")}
-                    value={entity.data.code}
-                    icon={<Hash className="size-4 stroke-[1.75]" />}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow label={t("fields.nameFr")} value={entity.data.name.fr || "—"} stacked />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow label={t("fields.nameEn")} value={entity.data.name.en || "—"} stacked />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.section")}
-                    value={
-                      t.has(`sections.${entity.data.section}`)
-                        ? t(`sections.${entity.data.section}` as "sections.FRANCOPHONE")
-                        : entity.data.section
-                    }
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.cycle")}
-                    value={
-                      t.has(`cycles.${entity.data.cycle}`)
-                        ? t(`cycles.${entity.data.cycle}` as "cycles.PRIMAIRE")
-                        : entity.data.cycle
-                    }
-                  />
-                </GroupedListItem>
-              </GroupedList>
+              <div className="grid grid-cols-1 items-stretch gap-6 lg:col-span-2 lg:grid-cols-2">
+                <GroupedList header={t("detail.identitySection")} className="h-full">
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("columns.code")}
+                      value={entity.data.code}
+                      icon={<Hash className="size-4 stroke-[1.75]" />}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow label={t("fields.nameFr")} value={entity.data.name.fr || "—"} stacked />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow label={t("fields.nameEn")} value={entity.data.name.en || "—"} stacked />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.section")}
+                      value={
+                        t.has(`sections.${entity.data.section}`)
+                          ? t(`sections.${entity.data.section}` as "sections.FRANCOPHONE")
+                          : entity.data.section
+                      }
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.cycle")}
+                      value={
+                        t.has(`cycles.${entity.data.cycle}`)
+                          ? t(`cycles.${entity.data.cycle}` as "cycles.PRIMAIRE")
+                          : entity.data.cycle
+                      }
+                    />
+                  </GroupedListItem>
+                </GroupedList>
 
-              <GroupedList header={t("detail.progressionSection")}>
-                <GroupedListItem>
-                  <DetailRow label={t("fields.order")} value={String(entity.data.order)} />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.equivalenceIndex")}
-                    value={dash(entity.data.equivalenceIndex)}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.nextLevelCode")}
-                    value={dash(entity.data.nextLevelCode)}
-                    icon={<Layers3 className="size-4 stroke-[1.75]" />}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.defaultGradingScheme")}
-                    value={dash(entity.data.defaultGradingSchemeId)}
-                    stacked
-                  />
-                </GroupedListItem>
-              </GroupedList>
+                <GroupedList header={t("detail.progressionSection")} className="h-full">
+                  <GroupedListItem>
+                    <DetailRow label={t("fields.order")} value={String(entity.data.order)} />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.equivalenceIndex")}
+                      value={dash(entity.data.equivalenceIndex)}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.nextLevelCode")}
+                      value={dash(entity.data.nextLevelCode)}
+                      icon={<Layers3 className="size-4 stroke-[1.75]" />}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.defaultGradingScheme")}
+                      value={dash(entity.data.defaultGradingSchemeId)}
+                      stacked
+                    />
+                  </GroupedListItem>
+                </GroupedList>
+              </div>
 
               <GroupedList
                 header={t("detail.classesSection")}

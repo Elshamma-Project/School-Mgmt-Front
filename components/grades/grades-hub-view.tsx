@@ -12,13 +12,13 @@ import {
   Scale,
   Shield,
   Unlock,
-  X,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { GradingSchemePanel } from "@/components/grades/grading-scheme-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DialogCloseButton } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { StatCard } from "@/components/ui/stat-card";
@@ -741,15 +741,11 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                       </p>
                     </div>
                   </div>
-                  <button
-                    type="button"
+                  <DialogCloseButton
                     aria-label={tCommon("cancel")}
                     disabled={acting}
                     onClick={() => clearPending()}
-                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--ios-secondary-label)] transition-colors hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)] disabled:opacity-50"
-                  >
-                    <X className="size-4 stroke-[1.75]" aria-hidden />
-                  </button>
+                  />
                 </div>
 
                 <div className="space-y-4 px-5 py-4">
@@ -874,7 +870,8 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                 <div className="flex flex-col-reverse gap-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-5 py-4 sm:flex-row sm:justify-end">
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="ghostDestructive"
+                    className="!text-[var(--ios-danger)] hover:!bg-[var(--ios-danger-soft)]"
                     disabled={acting}
                     onClick={() => clearPending()}
                   >

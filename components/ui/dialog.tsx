@@ -5,10 +5,11 @@ import {
   useId,
   useRef,
   useState,
+  type ButtonHTMLAttributes,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export type DialogAction = {
@@ -162,7 +163,7 @@ export function Dialog({
                 action.variant === "destructive" &&
                   "font-semibold text-[var(--ios-danger)]",
                 action.variant === "cancel" &&
-                  "font-normal text-[var(--ios-blue)]",
+                  "font-normal text-[var(--ios-danger)]",
                 (!action.variant || action.variant === "default") &&
                   "font-semibold text-[var(--ios-blue)]",
               )}
@@ -174,5 +175,27 @@ export function Dialog({
       </div>
     </div>,
     document.body,
+  );
+}
+
+type DialogCloseButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
+
+/** Bouton X rouge partagé par les panneaux / modales. */
+export function DialogCloseButton({
+  className,
+  type = "button",
+  ...props
+}: DialogCloseButtonProps) {
+  return (
+    <button
+      type={type}
+      {...props}
+      className={cn(
+        "inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[var(--ios-danger-soft)] text-[var(--ios-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--ios-danger)_22%,transparent)] disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
+    >
+      <X className="size-4 stroke-[2]" aria-hidden />
+    </button>
   );
 }

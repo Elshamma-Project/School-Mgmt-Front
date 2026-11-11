@@ -3,7 +3,13 @@ import { controlBase, controlDisabled, focusRing } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils/cn";
 import { Spinner } from "@/components/ui/spinner";
 
-type ButtonVariant = "primary" | "secondary" | "destructive" | "ghost" | "plain";
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "destructive"
+  | "ghost"
+  | "ghostDestructive"
+  | "plain";
 type ButtonSize = "md" | "sm" | "lg";
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -22,6 +28,8 @@ const variantClasses: Record<ButtonVariant, string> = {
   destructive:
     "bg-[var(--ios-danger)] text-white hover:brightness-[1.04] active:brightness-95",
   ghost: "bg-transparent text-[var(--ios-blue)] hover:bg-[var(--ios-fill)]",
+  ghostDestructive:
+    "bg-transparent text-[var(--ios-danger)] hover:bg-[var(--ios-danger-soft)]",
   plain: "bg-transparent text-[var(--ios-label)] hover:bg-[var(--ios-fill)]",
 };
 
@@ -55,6 +63,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={isDisabled}
         aria-busy={loading || undefined}
+        {...props}
         className={cn(
           "pressable inline-flex cursor-pointer items-center justify-center gap-2 font-semibold tracking-[-0.01em]",
           controlBase,
@@ -64,13 +73,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           sizeClasses[size],
           className,
         )}
-        {...props}
       >
         {loading ? (
           <Spinner
             size="sm"
             tone={
-              variant === "ghost"
+              variant === "ghost" || variant === "ghostDestructive"
                 ? "blue"
                 : variant === "secondary" || variant === "plain"
                   ? "default"

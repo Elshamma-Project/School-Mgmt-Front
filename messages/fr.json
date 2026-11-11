@@ -153,7 +153,6 @@
     "sequences": "Séquences",
     "reporting": "Reporting",
     "audit": "Audit",
-    "adminAccounts": "Comptes admin",
     "schools": "Établissements",
     "platform": "Plateforme",
     "notifications": "Notifications",
@@ -739,10 +738,6 @@
       "description": "Bulletins, gabarits et barèmes.",
       "empty": "Module reporting (direction)."
     },
-    "directorAdminAccounts": {
-      "description": "Comptes d’administration de l’établissement.",
-      "empty": "Module comptes admin — fondations prêtes."
-    },
     "directorTimetable": {
       "description": "Emploi du temps établissement.",
       "empty": "Module emploi du temps (direction)."
@@ -991,13 +986,15 @@
       "createTitle": "Nouveau barème",
       "editTitle": "Modifier le barème",
       "viewTitle": "Barème",
-      "createHint": "Création réservée au directeur. Les seuils par défaut s’appliquent ensuite.",
-      "createDefaultsHint": "Après création, ouvrez le barème pour ajuster seuils, tableau d’honneur et paramètres de fiche de report.",
+      "createHint": "Renseignez l’identité, les seuils, les options et les échelles avant d’enregistrer.",
       "nameFr": "Nom (FR)",
       "nameEn": "Nom (EN)",
       "nameRequired": "Indiquez au moins un nom (FR ou EN).",
       "codeRequired": "Le code est obligatoire.",
       "thresholdsSection": "Seuils de calcul",
+      "thresholdsHint": "Ces valeurs pilotent notes, mentions et tableau d’honneur (docs/04).",
+      "scoringGroup": "Notation",
+      "classGroup": "Classe & mérite",
       "reportSheetSection": "Fiche de report",
       "scalesSection": "Échelles d’appréciation",
       "bandsHint": "Chaque tranche : min inclus, max exclus (vide = pas de plafond). Ex. A ≥ 16, B+ [14 ; 16[.",
@@ -1018,12 +1015,18 @@
       "scaleRequired": "Ajoutez au moins une échelle d’appréciation.",
       "scaleCodeRequired": "Chaque échelle doit avoir un code.",
       "bandsInvalid": "Vérifiez les codes et bornes des tranches (min < max).",
-      "maxScore": "Note max",
+      "maxScore": "Note maximale",
+      "maxScoreHint": "Plafond d’une note (souvent 20).",
       "passMark": "Seuil de réussite",
-      "classSuccess": "Seuil réussite classe",
+      "passMarkHint": "Matière réussie à partir de ce seuil.",
+      "classSuccess": "Réussite de classe",
+      "classSuccessHint": "Profil de classe / % de réussite.",
       "decimals": "Décimales",
-      "honourRoll": "Tableau d’honneur (min)",
-      "effortThreshold": "Seuil « effort »",
+      "decimalsHint": "Précision d’affichage des moyennes.",
+      "honourRoll": "Tableau d’honneur",
+      "honourRollHint": "Moyenne minimale pour y figurer.",
+      "effortThreshold": "Seuil d’effort",
+      "effortThresholdHint": "Matières listées « à améliorer » en dessous.",
       "effortEmpty": "Vide = désactivé",
       "deadlineHours": "Délai fiche (h)",
       "maxRows": "Lignes / page PDF",
@@ -1036,6 +1039,7 @@
       "deadlineBlocking": "Délai fiche bloquant",
       "deadlineBlockingHint": "Refuse le dépôt après le délai ; sinon simple avertissement.",
       "rounding": "Arrondi {policy}",
+      "roundingLabel": "Arrondi",
       "createSuccess": "Barème créé",
       "updateSuccess": "Barème enregistré",
       "loadError": "Impossible de charger le barème.",
@@ -1100,16 +1104,6 @@
         "title": "Aucune salle",
         "description": "Ajoutez des salles dans le module Académique."
       }
-    }
-  },
-  "adminAccountsHub": {
-    "stats": {
-      "accounts": "Comptes",
-      "active": "Actifs"
-    },
-    "empty": {
-      "title": "Liste des comptes à brancher",
-      "description": "L’API de liste paginée des UserAccount n’existe pas encore ; création et consultation par id seulement."
     }
   }
 }

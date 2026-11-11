@@ -5,7 +5,7 @@ export { Badge } from "./badge";
 export { Button } from "./button";
 export { Checkbox } from "./checkbox";
 export { ConfirmDialog } from "./confirm-dialog";
-export { Dialog } from "./dialog";
+export { Dialog, DialogCloseButton } from "./dialog";
 export { EmptyState } from "./empty-state";
 export { Field } from "./field";
 export { GroupedList, GroupedListItem } from "./grouped-list";

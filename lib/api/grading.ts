@@ -53,12 +53,6 @@ export type GradingSchemeResponse = {
   active: boolean;
 };
 
-export type CreateGradingSchemePayload = {
-  code: string;
-  name: LocalizedTextDto;
-  schoolId?: string | null;
-};
-
 export type ScoreBandWritePayload = {
   code: string;
   label?: LocalizedTextDto | null;
@@ -69,6 +63,26 @@ export type ScoreBandWritePayload = {
 export type AppreciationScaleWritePayload = {
   code: string;
   bands: ScoreBandWritePayload[];
+};
+
+export type CreateGradingSchemePayload = {
+  code: string;
+  name: LocalizedTextDto;
+  maxScore?: number | string;
+  passMark?: number | string;
+  classSuccessThreshold?: number | string;
+  decimals?: number;
+  honourRollMinAverage?: number | string;
+  honourRollBlockedBySanction?: boolean;
+  effortSubjectThreshold?: number | string | null;
+  reportSheetDeadlineHours?: number;
+  reportSheetDeadlineBlocking?: boolean;
+  reportSheetMaxRowsPerPage?: number;
+  reportSheetAppreciationScaleCode?: string;
+  appreciationScales?: AppreciationScaleWritePayload[];
+  overallMentionBands?: ScoreBandWritePayload[];
+  active?: boolean;
+  schoolId?: string | null;
 };
 
 export type UpdateGradingSchemePayload = {
@@ -194,8 +208,8 @@ export async function createGradingScheme(
   return apiRequest<GradingSchemeResponse>("/api/v1/grading-schemes", {
     method: "POST",
     body: {
+      ...payload,
       code: payload.code.trim().toUpperCase(),
-      name: payload.name,
       schoolId: payload.schoolId?.trim() || null,
     },
   });

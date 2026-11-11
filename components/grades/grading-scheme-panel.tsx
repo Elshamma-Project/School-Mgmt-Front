@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Scale, Trash2, X } from "lucide-react";
+import {
+  Award,
+  CircleAlert,
+  Gauge,
+  Hash,
+  Plus,
+  Scale,
+  Sigma,
+  Target,
+  Trash2,
+  TrendingUp,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DialogCloseButton } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -168,45 +180,85 @@ export function GradingSchemePanel({
   const [mentionsDraft, setMentionsDraft] = useState<BandDraft[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const defaultScalesDraft = (): ScaleDraft[] => [
+    {
+      key: newKey(),
+      code: "LETTER",
+      bands: [
+        emptyBand({ code: "A", labelFr: "A", labelEn: "A", minInclusive: "16", maxExclusive: "" }),
+        emptyBand({
+          code: "B+",
+          labelFr: "B+",
+          labelEn: "B+",
+          minInclusive: "14",
+          maxExclusive: "16",
+        }),
+        emptyBand({
+          code: "B",
+          labelFr: "B",
+          labelEn: "B",
+          minInclusive: "12",
+          maxExclusive: "14",
+        }),
+        emptyBand({
+          code: "C",
+          labelFr: "C",
+          labelEn: "C",
+          minInclusive: "0",
+          maxExclusive: "12",
+        }),
+      ],
+    },
+  ];
+
+  const defaultMentionsDraft = (): BandDraft[] => [
+    emptyBand({
+      code: "TB",
+      labelFr: "TRÈS BIEN",
+      labelEn: "VERY GOOD",
+      minInclusive: "16",
+      maxExclusive: "",
+    }),
+    emptyBand({
+      code: "B",
+      labelFr: "BIEN",
+      labelEn: "GOOD",
+      minInclusive: "14",
+      maxExclusive: "16",
+    }),
+    emptyBand({
+      code: "AB",
+      labelFr: "ASSEZ BIEN",
+      labelEn: "FAIRLY GOOD",
+      minInclusive: "12",
+      maxExclusive: "14",
+    }),
+    emptyBand({
+      code: "PASSABLE",
+      labelFr: "PASSABLE",
+      labelEn: "PASSABLE",
+      minInclusive: "10",
+      maxExclusive: "12",
+    }),
+    emptyBand({
+      code: "INSUFFISANT",
+      labelFr: "TRAVAIL INSUFFISANT",
+      labelEn: "WEAK",
+      minInclusive: "0",
+      maxExclusive: "10",
+    }),
+  ];
+
   const hydrateBands = (row: GradingSchemeResponse) => {
     setScalesDraft(
       row.appreciationScales.length > 0
         ? row.appreciationScales.map(toScaleDraft)
-        : [
-            {
-              key: newKey(),
-              code: "LETTER",
-              bands: [
-                emptyBand({ code: "A", labelFr: "A", labelEn: "A", minInclusive: "16", maxExclusive: "" }),
-                emptyBand({
-                  code: "B+",
-                  labelFr: "B+",
-                  labelEn: "B+",
-                  minInclusive: "14",
-                  maxExclusive: "16",
-                }),
-                emptyBand({
-                  code: "B",
-                  labelFr: "B",
-                  labelEn: "B",
-                  minInclusive: "12",
-                  maxExclusive: "14",
-                }),
-                emptyBand({
-                  code: "C",
-                  labelFr: "C",
-                  labelEn: "C",
-                  minInclusive: "0",
-                  maxExclusive: "12",
-                }),
-              ],
-            },
-          ],
+        : defaultScalesDraft(),
     );
     setMentionsDraft(
       row.overallMentionBands.length > 0
         ? row.overallMentionBands.map(toBandDraft)
-        : [emptyBand({ code: "PASSABLE", minInclusive: "10", maxExclusive: "12" })],
+        : defaultMentionsDraft(),
     );
   };
 
@@ -236,8 +288,8 @@ export function GradingSchemePanel({
       setReportSheetMaxRowsPerPage("45");
       setReportSheetAppreciationScaleCode("LETTER");
       setActive(true);
-      setScalesDraft([]);
-      setMentionsDraft([]);
+      setScalesDraft(defaultScalesDraft());
+      setMentionsDraft(defaultMentionsDraft());
       return;
     }
 
@@ -289,16 +341,20 @@ export function GradingSchemePanel({
         : t("schemePanel.viewTitle");
 
   const scaleOptions = useMemo(() => {
-    const codes =
-      panelMode === "edit"
-        ? scalesDraft.map((s) => s.code.trim().toUpperCase()).filter(Boolean)
-        : (scheme?.appreciationScales.map((s) => s.code) ?? []);
+    const codes = editable
+      ? scalesDraft.map((s) => s.code.trim().toUpperCase()).filter(Boolean)
+      : (scheme?.appreciationScales.map((s) => s.code) ?? []);
     if (reportSheetAppreciationScaleCode && !codes.includes(reportSheetAppreciationScaleCode)) {
       codes.push(reportSheetAppreciationScaleCode);
     }
     if (codes.length === 0) return ["LETTER"];
     return codes;
-  }, [panelMode, reportSheetAppreciationScaleCode, scalesDraft, scheme?.appreciationScales]);
+  }, [
+    editable,
+    reportSheetAppreciationScaleCode,
+    scalesDraft,
+    scheme?.appreciationScales,
+  ]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -312,33 +368,11 @@ export function GradingSchemePanel({
       return;
     }
 
-    if (panelMode === "create") {
-      const trimmedCode = code.trim().toUpperCase();
-      if (!trimmedCode) {
-        setFormError(t("schemePanel.codeRequired"));
-        return;
-      }
-      setSaving(true);
-      try {
-        const created = await createGradingScheme({
-          code: trimmedCode,
-          name: { fr: fr || en, en: en || fr },
-          schoolId,
-        });
-        notify.success(t("schemePanel.createSuccess"));
-        onSaved(created);
-        onClose();
-      } catch (error) {
-        if (isAuthFailure(error)) return;
-        if (error instanceof ApiError) setFormError(error.message);
-        else setFormError(t("schemePanel.saveError"));
-      } finally {
-        setSaving(false);
-      }
+    const trimmedCode = code.trim().toUpperCase();
+    if (panelMode === "create" && !trimmedCode) {
+      setFormError(t("schemePanel.codeRequired"));
       return;
     }
-
-    if (!schemeId) return;
 
     const maxScoreN = parseDecimal(maxScore);
     const passMarkN = parseDecimal(passMark);
@@ -392,32 +426,47 @@ export function GradingSchemePanel({
       return;
     }
 
+    const sharedFields = {
+      name: { fr: fr || en, en: en || fr },
+      maxScore: maxScoreN,
+      passMark: passMarkN,
+      classSuccessThreshold: classSuccessN,
+      decimals: decimalsN,
+      honourRollMinAverage: honourN,
+      honourRollBlockedBySanction,
+      effortSubjectThreshold: effortN,
+      reportSheetDeadlineHours: deadlineN,
+      reportSheetDeadlineBlocking,
+      reportSheetMaxRowsPerPage: rowsN,
+      reportSheetAppreciationScaleCode,
+      appreciationScales,
+      overallMentionBands,
+      active,
+      schoolId,
+    };
+
     setSaving(true);
     try {
-      const updated = await updateGradingScheme(schemeId, {
-        name: { fr: fr || en, en: en || fr },
-        maxScore: maxScoreN,
-        passMark: passMarkN,
-        classSuccessThreshold: classSuccessN,
-        decimals: decimalsN,
-        honourRollMinAverage: honourN,
-        honourRollBlockedBySanction,
-        effortSubjectThreshold: effortN ?? undefined,
-        clearEffortSubjectThreshold: !effortRaw,
-        reportSheetDeadlineHours: deadlineN,
-        reportSheetDeadlineBlocking,
-        reportSheetMaxRowsPerPage: rowsN,
-        reportSheetAppreciationScaleCode,
-        appreciationScales,
-        overallMentionBands,
-        active,
-        schoolId,
-      });
-      notify.success(t("schemePanel.updateSuccess"));
-      onSaved(updated);
-      setScheme(updated);
-      hydrateBands(updated);
-      setPanelMode("view");
+      if (panelMode === "create") {
+        const created = await createGradingScheme({
+          code: trimmedCode,
+          ...sharedFields,
+        });
+        notify.success(t("schemePanel.createSuccess"));
+        onSaved(created);
+        onClose();
+      } else {
+        if (!schemeId) return;
+        const updated = await updateGradingScheme(schemeId, {
+          ...sharedFields,
+          clearEffortSubjectThreshold: !effortRaw,
+        });
+        notify.success(t("schemePanel.updateSuccess"));
+        onSaved(updated);
+        setScheme(updated);
+        hydrateBands(updated);
+        setPanelMode("view");
+      }
     } catch (error) {
       if (isAuthFailure(error)) return;
       if (error instanceof ApiError) setFormError(error.message);
@@ -461,15 +510,11 @@ export function GradingSchemePanel({
               </p>
             </div>
           </div>
-          <button
-            type="button"
+          <DialogCloseButton
             aria-label={tCommon("cancel")}
             disabled={saving}
             onClick={onClose}
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--ios-secondary-label)] transition-colors hover:bg-[var(--ios-fill)] hover:text-[var(--ios-label)] disabled:opacity-50"
-          >
-            <X className="size-4 stroke-[1.75]" aria-hidden />
-          </button>
+          />
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
@@ -489,16 +534,59 @@ export function GradingSchemePanel({
                   />
                 </Field>
               ) : scheme ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] border border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_28%,var(--ios-card))] px-3.5 py-2.5">
-                  <p className="font-mono text-[12px] text-[var(--ios-secondary-label)]">
-                    {scheme.code}
-                  </p>
-                  <Badge tone={active ? "success" : "neutral"}>
-                    {active ? t("statusActive") : t("inactive")}
-                  </Badge>
-                  <span className="text-[11px] text-[var(--ios-tertiary-label)]">
-                    {t("schemePanel.rounding", { policy: scheme.roundingPolicy })}
-                  </span>
+                <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+                  <div className="flex items-center gap-3.5 px-4 py-3.5">
+                    <div
+                      className={cn(
+                        "flex size-14 shrink-0 items-center justify-center rounded-[var(--radius-md)] ring-1",
+                        active
+                          ? "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)] ring-[color-mix(in_srgb,var(--ios-warning)_22%,transparent)]"
+                          : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)] ring-[color-mix(in_srgb,var(--ios-separator)_70%,transparent)]",
+                      )}
+                      aria-hidden
+                    >
+                      <Scale className="size-5 stroke-[1.75]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-mono text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                        {scheme.code}
+                      </p>
+                      <p className="mt-0.5 truncate text-[12px] text-[var(--ios-secondary-label)]">
+                        {localizedLabel(scheme.name, locale)}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <Badge tone={active ? "success" : "neutral"}>
+                          {active ? t("statusActive") : t("inactive")}
+                        </Badge>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--ios-fill)_55%,transparent)] px-2 py-0.5 text-[10px] font-medium text-[var(--ios-secondary-label)]">
+                          <Sigma className="size-3 stroke-[1.75]" aria-hidden />
+                          {scheme.roundingPolicy}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_20%,var(--ios-card))]">
+                    <div className="border-r border-[var(--ios-separator)]/55 px-4 py-2.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--ios-tertiary-label)]">
+                        {t("schemePanel.passMark")}
+                      </p>
+                      <p className="mt-0.5 text-[13px] font-semibold tabular-nums text-[var(--ios-label)]">
+                        {String(scheme.passMark)}
+                        <span className="text-[11px] font-medium text-[var(--ios-tertiary-label)]">
+                          {" "}
+                          / {String(scheme.maxScore)}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="px-4 py-2.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--ios-tertiary-label)]">
+                        {t("schemePanel.roundingLabel")}
+                      </p>
+                      <p className="mt-0.5 text-[13px] font-semibold text-[var(--ios-label)]">
+                        {scheme.roundingPolicy}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ) : null}
 
@@ -521,68 +609,105 @@ export function GradingSchemePanel({
                 </Field>
               </div>
 
-              {panelMode !== "create" ? (
-                <>
+              <>
                   <div>
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
-                      {t("schemePanel.thresholdsSection")}
-                    </p>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Field id="scheme-max" label={t("schemePanel.maxScore")}>
-                        <Input
+                    <div className="mb-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                        {t("schemePanel.thresholdsSection")}
+                      </p>
+                      <p className="mt-1 text-[11px] leading-snug text-[var(--ios-tertiary-label)]">
+                        {t("schemePanel.thresholdsHint")}
+                      </p>
+                    </div>
+
+                    <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+                      <div className="border-b border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-3.5 py-2">
+                        <p className="text-[11px] font-semibold tracking-[-0.01em] text-[var(--ios-secondary-label)]">
+                          {t("schemePanel.scoringGroup")}
+                        </p>
+                      </div>
+                      <div className="grid gap-0 sm:grid-cols-2">
+                        <ThresholdField
                           id="scheme-max"
-                          inputMode="decimal"
+                          label={t("schemePanel.maxScore")}
+                          hint={t("schemePanel.maxScoreHint")}
+                          icon={<Gauge className="size-3.5 stroke-[1.75]" aria-hidden />}
+                          tone="blue"
                           value={maxScore}
-                          onChange={(e) => setMaxScore(e.target.value)}
+                          onChange={setMaxScore}
                           disabled={!editable || saving}
+                          inputMode="decimal"
+                          borderRight
                         />
-                      </Field>
-                      <Field id="scheme-pass" label={t("schemePanel.passMark")}>
-                        <Input
+                        <ThresholdField
                           id="scheme-pass"
-                          inputMode="decimal"
+                          label={t("schemePanel.passMark")}
+                          hint={t("schemePanel.passMarkHint")}
+                          icon={<Target className="size-3.5 stroke-[1.75]" aria-hidden />}
+                          tone="green"
                           value={passMark}
-                          onChange={(e) => setPassMark(e.target.value)}
+                          onChange={setPassMark}
                           disabled={!editable || saving}
+                          inputMode="decimal"
                         />
-                      </Field>
-                      <Field id="scheme-success" label={t("schemePanel.classSuccess")}>
-                        <Input
+                      </div>
+
+                      <div className="border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-3.5 py-2">
+                        <p className="text-[11px] font-semibold tracking-[-0.01em] text-[var(--ios-secondary-label)]">
+                          {t("schemePanel.classGroup")}
+                        </p>
+                      </div>
+                      <div className="grid gap-0 sm:grid-cols-2">
+                        <ThresholdField
                           id="scheme-success"
-                          inputMode="decimal"
+                          label={t("schemePanel.classSuccess")}
+                          hint={t("schemePanel.classSuccessHint")}
+                          icon={<TrendingUp className="size-3.5 stroke-[1.75]" aria-hidden />}
+                          tone="amber"
                           value={classSuccessThreshold}
-                          onChange={(e) => setClassSuccessThreshold(e.target.value)}
+                          onChange={setClassSuccessThreshold}
                           disabled={!editable || saving}
+                          inputMode="decimal"
+                          borderRight
+                          borderBottom
                         />
-                      </Field>
-                      <Field id="scheme-decimals" label={t("schemePanel.decimals")}>
-                        <Input
+                        <ThresholdField
                           id="scheme-decimals"
-                          inputMode="numeric"
+                          label={t("schemePanel.decimals")}
+                          hint={t("schemePanel.decimalsHint")}
+                          icon={<Hash className="size-3.5 stroke-[1.75]" aria-hidden />}
+                          tone="slate"
                           value={decimals}
-                          onChange={(e) => setDecimals(e.target.value)}
+                          onChange={setDecimals}
                           disabled={!editable || saving}
+                          inputMode="numeric"
+                          borderBottom
                         />
-                      </Field>
-                      <Field id="scheme-honour" label={t("schemePanel.honourRoll")}>
-                        <Input
+                        <ThresholdField
                           id="scheme-honour"
-                          inputMode="decimal"
+                          label={t("schemePanel.honourRoll")}
+                          hint={t("schemePanel.honourRollHint")}
+                          icon={<Award className="size-3.5 stroke-[1.75]" aria-hidden />}
+                          tone="warning"
                           value={honourRollMinAverage}
-                          onChange={(e) => setHonourRollMinAverage(e.target.value)}
+                          onChange={setHonourRollMinAverage}
                           disabled={!editable || saving}
-                        />
-                      </Field>
-                      <Field id="scheme-effort" label={t("schemePanel.effortThreshold")}>
-                        <Input
-                          id="scheme-effort"
                           inputMode="decimal"
+                          borderRight
+                        />
+                        <ThresholdField
+                          id="scheme-effort"
+                          label={t("schemePanel.effortThreshold")}
+                          hint={t("schemePanel.effortThresholdHint")}
+                          icon={<CircleAlert className="size-3.5 stroke-[1.75]" aria-hidden />}
+                          tone="danger"
                           value={effortSubjectThreshold}
-                          onChange={(e) => setEffortSubjectThreshold(e.target.value)}
+                          onChange={setEffortSubjectThreshold}
                           disabled={!editable || saving}
+                          inputMode="decimal"
                           placeholder={t("schemePanel.effortEmpty")}
                         />
-                      </Field>
+                      </div>
                     </div>
                   </div>
 
@@ -695,7 +820,7 @@ export function GradingSchemePanel({
                       <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
                         {t("schemePanel.scalesSection")}
                       </p>
-                      {panelMode === "edit" ? (
+                      {editable ? (
                         <Button
                           type="button"
                           size="sm"
@@ -720,7 +845,7 @@ export function GradingSchemePanel({
                     <p className="mb-2 text-[11px] leading-snug text-[var(--ios-secondary-label)]">
                       {t("schemePanel.bandsHint")}
                     </p>
-                    {panelMode === "edit" ? (
+                    {editable ? (
                       <div className="space-y-3">
                         {scalesDraft.map((scale, scaleIndex) => (
                           <div
@@ -833,7 +958,7 @@ export function GradingSchemePanel({
                     <p className="mb-2 text-[11px] leading-snug text-[var(--ios-secondary-label)]">
                       {t("schemePanel.mentionsHint")}
                     </p>
-                    {panelMode === "edit" ? (
+                    {editable ? (
                       <div className="rounded-[var(--radius-md)] border border-[var(--ios-separator)]/55 px-3 py-3">
                         <BandDraftEditor
                           bands={mentionsDraft}
@@ -873,12 +998,7 @@ export function GradingSchemePanel({
                       </p>
                     )}
                   </div>
-                </>
-              ) : (
-                <p className="text-[12px] leading-relaxed text-[var(--ios-secondary-label)]">
-                  {t("schemePanel.createDefaultsHint")}
-                </p>
-              )}
+              </>
 
               {formError ? (
                 <p className="text-[12px] text-[var(--ios-danger)]" role="alert">
@@ -894,7 +1014,13 @@ export function GradingSchemePanel({
             "flex flex-col-reverse gap-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-5 py-4 sm:flex-row sm:justify-end",
           )}
         >
-          <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>
+          <Button
+            type="button"
+            variant="ghostDestructive"
+            className="!text-[var(--ios-danger)] hover:!bg-[var(--ios-danger-soft)]"
+            disabled={saving}
+            onClick={onClose}
+          >
             {tCommon("cancel")}
           </Button>
           {panelMode === "view" && canManage ? (
@@ -919,6 +1045,86 @@ export function GradingSchemePanel({
       </form>
     </div>,
     document.body,
+  );
+}
+
+function ThresholdField({
+  id,
+  label,
+  hint,
+  icon,
+  tone,
+  value,
+  onChange,
+  disabled,
+  inputMode,
+  placeholder,
+  borderRight,
+  borderBottom,
+}: {
+  id: string;
+  label: string;
+  hint: string;
+  icon: ReactNode;
+  tone: "blue" | "green" | "amber" | "slate" | "warning" | "danger";
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  inputMode?: "decimal" | "numeric";
+  placeholder?: string;
+  borderRight?: boolean;
+  borderBottom?: boolean;
+}) {
+  const toneClass =
+    tone === "blue"
+      ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
+      : tone === "green"
+        ? "bg-[var(--ios-success-soft)] text-[var(--ios-success)]"
+        : tone === "amber" || tone === "warning"
+          ? "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]"
+          : tone === "danger"
+            ? "bg-[var(--ios-danger-soft)] text-[var(--ios-danger)]"
+            : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]";
+
+  return (
+    <div
+      className={cn(
+        "px-3.5 py-3",
+        borderRight && "sm:border-r sm:border-[var(--ios-separator)]/55",
+        borderBottom && "border-b border-[var(--ios-separator)]/55",
+      )}
+    >
+      <div className="mb-2 flex items-start gap-2.5">
+        <span
+          className={cn(
+            "mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full",
+            toneClass,
+          )}
+        >
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <label
+            htmlFor={id}
+            className="block text-[12px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]"
+          >
+            {label}
+          </label>
+          <p className="mt-0.5 text-[10px] leading-snug text-[var(--ios-tertiary-label)]">
+            {hint}
+          </p>
+        </div>
+      </div>
+      <Input
+        id={id}
+        inputMode={inputMode}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        placeholder={placeholder}
+        className="h-[var(--control-height-sm)] tabular-nums"
+      />
+    </div>
   );
 }
 
