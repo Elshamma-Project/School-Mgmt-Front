@@ -12,9 +12,6 @@ export type GradesTab = (typeof GRADES_TABS)[number];
 export const TIMETABLE_TABS = ["overview", "rooms"] as const;
 export type TimetableTab = (typeof TIMETABLE_TABS)[number];
 
-export const ADMIN_ACCOUNTS_TABS = ["overview"] as const;
-export type AdminAccountsTab = (typeof ADMIN_ACCOUNTS_TABS)[number];
-
 function parseTab<T extends string>(
   value: string | null | undefined,
   allowed: readonly T[],

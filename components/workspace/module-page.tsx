@@ -8,7 +8,6 @@ import {
   FileSpreadsheet,
   GraduationCap,
   Shield,
-  UserRound,
   Users,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
