@@ -8,6 +8,7 @@ import {
   Gauge,
   Hash,
   Plus,
+  RefreshCw,
   Scale,
   Sigma,
   Target,
@@ -21,6 +22,7 @@ import { DialogCloseButton } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { localizedLabel } from "@/lib/api/academic";
 import {
@@ -158,6 +160,8 @@ export function GradingSchemePanel({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [scheme, setScheme] = useState<GradingSchemeResponse | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadTick, setLoadTick] = useState(0);
   const [panelMode, setPanelMode] = useState<SchemePanelMode>(mode);
 
   const [code, setCode] = useState("");
@@ -270,8 +274,10 @@ export function GradingSchemePanel({
     if (!open) return;
     setPanelMode(mode);
     setFormError(null);
+    setLoadError(null);
 
     if (mode === "create") {
+      setLoading(false);
       setScheme(null);
       setCode("");
       setNameFr("");
@@ -293,12 +299,20 @@ export function GradingSchemePanel({
       return;
     }
 
-    if (!schemeId) return;
+    if (!schemeId) {
+      setLoading(false);
+      setScheme(null);
+      setLoadError(t("schemePanel.notFoundHint"));
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
+    setScheme(null);
     void getGradingScheme(schemeId, schoolId)
       .then((row) => {
         if (cancelled) return;
+        setLoadError(null);
         setScheme(row);
         setCode(row.code);
         setNameFr(row.name.fr ?? "");
@@ -319,9 +333,12 @@ export function GradingSchemePanel({
       })
       .catch((error) => {
         if (cancelled || isAuthFailure(error)) return;
-        if (error instanceof ApiError) notify.error(error.message);
-        else notify.error(t("schemePanel.loadError"));
-        onClose();
+        setScheme(null);
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : t("schemePanel.loadError");
+        setLoadError(message);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -330,7 +347,9 @@ export function GradingSchemePanel({
     return () => {
       cancelled = true;
     };
-  }, [mode, onClose, open, schemeId, schoolId, t]);
+  }, [loadTick, mode, open, schemeId, schoolId, t]);
+
+  const showLoadFailure = panelMode !== "create" && !loading && (!scheme || Boolean(loadError));
 
   const editable = panelMode === "create" || panelMode === "edit";
   const title =
@@ -504,9 +523,11 @@ export function GradingSchemePanel({
               <p className="mt-0.5 truncate text-[12px] text-[var(--ios-secondary-label)]">
                 {panelMode === "create"
                   ? t("schemePanel.createHint")
-                  : scheme
-                    ? `${scheme.code} · ${localizedLabel(scheme.name, locale)}`
-                    : tCommon("loading")}
+                  : loading
+                    ? t("schemePanel.loadingHint")
+                    : scheme
+                      ? `${scheme.code} · ${localizedLabel(scheme.name, locale)}`
+                      : t("schemePanel.notFoundTitle")}
               </p>
             </div>
           </div>
@@ -519,7 +540,39 @@ export function GradingSchemePanel({
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {loading ? (
-            <p className="text-[13px] text-[var(--ios-secondary-label)]">{tCommon("loading")}</p>
+            <SchemePanelLoadingState
+              title={t("schemePanel.loadingTitle")}
+              hint={t("schemePanel.loadingHint")}
+            />
+          ) : showLoadFailure ? (
+            <div className="flex flex-col items-center px-2 py-8 text-center">
+              <span
+                className="mb-3 inline-flex size-12 items-center justify-center rounded-full bg-[var(--ios-danger-soft)] text-[var(--ios-danger)]"
+                aria-hidden
+              >
+                <CircleAlert className="size-5 stroke-[1.75]" />
+              </span>
+              <p className="text-[15px] font-semibold tracking-[-0.015em] text-[var(--ios-label)]">
+                {t("schemePanel.notFoundTitle")}
+              </p>
+              <p className="mt-1.5 max-w-sm text-[12px] leading-relaxed text-[var(--ios-secondary-label)]">
+                {loadError?.trim()
+                  ? `${loadError.trim()} — ${t("schemePanel.loadErrorHint")}`
+                  : t("schemePanel.notFoundHint")}
+              </p>
+              <div className="mt-4 flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
+                <Button type="button" variant="secondary" onClick={onClose}>
+                  {tCommon("cancel")}
+                </Button>
+                <Button
+                  type="button"
+                  leadingIcon={<RefreshCw className="size-3.5" aria-hidden />}
+                  onClick={() => setLoadTick((n) => n + 1)}
+                >
+                  {t("schemePanel.retry")}
+                </Button>
+              </div>
+            </div>
           ) : (
             <>
               {panelMode === "create" ? (
@@ -1023,11 +1076,11 @@ export function GradingSchemePanel({
           >
             {tCommon("cancel")}
           </Button>
-          {panelMode === "view" && canManage ? (
+          {!showLoadFailure && panelMode === "view" && canManage ? (
             <Button
               type="button"
               variant="secondary"
-              disabled={loading || saving}
+              disabled={loading || saving || !scheme}
               onClick={() => {
                 if (scheme) hydrateBands(scheme);
                 setPanelMode("edit");
@@ -1036,7 +1089,7 @@ export function GradingSchemePanel({
               {tCommon("edit")}
             </Button>
           ) : null}
-          {editable && canManage ? (
+          {!showLoadFailure && editable && canManage ? (
             <Button type="submit" disabled={loading || saving}>
               {saving ? tCommon("loading") : tCommon("save")}
             </Button>
@@ -1045,6 +1098,53 @@ export function GradingSchemePanel({
       </form>
     </div>,
     document.body,
+  );
+}
+
+function SchemePanelLoadingState({ title, hint }: { title: string; hint: string }) {
+  return (
+    <div className="space-y-4" role="status" aria-live="polite" aria-busy="true">
+      <div className="flex items-start gap-3">
+        <Skeleton className="size-11 shrink-0 rounded-full" />
+        <div className="min-w-0 flex-1 space-y-2 pt-1">
+          <p className="text-[13px] font-semibold text-[var(--ios-label)]">{title}</p>
+          <p className="text-[11px] leading-snug text-[var(--ios-secondary-label)]">{hint}</p>
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55">
+        <div className="flex items-center gap-3.5 px-4 py-3.5">
+          <Skeleton className="size-14 shrink-0 rounded-[var(--radius-md)]" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-3.5 w-1/3" />
+            <Skeleton className="h-3 w-1/2" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-[var(--ios-separator)]/55">
+          <div className="space-y-2 border-r border-[var(--ios-separator)]/55 px-4 py-3">
+            <Skeleton className="h-2.5 w-16" />
+            <Skeleton className="h-3.5 w-20" />
+          </div>
+          <div className="space-y-2 px-4 py-3">
+            <Skeleton className="h-2.5 w-16" />
+            <Skeleton className="h-3.5 w-24" />
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Skeleton className="h-[var(--control-height-md)] w-full rounded-[var(--radius-md)]" />
+        <Skeleton className="h-[var(--control-height-md)] w-full rounded-[var(--radius-md)]" />
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <Skeleton className="h-16 rounded-[var(--radius-md)]" />
+        <Skeleton className="h-16 rounded-[var(--radius-md)]" />
+        <Skeleton className="h-16 rounded-[var(--radius-md)]" />
+        <Skeleton className="h-16 rounded-[var(--radius-md)]" />
+        <Skeleton className="h-16 rounded-[var(--radius-md)]" />
+        <Skeleton className="h-16 rounded-[var(--radius-md)]" />
+      </div>
+      <span className="sr-only">{title}</span>
+    </div>
   );
 }
 

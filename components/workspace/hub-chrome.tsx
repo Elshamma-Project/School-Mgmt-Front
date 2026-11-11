@@ -98,6 +98,8 @@ type HubToolbarProps = {
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
+  /** Masque le champ recherche (ex. déjà dans une carte d’action). */
+  hideSearch?: boolean;
   addLabel?: string;
   onAdd?: () => void;
   trailing?: ReactNode;
@@ -111,11 +113,13 @@ export function HubToolbar({
   searchValue,
   onSearchChange,
   searchPlaceholder,
+  hideSearch = false,
   addLabel,
   onAdd,
   trailing,
 }: HubToolbarProps) {
   const tCommon = useTranslations("common");
+  const showAside = !hideSearch || Boolean(trailing) || Boolean(addLabel && onAdd);
 
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
@@ -150,28 +154,32 @@ export function HubToolbar({
         })}
       </nav>
 
-      <div className="flex items-center gap-2 sm:gap-2.5">
-        <div className="min-w-0 flex-1 lg:w-[220px] lg:flex-none">
-          <IconInput
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder}
-            icon={<Search className="size-4 stroke-[1.75]" />}
-            aria-label={tCommon("search")}
-          />
+      {showAside ? (
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {!hideSearch ? (
+            <div className="min-w-0 flex-1 lg:w-[220px] lg:flex-none">
+              <IconInput
+                value={searchValue}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder={searchPlaceholder}
+                icon={<Search className="size-4 stroke-[1.75]" />}
+                aria-label={tCommon("search")}
+              />
+            </div>
+          ) : null}
+          {trailing}
+          {addLabel && onAdd ? (
+            <Button
+              type="button"
+              className="shrink-0"
+              leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
+              onClick={onAdd}
+            >
+              {addLabel}
+            </Button>
+          ) : null}
         </div>
-        {trailing}
-        {addLabel && onAdd ? (
-          <Button
-            type="button"
-            className="shrink-0"
-            leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
-            onClick={onAdd}
-          >
-            {addLabel}
-          </Button>
-        ) : null}
-      </div>
+      ) : null}
     </div>
   );
 }

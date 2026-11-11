@@ -7,7 +7,7 @@ import {
   ClipboardList,
   FileSpreadsheet,
   GraduationCap,
-  Shield,
+  Layers,
   Users,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -32,11 +32,11 @@ const MODULE_ICONS = {
   directorStudents: GraduationCap,
   directorStaff: Users,
   directorAcademic: BookOpen,
-  directorSequences: Shield,
+  directorSequences: ClipboardList,
   directorReporting: FileSpreadsheet,
   directorTimetable: CalendarDays,
   superSchools: Building2,
-  superPlatform: Shield,
+  superPlatform: Layers,
   superAudit: ClipboardList,
   studentGrades: ClipboardList,
   studentReportCards: FileSpreadsheet,

@@ -136,7 +136,7 @@
     "manageAbsences": "Absences, retards, sanctions",
     "reopenClosedSequence": "Rouvrir une séquence clôturée",
     "manageAdminAccounts": "Comptes d’administration",
-    "manageGradeTemplates": "Barèmes et gabarits",
+    "manageGradeTemplates": "Barèmes et modèles",
     "viewAuditJournal": "Journal d’audit",
     "managePlatform": "Plateforme multi-écoles"
   },
@@ -822,7 +822,7 @@
       "empty": "Module séquences — fondations prêtes."
     },
     "directorReporting": {
-      "description": "Bulletins, gabarits et barèmes.",
+      "description": "Bulletins, modèles et barèmes.",
       "empty": "Module reporting (direction)."
     },
     "directorTimetable": {
@@ -931,7 +931,7 @@
     "tabsNav": "Reporting",
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire configurée",
-    "yearHint": "Les gabarits de bulletins sont liés à l’établissement ; la génération suit l’année.",
+    "yearHint": "Les modèles de bulletins sont liés à l’établissement ; la génération suit l’année.",
     "yearLockedBadge": "Lecture seule",
     "yearLockedHint": "Année terminée : consultation des bulletins possible, pas de nouvelles saisies liées à l’année.",
     "yearStatus": {
@@ -943,16 +943,16 @@
     "statusActive": "Actif",
     "inactive": "Inactif",
     "loadError": "Impossible de charger le reporting.",
-    "tableCount": "{count, plural, one {# gabarit affiché} other {# gabarits affichés}}",
+    "tableCount": "{count, plural, one {# modèle affiché} other {# modèles affichés}}",
     "stats": {
-      "templates": "Gabarits",
+      "templates": "Modèles",
       "active": "Actifs",
       "annual": "Annuels",
       "term": "Trimestres",
       "cards": "Bulletins"
     },
     "tabs": {
-      "templates": "Gabarits",
+      "templates": "Modèles",
       "bulletins": "Bulletins",
       "reviews": "Revues"
     },
@@ -970,10 +970,15 @@
       "rank": "Rang",
       "actions": "Actions"
     },
+    "periodAnnual": "Annuel",
+    "periodTerm": "Trimestre",
+    "periodOther": "{type}",
+    "templateMeta": "{code} · {count, plural, one {# évaluation} other {# évaluations}}",
+    "openTemplate": "Ouvrir",
     "empty": {
       "templates": {
-        "title": "Aucun gabarit",
-        "description": "Les gabarits annuel et trimestriel sont créés automatiquement à l’ouverture du module."
+        "title": "Aucun modèle",
+        "description": "Les modèles annuel et trimestriel sont créés automatiquement à l’ouverture du module."
       },
       "bulletins": {
         "title": "Aucun bulletin",
@@ -985,9 +990,9 @@
       }
     },
     "templates": {
-      "back": "Retour aux gabarits",
-      "loadError": "Impossible de charger le gabarit.",
-      "notFound": "Gabarit introuvable",
+      "back": "Retour aux modèles",
+      "loadError": "Impossible de charger le modèle.",
+      "notFound": "Modèle introuvable",
       "downloadPdf": "Télécharger le PDF",
       "pdfSuccess": "PDF téléchargé",
       "pdfError": "Téléchargement PDF impossible.",
@@ -995,10 +1000,14 @@
     },
     "cardsCount": "{count, plural, one {# bulletin} other {# bulletins}}",
     "generate": {
-      "action": "Générer (annuel)",
+      "action": "Générer",
+      "actionFull": "Générer les bulletins annuels",
       "running": "Génération…",
       "class": "Classe",
-      "noClass": "Aucune classe",
+      "classHint": "Choisissez la classe à traiter",
+      "noClass": "Aucune classe disponible",
+      "noClassHint": "Créez ou activez une classe pour cette année scolaire.",
+      "periodBadge": "Annuel",
       "success": "{count, plural, one {# bulletin généré} other {# bulletins générés}}",
       "error": "Génération impossible."
     },
@@ -1064,16 +1073,27 @@
     "sessionAction": {
       "openTitle": "Ouvrir la session",
       "openDescription": "Les enseignants pourront saisir les notes de cette séquence pour l’année courante.",
-      "openConfirm": "Ouvrir la session",
+      "openConfirm": "Ouvrir",
       "openSuccess": "Session ouverte",
       "closeTitle": "Clôturer la session",
       "closeDescription": "La saisie enseignant sera bloquée. L’administration pourra encore corriger avec un motif.",
-      "closeConfirm": "Clôturer la session",
+      "closeConfirm": "Clôturer",
       "closeSuccess": "Session clôturée",
       "reopenTitle": "Rouvrir la session",
       "reopenDescription": "Réouverture exceptionnelle réservée au directeur. Un motif est obligatoire.",
-      "reopenConfirm": "Rouvrir la session",
+      "reopenConfirm": "Rouvrir",
       "reopenSuccess": "Session rouverte",
+      "examDateTitle": "Calendrier de la séquence",
+      "examDateDescription": "Définissez la date d’examen, la période et le délai de saisie des notes.",
+      "examDateConfirm": "Enregistrer",
+      "examDateSuccess": "Calendrier enregistré",
+      "examDateRequired": "Indiquez au moins la date d’examen.",
+      "examDateEdit": "Paramètres",
+      "startDateLabel": "Début de période",
+      "endDateLabel": "Fin de période",
+      "entryDeadlineLabel": "Délai de saisie",
+      "setExamHint": "Cliquer pour définir",
+      "noAction": "Aucune action",
       "panelHint": "Année {year}",
       "termLabel": "Trimestre {term}",
       "examLabel": "Examen",
@@ -1083,10 +1103,26 @@
       "reasonRequired": "Le motif est obligatoire pour rouvrir une session.",
       "forbidden": "Vous n’avez pas le droit de modifier cette session.",
       "reopenForbidden": "Seul le directeur peut rouvrir une session clôturée.",
+      "yearLocked": "Année en lecture seule : aucune modification de session.",
       "error": "Action impossible sur cette session."
     },
-    "schemeAdd": "Nouveau barème",
+    "schemeAdd": "Créer",
+    "schemeAddFull": "Créer un nouveau barème",
+    "schemeCardTitle": "Barèmes de notation",
+    "schemeCardHint": "Définissez seuils, mentions et échelles utilisés sur les bulletins.",
     "schemeManageHint": "Création et modification réservées au directeur.",
+    "sessionCardTitle": "Séquences d’évaluation",
+    "sessionCardHint": "Les 6 séquences (DEV1–DEV6) sont créées pour l’année, puis ouvertes une par une.",
+    "sessionEnsure": "Initialiser",
+    "sessionEnsureFull": "Créer les 6 séquences de l’année",
+    "sessionEnsureRunning": "Initialisation…",
+    "sessionEnsureSuccess": "{count, plural, one {# séquence prête} other {# séquences prêtes}}",
+    "sessionEnsureError": "Impossible d’initialiser les séquences.",
+    "sessionEnsureHint": "Aucune séquence pour cette année. Initialisez-les pour ouvrir la saisie des notes.",
+    "sessionManageHint": "Seul l’administration / le directeur peut initialiser ou ouvrir les séquences.",
+    "auditCardTitle": "Journal d’audit",
+    "auditCardHint": "Historique des corrections de notes (BR-18) : action, cible et acteur.",
+    "auditSearchLabel": "Filtrer",
     "schemePanel": {
       "createTitle": "Nouveau barème",
       "editTitle": "Modifier le barème",
@@ -1148,6 +1184,12 @@
       "createSuccess": "Barème créé",
       "updateSuccess": "Barème enregistré",
       "loadError": "Impossible de charger le barème.",
+      "loadingTitle": "Chargement du barème",
+      "loadingHint": "Récupération des seuils, mentions et échelles…",
+      "notFoundTitle": "Barème introuvable",
+      "notFoundHint": "Ce barème n’existe plus, a été supprimé, ou vous n’y avez pas accès. Revenez à la liste ou réessayez.",
+      "loadErrorHint": "La connexion ou le serveur a échoué. Vérifiez votre réseau puis réessayez.",
+      "retry": "Réessayer",
       "saveError": "Enregistrement du barème impossible.",
       "invalidNumbers": "Vérifiez les valeurs numériques.",
       "passMarkTooHigh": "Le seuil de réussite ne peut pas dépasser la note max.",
@@ -1155,8 +1197,8 @@
     },
     "empty": {
       "sessions": {
-        "title": "Aucune session",
-        "description": "Ouvrez les séquences d’évaluation de l’année courante."
+        "title": "Aucune séquence",
+        "description": "Initialisez les 6 séquences de l’année courante, puis ouvrez-les pour la saisie."
       },
       "schemes": {
         "title": "Aucun barème",

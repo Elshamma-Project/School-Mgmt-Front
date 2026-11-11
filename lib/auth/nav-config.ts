@@ -9,8 +9,8 @@ import {
   GraduationCap,
   Home,
   LayoutDashboard,
+  Layers,
   Settings,
-  Shield,
   Users,
 } from "lucide-react";
 import {
@@ -203,7 +203,7 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
         item(
           `${home}/sequences`,
           "sequences",
-          Shield,
+          ClipboardList,
           gradesNavChildren(home, "sequences"),
         ),
         item(`${home}/reporting`, "reporting", FileSpreadsheet, reportingNavChildren(home)),
@@ -214,7 +214,7 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
       return [
         item(home, "home", LayoutDashboard),
         item(`${home}/schools`, "schools", Building2),
-        item(`${home}/platform`, "platform", Shield),
+        item(`${home}/platform`, "platform", Layers),
         item(`${home}/audit`, "audit", ClipboardList),
         ...sharedTail,
       ];

@@ -13,15 +13,15 @@ title:
 
 ### Année scolaire
 
-Les gabarits et bulletins s’appuient sur l’année courante et les notes de séquence.
+Les modèles et bulletins s’appuient sur l’année courante et les notes de séquence.
 
 ### Génération
 
 Les bulletins se génèrent dans les deux langues ; la langue de la section est prioritaire. Un bulletin tient sur une page A4.
 
-### Aperçu d’un gabarit
+### Aperçu d’un modèle
 
-Cliquez un gabarit (annuel ou trimestriel) pour ouvrir son aperçu A4 (une page) selon la maquette KOBE : en-tête bilingue, tableau des notes, bandeaux et visas. Les données affichées sont des données démo anonymisées. Téléchargez le PDF pour valider le rendu réel.
+Cliquez un modèle (annuel ou trimestriel) pour ouvrir son aperçu A4 (une page) selon la maquette KOBE : en-tête bilingue, tableau des notes, bandeaux et visas. Les données affichées sont des données démo anonymisées. Téléchargez le PDF pour valider le rendu réel.
 
 ## EN
 

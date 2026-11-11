@@ -1,9 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClipboardList, Download, FileSpreadsheet, Layers3, Sparkles } from "lucide-react";
+import {
+  CalendarRange,
+  ChevronRight,
+  ClipboardList,
+  Download,
+  FileSpreadsheet,
+  Layers3,
+  School2,
+  Sparkles,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Select } from "@/components/ui/select";
@@ -261,38 +271,60 @@ export function ReportingHubView() {
         searchValue={query}
         onSearchChange={setQuery}
         searchPlaceholder={t(`search.${tab}`)}
-        trailing={
-          tab === "bulletins" ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <Select
-                value={classId}
-                onChange={(e) => setClassId(e.target.value)}
-                className="min-w-[140px]"
-                aria-label={t("generate.class")}
-              >
-                {classes.length === 0 ? (
-                  <option value="">{t("generate.noClass")}</option>
-                ) : (
-                  classes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))
-                )}
-              </Select>
-              <Button
-                type="button"
-                size="sm"
-                disabled={generating || !classId || !yearId}
-                onClick={() => void onGenerate()}
-              >
-                <Sparkles className="size-3.5" aria-hidden />
-                {generating ? t("generate.running") : t("generate.action")}
-              </Button>
-            </div>
-          ) : null
-        }
       />
+
+      {tab === "bulletins" ? (
+        <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+          <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:p-4">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <span
+                className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
+                aria-hidden
+              >
+                <School2 className="size-[18px] stroke-[1.75]" />
+              </span>
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                    {t("generate.class")}
+                  </p>
+                  <Badge tone="blue">{t("generate.periodBadge")}</Badge>
+                </div>
+                <p className="text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                  {classes.length === 0 ? t("generate.noClassHint") : t("generate.classHint")}
+                </p>
+                <Select
+                  value={classId}
+                  onChange={(e) => setClassId(e.target.value)}
+                  className="max-w-md"
+                  disabled={classes.length === 0 || loading}
+                  aria-label={t("generate.class")}
+                >
+                  {classes.length === 0 ? (
+                    <option value="">{t("generate.noClass")}</option>
+                  ) : (
+                    classes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))
+                  )}
+                </Select>
+              </div>
+            </div>
+            <Button
+              type="button"
+              className="w-full shrink-0 sm:w-auto"
+              disabled={generating || !classId || !yearId || yearLocked}
+              onClick={() => void onGenerate()}
+              leadingIcon={<Sparkles className="size-3.5" aria-hidden />}
+              aria-label={t("generate.actionFull")}
+            >
+              {generating ? t("generate.running") : t("generate.action")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {loading ? (
         <HubLoadingRows />
@@ -384,52 +416,86 @@ export function ReportingHubView() {
       ) : (
         <>
           <ul className="space-y-2.5 md:hidden">
-            {filteredTemplates.map((item) => (
-              <li key={item.id}>
-                <Link
-                  href={`${workspaceHome}/reporting/${encodeURIComponent(item.code)}`}
-                  className="block rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)] pressable"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+            {filteredTemplates.map((item) => {
+              const href = `${workspaceHome}/reporting/${encodeURIComponent(item.code)}`;
+              const isAnnual = item.periodType === "ANNUAL";
+              return (
+                <li key={item.id}>
+                  <Link
+                    href={href}
+                    className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)] pressable"
+                  >
+                    <span
+                      className={cn(
+                        "flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)]",
+                        isAnnual
+                          ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
+                          : "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]",
+                      )}
+                      aria-hidden
+                    >
+                      {isAnnual ? (
+                        <FileSpreadsheet className="size-[18px] stroke-[1.75]" />
+                      ) : (
+                        <CalendarRange className="size-[18px] stroke-[1.75]" />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
                         {localizedLabel(item.name, locale)}
                       </p>
-                      <p className="mt-0.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                        {item.code} · {item.periodType}
+                      <p className="mt-0.5 truncate text-[11px] text-[var(--ios-secondary-label)]">
+                        {t("templateMeta", {
+                          code: item.code,
+                          count: item.sequenceColumns.length,
+                        })}
                       </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <Badge tone={isAnnual ? "blue" : "warning"}>
+                          {isAnnual
+                            ? t("periodAnnual")
+                            : item.periodType === "TERM"
+                              ? t("periodTerm")
+                              : t("periodOther", { type: item.periodType })}
+                        </Badge>
+                        <HubStatusPill
+                          active={item.active}
+                          activeLabel={t("statusActive")}
+                          inactiveLabel={t("inactive")}
+                        />
+                      </div>
                     </div>
-                    <HubStatusPill
-                      active={item.active}
-                      activeLabel={t("statusActive")}
-                      inactiveLabel={t("inactive")}
+                    <ChevronRight
+                      className="size-4 shrink-0 text-[var(--ios-tertiary-label)]"
+                      aria-hidden
                     />
-                  </div>
-                </Link>
-              </li>
-            ))}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
           <HubTableShell countLabel={t("tableCount", { count: filteredTemplates.length })}>
-            <table className="w-full min-w-[720px] border-collapse text-left">
+            <table className="w-full min-w-[640px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
-                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_36%,var(--ios-card))]">
+                  <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                     {t("columns.name")}
                   </th>
-                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                    {t("columns.code")}
-                  </th>
-                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                  <th className="px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                     {t("columns.period")}
                   </th>
-                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                  <th className="px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                     {t("columns.status")}
+                  </th>
+                  <th className="w-12 px-4 py-3">
+                    <span className="sr-only">{t("openTemplate")}</span>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredTemplates.map((item, index) => {
                   const href = `${workspaceHome}/reporting/${encodeURIComponent(item.code)}`;
+                  const isAnnual = item.periodType === "ANNUAL";
                   return (
                     <tr
                       key={item.id}
@@ -443,26 +509,62 @@ export function ReportingHubView() {
                         }
                       }}
                       className={cn(
-                        "cursor-pointer border-b border-[var(--ios-separator)]/55 last:border-b-0 transition-colors hover:bg-[color-mix(in_srgb,var(--ios-blue)_6%,transparent)] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
+                        "group cursor-pointer border-b border-[var(--ios-separator)]/45 last:border-b-0 transition-colors duration-[var(--duration-fast)] hover:bg-[color-mix(in_srgb,var(--ios-blue)_7%,transparent)] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
                         index % 2 === 1 &&
-                          "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                        !item.active && "opacity-70",
+                          "bg-[color-mix(in_srgb,var(--ios-fill)_18%,transparent)]",
+                        !item.active && "opacity-75",
                       )}
                     >
-                      <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
-                        {localizedLabel(item.name, locale)}
-                      </td>
-                      <td className="px-3 py-3.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                        {item.code}
-                      </td>
-                      <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
-                        {item.periodType}
-                      </td>
                       <td className="px-5 py-3.5">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span
+                            className={cn(
+                              "flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] transition-transform duration-[var(--duration-fast)] group-hover:scale-[1.03]",
+                              isAnnual
+                                ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
+                                : "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]",
+                            )}
+                            aria-hidden
+                          >
+                            {isAnnual ? (
+                              <FileSpreadsheet className="size-[18px] stroke-[1.75]" />
+                            ) : (
+                              <CalendarRange className="size-[18px] stroke-[1.75]" />
+                            )}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                              {localizedLabel(item.name, locale)}
+                            </p>
+                            <p className="mt-0.5 truncate text-[11px] text-[var(--ios-secondary-label)]">
+                              {t("templateMeta", {
+                                code: item.code,
+                                count: item.sequenceColumns.length,
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <Badge tone={isAnnual ? "blue" : "warning"}>
+                          {isAnnual
+                            ? t("periodAnnual")
+                            : item.periodType === "TERM"
+                              ? t("periodTerm")
+                              : t("periodOther", { type: item.periodType })}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-3.5">
                         <HubStatusPill
                           active={item.active}
                           activeLabel={t("statusActive")}
                           inactiveLabel={t("inactive")}
+                        />
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <ChevronRight
+                          className="ml-auto size-4 text-[var(--ios-tertiary-label)] transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5 group-hover:text-[var(--ios-blue)]"
+                          aria-hidden
                         />
                       </td>
                     </tr>

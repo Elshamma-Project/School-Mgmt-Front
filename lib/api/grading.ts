@@ -146,6 +146,20 @@ export async function listEvaluationSessions(options: {
   return apiRequest<EvaluationSessionResponse[]>(`/api/v1/evaluation-sessions?${qs}`);
 }
 
+/** BR-20 : crée les 6 séquences (DEV1–DEV6) de l’année si absentes. */
+export async function ensureEvaluationSessions(options: {
+  academicYearId: string;
+  schoolId?: string | null;
+}): Promise<EvaluationSessionResponse[]> {
+  return apiRequest<EvaluationSessionResponse[]>("/api/v1/evaluation-sessions/ensure", {
+    method: "POST",
+    body: {
+      academicYearId: options.academicYearId,
+      schoolId: options.schoolId?.trim() || null,
+    },
+  });
+}
+
 export async function openEvaluationSession(
   id: string,
   schoolId?: string | null,
@@ -183,6 +197,31 @@ export async function reopenEvaluationSession(
       schoolId: options.schoolId?.trim() || null,
     },
   });
+}
+
+export async function updateEvaluationSessionSchedule(
+  id: string,
+  options: {
+    examDate?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    entryDeadline?: string | null;
+    schoolId?: string | null;
+  },
+): Promise<EvaluationSessionResponse> {
+  return apiRequest<EvaluationSessionResponse>(
+    `/api/v1/evaluation-sessions/${encodeURIComponent(id)}/schedule`,
+    {
+      method: "PUT",
+      body: {
+        examDate: options.examDate?.trim() || null,
+        startDate: options.startDate?.trim() || null,
+        endDate: options.endDate?.trim() || null,
+        entryDeadline: options.entryDeadline?.trim() || null,
+        schoolId: options.schoolId?.trim() || null,
+      },
+    },
+  );
 }
 
 export async function listGradingSchemes(

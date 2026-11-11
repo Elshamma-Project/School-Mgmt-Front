@@ -9,7 +9,10 @@ import {
   Lock,
   LockOpen,
   Pencil,
+  Plus,
   Scale,
+  ScrollText,
+  Search,
   Shield,
   Unlock,
 } from "lucide-react";
@@ -21,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { DialogCloseButton } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
+import { IconInput } from "@/components/ui/icon-input";
+import { Input } from "@/components/ui/input";
 import { StatCard } from "@/components/ui/stat-card";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -34,11 +39,13 @@ import { useRouter } from "@/i18n/navigation";
 import { listAcademicYears, localizedLabel } from "@/lib/api/academic";
 import {
   closeEvaluationSession,
+  ensureEvaluationSessions,
   listEvaluationSessions,
   listGradeAudits,
   listGradingSchemes,
   openEvaluationSession,
   reopenEvaluationSession,
+  updateEvaluationSessionSchedule,
   type EvaluationSessionResponse,
   type GradeAuditEntryResponse,
   type GradingSchemeResponse,
@@ -57,7 +64,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { ApiError, isAuthFailure } from "@/types/api";
 import { primaryRole, type AppRole } from "@/types/auth";
 
-type SessionActionKind = "open" | "close" | "reopen";
+type SessionActionKind = "open" | "close" | "reopen" | "examDate";
 
 const SESSION_MANAGERS: readonly AppRole[] = [
   "ADMINISTRATION",
@@ -88,6 +95,8 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const tab = parseGradesTab(searchParams.get("tab"));
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [ensuring, setEnsuring] = useState(false);
+  const [yearId, setYearId] = useState<string | null>(null);
   const [yearLabel, setYearLabel] = useState<string | null>(null);
   const [yearStatus, setYearStatus] = useState<string | null>(null);
   const [yearLocked, setYearLocked] = useState(false);
@@ -100,6 +109,11 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   } | null>(null);
   const [reopenReason, setReopenReason] = useState("");
   const [reopenInvalid, setReopenInvalid] = useState(false);
+  const [examDateDraft, setExamDateDraft] = useState("");
+  const [startDateDraft, setStartDateDraft] = useState("");
+  const [endDateDraft, setEndDateDraft] = useState("");
+  const [entryDeadlineDraft, setEntryDeadlineDraft] = useState("");
+  const [examDateInvalid, setExamDateInvalid] = useState(false);
   const [acting, setActing] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [schemePanel, setSchemePanel] = useState<{
@@ -128,6 +142,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
         years.content.find((y) => y.status === "ACTIVE") ??
         years.content[0] ??
         null;
+      setYearId(year?.id ?? null);
       setYearLabel(year?.label ?? null);
       setYearStatus(year?.status ?? null);
       setYearLocked(Boolean(year?.locked));
@@ -147,6 +162,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
       if (isAuthFailure(error)) return;
       if (error instanceof ApiError) notify.error(error.message);
       else notify.error(t("loadError"));
+      setYearId(null);
       setSessions([]);
       setSchemes([]);
       setAudits([]);
@@ -154,6 +170,25 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
       setLoading(false);
     }
   }, [schoolId, t]);
+
+  async function onEnsureSessions() {
+    if (!yearId || ensuring || yearLocked) return;
+    setEnsuring(true);
+    try {
+      const rows = await ensureEvaluationSessions({
+        academicYearId: yearId,
+        schoolId,
+      });
+      setSessions(rows);
+      notify.success(t("sessionEnsureSuccess", { count: rows.length }));
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("sessionEnsureError"));
+    } finally {
+      setEnsuring(false);
+    }
+  }
 
   useEffect(() => {
     void load();
@@ -163,35 +198,43 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
     setPending(null);
     setReopenReason("");
     setReopenInvalid(false);
+    setExamDateDraft("");
+    setStartDateDraft("");
+    setEndDateDraft("");
+    setEntryDeadlineDraft("");
+    setExamDateInvalid(false);
   }, []);
 
   const requestSessionAction = useCallback(
-    (session: EvaluationSessionResponse) => {
-      if (session.status === "PLANNED") {
+    (session: EvaluationSessionResponse, kind: SessionActionKind) => {
+      if (yearLocked) {
+        notify.error(t("sessionAction.yearLocked"));
+        return;
+      }
+      if (kind === "open" || kind === "close" || kind === "examDate") {
         if (!canOpenClose) {
           notify.error(t("sessionAction.forbidden"));
           return;
         }
-        setPending({ session, kind: "open" });
-        return;
       }
-      if (session.status === "OPEN") {
-        if (!canOpenClose) {
-          notify.error(t("sessionAction.forbidden"));
-          return;
-        }
-        setPending({ session, kind: "close" });
-        return;
-      }
-      if (!canReopen) {
+      if (kind === "reopen" && !canReopen) {
         notify.error(t("sessionAction.reopenForbidden"));
         return;
       }
-      setReopenReason("");
-      setReopenInvalid(false);
-      setPending({ session, kind: "reopen" });
+      if (kind === "reopen") {
+        setReopenReason("");
+        setReopenInvalid(false);
+      }
+      if (kind === "examDate") {
+        setExamDateDraft(session.examDate ?? "");
+        setStartDateDraft(session.startDate ?? "");
+        setEndDateDraft(session.endDate ?? "");
+        setEntryDeadlineDraft(session.entryDeadline ?? "");
+        setExamDateInvalid(false);
+      }
+      setPending({ session, kind });
     },
-    [canOpenClose, canReopen, t],
+    [canOpenClose, canReopen, t, yearLocked],
   );
 
   const runSessionAction = useCallback(async () => {
@@ -200,6 +243,17 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
     if (kind === "reopen" && !reopenReason.trim()) {
       setReopenInvalid(true);
       notify.error(t("sessionAction.reasonRequired"));
+      return;
+    }
+    if (
+      kind === "examDate" &&
+      !examDateDraft.trim() &&
+      !startDateDraft.trim() &&
+      !endDateDraft.trim() &&
+      !entryDeadlineDraft.trim()
+    ) {
+      setExamDateInvalid(true);
+      notify.error(t("sessionAction.examDateRequired"));
       return;
     }
 
@@ -212,6 +266,15 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
       } else if (kind === "close") {
         updated = await closeEvaluationSession(session.id, { schoolId });
         notify.success(t("sessionAction.closeSuccess"));
+      } else if (kind === "examDate") {
+        updated = await updateEvaluationSessionSchedule(session.id, {
+          examDate: examDateDraft.trim() || null,
+          startDate: startDateDraft.trim() || null,
+          endDate: endDateDraft.trim() || null,
+          entryDeadline: entryDeadlineDraft.trim() || null,
+          schoolId,
+        });
+        notify.success(t("sessionAction.examDateSuccess"));
       } else {
         updated = await reopenEvaluationSession(session.id, {
           reason: reopenReason,
@@ -228,7 +291,18 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
     } finally {
       setActing(false);
     }
-  }, [acting, clearPending, pending, reopenReason, schoolId, t]);
+  }, [
+    acting,
+    clearPending,
+    endDateDraft,
+    entryDeadlineDraft,
+    examDateDraft,
+    pending,
+    reopenReason,
+    schoolId,
+    startDateDraft,
+    t,
+  ]);
 
   const q = query.trim().toLowerCase();
 
@@ -339,20 +413,125 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
         searchValue={query}
         onSearchChange={setQuery}
         searchPlaceholder={t(`search.${tab}`)}
-        addLabel={tab === "schemes" && canManageSchemes ? t("schemeAdd") : undefined}
-        onAdd={
-          tab === "schemes" && canManageSchemes
-            ? () => setSchemePanel({ mode: "create", schemeId: null })
-            : undefined
-        }
-        trailing={
-          tab === "schemes" && !canManageSchemes ? (
-            <p className="hidden max-w-[220px] text-right text-[11px] leading-snug text-[var(--ios-secondary-label)] sm:block">
-              {t("schemeManageHint")}
-            </p>
-          ) : undefined
-        }
+        hideSearch={tab === "audits"}
       />
+
+      {tab === "audits" ? (
+        <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+          <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:p-4">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <span
+                className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]"
+                aria-hidden
+              >
+                <ScrollText className="size-[18px] stroke-[1.75]" />
+              </span>
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                    {t("auditCardTitle")}
+                  </p>
+                  <Badge tone="neutral">{t("tabs.audits")}</Badge>
+                </div>
+                <p className="text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                  {t("auditCardHint")}
+                </p>
+              </div>
+            </div>
+            <div className="w-full min-w-0 sm:max-w-[260px]">
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                {t("auditSearchLabel")}
+              </p>
+              <IconInput
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("search.audits")}
+                icon={<Search className="size-4 stroke-[1.75]" />}
+                aria-label={tCommon("search")}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {tab === "schemes" ? (
+        <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+          <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <span
+                className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]"
+                aria-hidden
+              >
+                <Scale className="size-[18px] stroke-[1.75]" />
+              </span>
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                    {t("schemeCardTitle")}
+                  </p>
+                  <Badge tone="warning">{t("tabs.schemes")}</Badge>
+                </div>
+                <p className="text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                  {canManageSchemes ? t("schemeCardHint") : t("schemeManageHint")}
+                </p>
+              </div>
+            </div>
+            {canManageSchemes ? (
+              <Button
+                type="button"
+                className="w-full shrink-0 sm:w-auto"
+                leadingIcon={<Plus className="size-3.5" aria-hidden />}
+                aria-label={t("schemeAddFull")}
+                onClick={() => setSchemePanel({ mode: "create", schemeId: null })}
+              >
+                {t("schemeAdd")}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {tab === "sessions" ? (
+        <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+          <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <span
+                className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
+                aria-hidden
+              >
+                <ClipboardList className="size-[18px] stroke-[1.75]" />
+              </span>
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                    {t("sessionCardTitle")}
+                  </p>
+                  <Badge tone="blue">{t("tabs.sessions")}</Badge>
+                </div>
+                <p className="text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                  {!canOpenClose
+                    ? t("sessionManageHint")
+                    : sessions.length === 0
+                      ? t("sessionEnsureHint")
+                      : t("sessionCardHint")}
+                </p>
+              </div>
+            </div>
+            {canOpenClose && sessions.length === 0 ? (
+              <Button
+                type="button"
+                className="w-full shrink-0 sm:w-auto"
+                leadingIcon={<Plus className="size-3.5" aria-hidden />}
+                aria-label={t("sessionEnsureFull")}
+                disabled={ensuring || !yearId || yearLocked || loading}
+                onClick={() => void onEnsureSessions()}
+              >
+                {ensuring ? t("sessionEnsureRunning") : t("sessionEnsure")}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {loading ? (
         <HubLoadingRows />
@@ -361,59 +540,82 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
           title={t(`empty.${tab}.title`)}
           description={t(`empty.${tab}.description`)}
           icon={<ClipboardList className="size-9 stroke-[1.5]" aria-hidden />}
+          action={
+            tab === "sessions" && canOpenClose ? (
+              <Button
+                type="button"
+                leadingIcon={<Plus className="size-3.5" aria-hidden />}
+                disabled={ensuring || !yearId || yearLocked}
+                onClick={() => void onEnsureSessions()}
+              >
+                {ensuring ? t("sessionEnsureRunning") : t("sessionEnsure")}
+              </Button>
+            ) : undefined
+          }
         />
       ) : tab === "sessions" ? (
         <>
           <ul className="space-y-2.5 md:hidden">
-            {filteredSessions.map((item) => {
-              const interactive =
-                !yearLocked &&
-                ((item.status === "PLANNED" && canOpenClose) ||
-                  (item.status === "OPEN" && canOpenClose) ||
-                  (item.status === "CLOSED" && canReopen));
-              return (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => requestSessionAction(item)}
-                    className={cn(
-                      "flex w-full items-start justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 text-left shadow-[var(--ios-shadow)]",
-                      interactive
-                        ? "pressable cursor-pointer hover:bg-[color-mix(in_srgb,var(--ios-fill)_35%,var(--ios-card))]"
-                        : "cursor-default",
-                    )}
+            {filteredSessions.map((item) => (
+              <li
+                key={item.id}
+                className="rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
+                      {item.shortLabel}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
+                      {localizedLabel(item.name, locale)} · T{item.termNumber}
+                    </p>
+                    <p className="mt-1 text-[11px] text-[var(--ios-secondary-label)]">
+                      {canOpenClose && !yearLocked ? (
+                        <button
+                          type="button"
+                          className="text-[var(--ios-blue)] hover:underline"
+                          onClick={() => requestSessionAction(item, "examDate")}
+                        >
+                          {item.examDate ?? t("sessionAction.setExamHint")}
+                        </button>
+                      ) : (
+                        (item.examDate ?? "—")
+                      )}
+                    </p>
+                  </div>
+                  <Badge
+                    tone={
+                      item.status === "OPEN"
+                        ? "success"
+                        : item.status === "CLOSED"
+                          ? "neutral"
+                          : "blue"
+                    }
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-[13px] font-semibold text-[var(--ios-label)]">
-                        {item.shortLabel}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
-                        {localizedLabel(item.name, locale)} · T{item.termNumber}
-                      </p>
-                      <p className="mt-1 text-[11px] text-[var(--ios-secondary-label)]">
-                        {item.examDate ?? "—"}
-                      </p>
-                    </div>
-                    <Badge
-                      tone={
-                        item.status === "OPEN"
-                          ? "success"
-                          : item.status === "CLOSED"
-                            ? "neutral"
-                            : "blue"
-                      }
-                    >
-                      {t.has(`sessionStatus.${item.status}`)
-                        ? t(`sessionStatus.${item.status}`)
-                        : item.status}
-                    </Badge>
-                  </button>
-                </li>
-              );
-            })}
+                    {t.has(`sessionStatus.${item.status}`)
+                      ? t(`sessionStatus.${item.status}`)
+                      : item.status}
+                  </Badge>
+                </div>
+                <SessionRowActions
+                  item={item}
+                  yearLocked={yearLocked}
+                  canOpenClose={canOpenClose}
+                  canReopen={canReopen}
+                  labels={{
+                    open: t("sessionAction.openConfirm"),
+                    close: t("sessionAction.closeConfirm"),
+                    reopen: t("sessionAction.reopenConfirm"),
+                    examDate: t("sessionAction.examDateEdit"),
+                    none: t("sessionAction.noAction"),
+                  }}
+                  onAction={requestSessionAction}
+                />
+              </li>
+            ))}
           </ul>
           <HubTableShell countLabel={t("tableCount", { count: filteredSessions.length })}>
-            <table className="w-full min-w-[720px] border-collapse text-left">
+            <table className="w-full min-w-[820px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
                   <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
@@ -425,73 +627,82 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                   <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                     {t("columns.status")}
                   </th>
-                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
                     {t("columns.examDate")}
+                  </th>
+                  <th className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.actions")}
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredSessions.map((item, index) => {
-                  const interactive =
-                    !yearLocked &&
-                    ((item.status === "PLANNED" && canOpenClose) ||
-                      (item.status === "OPEN" && canOpenClose) ||
-                      (item.status === "CLOSED" && canReopen) ||
-                      canOpenClose ||
-                      canReopen);
-                  return (
-                    <tr
-                      key={item.id}
-                      tabIndex={0}
-                      role="button"
-                      onClick={() => requestSessionAction(item)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          requestSessionAction(item);
+                {filteredSessions.map((item, index) => (
+                  <tr
+                    key={item.id}
+                    className={cn(
+                      "border-b border-[var(--ios-separator)]/55 last:border-b-0",
+                      index % 2 === 1 &&
+                        "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
+                    )}
+                  >
+                    <td className="px-5 py-3.5">
+                      <p className="text-[13px] font-semibold text-[var(--ios-label)]">
+                        {item.shortLabel}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
+                        {localizedLabel(item.name, locale)}
+                      </p>
+                    </td>
+                    <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
+                      {item.termNumber}
+                    </td>
+                    <td className="px-3 py-3.5">
+                      <Badge
+                        tone={
+                          item.status === "OPEN"
+                            ? "success"
+                            : item.status === "CLOSED"
+                              ? "neutral"
+                              : "blue"
                         }
-                      }}
-                      className={cn(
-                        "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                        index % 2 === 1 &&
-                          "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                        interactive
-                          ? "cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--ios-blue)_6%,transparent)] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]"
-                          : "cursor-default",
-                      )}
-                    >
-                      <td className="px-5 py-3.5">
-                        <p className="text-[13px] font-semibold text-[var(--ios-label)]">
-                          {item.shortLabel}
-                        </p>
-                        <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
-                          {localizedLabel(item.name, locale)}
-                        </p>
-                      </td>
-                      <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
-                        {item.termNumber}
-                      </td>
-                      <td className="px-3 py-3.5">
-                        <Badge
-                          tone={
-                            item.status === "OPEN"
-                              ? "success"
-                              : item.status === "CLOSED"
-                                ? "neutral"
-                                : "blue"
-                          }
+                      >
+                        {t.has(`sessionStatus.${item.status}`)
+                          ? t(`sessionStatus.${item.status}`)
+                          : item.status}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-3.5 text-[12px] text-[var(--ios-secondary-label)]">
+                      {canOpenClose && !yearLocked ? (
+                        <button
+                          type="button"
+                          className="pressable rounded-[var(--radius-sm)] text-left text-[12px] text-[var(--ios-blue)] hover:underline focus-visible:shadow-[var(--focus-ring)]"
+                          onClick={() => requestSessionAction(item, "examDate")}
                         >
-                          {t.has(`sessionStatus.${item.status}`)
-                            ? t(`sessionStatus.${item.status}`)
-                            : item.status}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-3.5 text-[12px] text-[var(--ios-secondary-label)]">
-                        {item.examDate ?? "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
+                          {item.examDate ?? t("sessionAction.setExamHint")}
+                        </button>
+                      ) : (
+                        (item.examDate ?? "—")
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <SessionRowActions
+                        item={item}
+                        yearLocked={yearLocked}
+                        canOpenClose={canOpenClose}
+                        canReopen={canReopen}
+                        dense
+                        labels={{
+                          open: t("sessionAction.openConfirm"),
+                          close: t("sessionAction.closeConfirm"),
+                          reopen: t("sessionAction.reopenConfirm"),
+                          examDate: t("sessionAction.examDateEdit"),
+                          none: t("sessionAction.noAction"),
+                        }}
+                        onAction={requestSessionAction}
+                      />
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </HubTableShell>
@@ -719,6 +930,8 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                           "bg-[var(--ios-danger-soft)] text-[var(--ios-danger)] ring-[color-mix(in_srgb,var(--ios-danger)_22%,transparent)]",
                         pending.kind === "reopen" &&
                           "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)] ring-[color-mix(in_srgb,var(--ios-warning)_22%,transparent)]",
+                        pending.kind === "examDate" &&
+                          "bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-[color-mix(in_srgb,var(--ios-blue)_22%,transparent)]",
                       )}
                       aria-hidden
                     >
@@ -726,6 +939,8 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                         <LockOpen className="size-4 stroke-[1.75]" />
                       ) : pending.kind === "close" ? (
                         <Lock className="size-4 stroke-[1.75]" />
+                      ) : pending.kind === "examDate" ? (
+                        <CalendarDays className="size-4 stroke-[1.75]" />
                       ) : (
                         <Unlock className="size-4 stroke-[1.75]" />
                       )}
@@ -739,7 +954,9 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                           ? t("sessionAction.openTitle")
                           : pending.kind === "close"
                             ? t("sessionAction.closeTitle")
-                            : t("sessionAction.reopenTitle")}
+                            : pending.kind === "examDate"
+                              ? t("sessionAction.examDateTitle")
+                              : t("sessionAction.reopenTitle")}
                       </h2>
                       <p className="mt-0.5 text-[12px] text-[var(--ios-secondary-label)]">
                         {yearLabel
@@ -844,7 +1061,9 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                       ? t("sessionAction.openDescription")
                       : pending.kind === "close"
                         ? t("sessionAction.closeDescription")
-                        : t("sessionAction.reopenDescription")}
+                        : pending.kind === "examDate"
+                          ? t("sessionAction.examDateDescription")
+                          : t("sessionAction.reopenDescription")}
                   </p>
 
                   {pending.kind === "reopen" ? (
@@ -872,13 +1091,65 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                       />
                     </Field>
                   ) : null}
+
+                  {pending.kind === "examDate" ? (
+                    <div className="space-y-3">
+                      <Field
+                        label={t("sessionAction.examLabel")}
+                        error={
+                          examDateInvalid
+                            ? t("sessionAction.examDateRequired")
+                            : undefined
+                        }
+                      >
+                        <Input
+                          type="date"
+                          value={examDateDraft}
+                          onChange={(event) => {
+                            setExamDateDraft(event.target.value);
+                            if (examDateInvalid && event.target.value.trim()) {
+                              setExamDateInvalid(false);
+                            }
+                          }}
+                          invalid={examDateInvalid}
+                          disabled={acting}
+                          autoFocus
+                        />
+                      </Field>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Field label={t("sessionAction.startDateLabel")}>
+                          <Input
+                            type="date"
+                            value={startDateDraft}
+                            onChange={(event) => setStartDateDraft(event.target.value)}
+                            disabled={acting}
+                          />
+                        </Field>
+                        <Field label={t("sessionAction.endDateLabel")}>
+                          <Input
+                            type="date"
+                            value={endDateDraft}
+                            onChange={(event) => setEndDateDraft(event.target.value)}
+                            disabled={acting}
+                          />
+                        </Field>
+                      </div>
+                      <Field label={t("sessionAction.entryDeadlineLabel")}>
+                        <Input
+                          type="date"
+                          value={entryDeadlineDraft}
+                          onChange={(event) => setEntryDeadlineDraft(event.target.value)}
+                          disabled={acting}
+                        />
+                      </Field>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-col-reverse gap-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-5 py-4 sm:flex-row sm:justify-end">
                   <Button
                     type="button"
-                    variant="ghostDestructive"
-                    className="!text-[var(--ios-danger)] hover:!bg-[var(--ios-danger-soft)]"
+                    variant="ghost"
                     disabled={acting}
                     onClick={() => clearPending()}
                   >
@@ -889,7 +1160,12 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                     variant={pending.kind === "close" ? "destructive" : "primary"}
                     disabled={
                       acting ||
-                      (pending.kind === "reopen" && !reopenReason.trim())
+                      (pending.kind === "reopen" && !reopenReason.trim()) ||
+                      (pending.kind === "examDate" &&
+                        !examDateDraft.trim() &&
+                        !startDateDraft.trim() &&
+                        !endDateDraft.trim() &&
+                        !entryDeadlineDraft.trim())
                     }
                     onClick={() => void runSessionAction()}
                   >
@@ -899,7 +1175,9 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                         ? t("sessionAction.openConfirm")
                         : pending.kind === "close"
                           ? t("sessionAction.closeConfirm")
-                          : t("sessionAction.reopenConfirm")}
+                          : pending.kind === "examDate"
+                            ? t("sessionAction.examDateConfirm")
+                            : t("sessionAction.reopenConfirm")}
                   </Button>
                 </div>
               </div>
@@ -907,6 +1185,103 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
             document.body,
           )
         : null}
+    </div>
+  );
+}
+
+function SessionRowActions({
+  item,
+  yearLocked,
+  canOpenClose,
+  canReopen,
+  dense = false,
+  labels,
+  onAction,
+}: {
+  item: EvaluationSessionResponse;
+  yearLocked: boolean;
+  canOpenClose: boolean;
+  canReopen: boolean;
+  dense?: boolean;
+  labels: {
+    open: string;
+    close: string;
+    reopen: string;
+    examDate: string;
+    none: string;
+  };
+  onAction: (session: EvaluationSessionResponse, kind: SessionActionKind) => void;
+}) {
+  const canLifecycle =
+    !yearLocked &&
+    ((item.status === "PLANNED" && canOpenClose) ||
+      (item.status === "OPEN" && canOpenClose) ||
+      (item.status === "CLOSED" && canReopen));
+  const canEditDate = !yearLocked && canOpenClose;
+
+  if (!canLifecycle && !canEditDate) {
+    return (
+      <p
+        className={cn(
+          "text-[11px] text-[var(--ios-tertiary-label)]",
+          dense ? "text-right" : "mt-2.5 border-t border-[var(--ios-separator)]/45 pt-2.5",
+        )}
+      >
+        {labels.none}
+      </p>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-1.5",
+        dense ? "justify-end" : "mt-2.5 justify-end border-t border-[var(--ios-separator)]/45 pt-2.5",
+      )}
+    >
+      {item.status === "PLANNED" && canOpenClose && !yearLocked ? (
+        <Button
+          type="button"
+          size="sm"
+          leadingIcon={<LockOpen className="size-3.5" aria-hidden />}
+          onClick={() => onAction(item, "open")}
+        >
+          {labels.open}
+        </Button>
+      ) : null}
+      {item.status === "OPEN" && canOpenClose && !yearLocked ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="destructive"
+          leadingIcon={<Lock className="size-3.5" aria-hidden />}
+          onClick={() => onAction(item, "close")}
+        >
+          {labels.close}
+        </Button>
+      ) : null}
+      {item.status === "CLOSED" && canReopen && !yearLocked ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          leadingIcon={<Unlock className="size-3.5" aria-hidden />}
+          onClick={() => onAction(item, "reopen")}
+        >
+          {labels.reopen}
+        </Button>
+      ) : null}
+      {canEditDate ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          leadingIcon={<CalendarDays className="size-3.5" aria-hidden />}
+          onClick={() => onAction(item, "examDate")}
+        >
+          {labels.examDate}
+        </Button>
+      ) : null}
     </div>
   );
 }

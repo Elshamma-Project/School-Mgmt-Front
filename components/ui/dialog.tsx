@@ -163,7 +163,7 @@ export function Dialog({
                 action.variant === "destructive" &&
                   "font-semibold text-[var(--ios-danger)]",
                 action.variant === "cancel" &&
-                  "font-normal text-[var(--ios-danger)]",
+                  "font-normal text-[var(--ios-blue)]",
                 (!action.variant || action.variant === "default") &&
                   "font-semibold text-[var(--ios-blue)]",
               )}
