@@ -192,12 +192,15 @@
     "activeRole": "Active",
     "readOnlyHint": "School settings are viewable here. Only the director can edit them.",
     "yearSection": "Academic year",
-    "yearHint": "Only one year is current. Without a manual choice, the system auto-selects the year that contains today’s date.",
+    "yearHint": "Only one year is current. Switching the current year loads that year’s classes, enrollments and grades. From the end date onward the year is locked automatically for everyone — read-only.",
     "yearCurrentLabel": "Current year",
     "yearSelect": "Set current year",
     "yearNone": "None",
     "yearEmpty": "No academic years yet",
     "yearBadgeCurrent": "current",
+    "yearBadgeLocked": "locked",
+    "yearLockedBadge": "Read-only",
+    "yearLockedHint": "This year has ended: grades, enrollments and sequences can no longer be changed, even by the director.",
     "yearSetAction": "Set as current",
     "yearAlreadyCurrent": "Already current",
     "yearSetSuccess": "Current year updated",
@@ -364,10 +367,13 @@
     "yearLabel": "School year",
     "yearEmpty": "No school year configured",
     "yearHint": "Classes belong to the current year; levels, subjects and groups are permanent.",
+    "yearLockedBadge": "Read-only",
+    "yearLockedHint": "Year ended: classes and assignments can no longer be changed.",
     "yearStatus": {
       "PLANNED": "Planned",
       "ACTIVE": "Active",
-      "CLOSED": "Closed"
+      "CLOSED": "Closed",
+      "ARCHIVED": "Archived"
     },
     "statusActive": "Active",
     "inactive": "Inactive",
@@ -859,10 +865,13 @@
     "yearLabel": "Academic year",
     "yearEmpty": "No academic year configured",
     "yearHint": "Enrollments shown are for the current year.",
+    "yearLockedBadge": "Read-only",
+    "yearLockedHint": "Year ended: enrollments are read-only.",
     "yearStatus": {
       "PLANNED": "Planned",
       "ACTIVE": "Active",
-      "CLOSED": "Closed"
+      "CLOSED": "Closed",
+      "ARCHIVED": "Archived"
     },
     "statusActive": "Active",
     "inactive": "Inactive",
@@ -919,10 +928,13 @@
     "yearLabel": "Academic year",
     "yearEmpty": "No academic year configured",
     "yearHint": "Report templates belong to the school; generation follows the year.",
+    "yearLockedBadge": "Read-only",
+    "yearLockedHint": "Year ended: report cards can be viewed; year-scoped edits are blocked.",
     "yearStatus": {
       "PLANNED": "Planned",
       "ACTIVE": "Active",
-      "CLOSED": "Closed"
+      "CLOSED": "Closed",
+      "ARCHIVED": "Archived"
     },
     "statusActive": "Active",
     "inactive": "Inactive",
@@ -988,10 +1000,13 @@
     "yearLabel": "Academic year",
     "yearEmpty": "No academic year configured",
     "yearHint": "Evaluation sessions belong to the current year.",
+    "yearLockedBadge": "Read-only",
+    "yearLockedHint": "Year ended: sequences cannot be opened and grades cannot be entered, even by the director.",
     "yearStatus": {
       "PLANNED": "Planned",
       "ACTIVE": "Active",
-      "CLOSED": "Closed"
+      "CLOSED": "Closed",
+      "ARCHIVED": "Archived"
     },
     "statusActive": "Active",
     "inactive": "Inactive",
@@ -1145,10 +1160,13 @@
     "yearLabel": "Academic year",
     "yearEmpty": "No academic year configured",
     "yearHint": "Rooms are already available; the timetable grid comes next.",
+    "yearLockedBadge": "Read-only",
+    "yearLockedHint": "Year ended: timetable for this year is read-only.",
     "yearStatus": {
       "PLANNED": "Planned",
       "ACTIVE": "Active",
-      "CLOSED": "Closed"
+      "CLOSED": "Closed",
+      "ARCHIVED": "Archived"
     },
     "statusActive": "Active",
     "inactive": "Inactive",

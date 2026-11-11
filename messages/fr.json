@@ -192,12 +192,15 @@
     "activeRole": "Actif",
     "readOnlyHint": "Les paramètres de l’établissement sont consultables ici. Seul le directeur peut les modifier.",
     "yearSection": "Année scolaire",
-    "yearHint": "Une seule année est courante. Sans choix manuel, le système sélectionne automatiquement celle qui contient la date du jour.",
+    "yearHint": "Une seule année est courante. Changer d’année courante recharge classes, inscriptions et notes de cette année. Dès le dernier jour (date de fin), l’année est verrouillée automatiquement pour tout le monde — consultation seule.",
     "yearCurrentLabel": "Année en cours",
     "yearSelect": "Définir l’année courante",
     "yearNone": "Aucune",
     "yearEmpty": "Aucune année créée",
     "yearBadgeCurrent": "courante",
+    "yearBadgeLocked": "verrouillée",
+    "yearLockedBadge": "Lecture seule",
+    "yearLockedHint": "Cette année est terminée : notes, inscriptions et séquences ne peuvent plus être modifiées, même par le directeur.",
     "yearSetAction": "Définir comme courante",
     "yearAlreadyCurrent": "Déjà courante",
     "yearSetSuccess": "Année courante mise à jour",
@@ -364,10 +367,13 @@
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire configurée",
     "yearHint": "Les classes sont liées à l’année courante ; niveaux, matières et groupes sont permanents.",
+    "yearLockedBadge": "Lecture seule",
+    "yearLockedHint": "Année terminée : aucune modification (classes, affectations) n’est possible.",
     "yearStatus": {
       "PLANNED": "Planifiée",
       "ACTIVE": "Active",
-      "CLOSED": "Clôturée"
+      "CLOSED": "Clôturée",
+      "ARCHIVED": "Archivée"
     },
     "statusActive": "Actif",
     "inactive": "Inactif",
@@ -859,10 +865,13 @@
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire configurée",
     "yearHint": "Les inscriptions affichées concernent l’année courante.",
+    "yearLockedBadge": "Lecture seule",
+    "yearLockedHint": "Année terminée : inscriptions et affectations en lecture seule.",
     "yearStatus": {
       "PLANNED": "Planifiée",
       "ACTIVE": "Active",
-      "CLOSED": "Clôturée"
+      "CLOSED": "Clôturée",
+      "ARCHIVED": "Archivée"
     },
     "statusActive": "Actif",
     "inactive": "Inactif",
@@ -919,10 +928,13 @@
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire configurée",
     "yearHint": "Les gabarits de bulletins sont liés à l’établissement ; la génération suit l’année.",
+    "yearLockedBadge": "Lecture seule",
+    "yearLockedHint": "Année terminée : consultation des bulletins possible, pas de nouvelles saisies liées à l’année.",
     "yearStatus": {
       "PLANNED": "Planifiée",
       "ACTIVE": "Active",
-      "CLOSED": "Clôturée"
+      "CLOSED": "Clôturée",
+      "ARCHIVED": "Archivée"
     },
     "statusActive": "Actif",
     "inactive": "Inactif",
@@ -988,10 +1000,13 @@
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire configurée",
     "yearHint": "Les sessions d’évaluation sont liées à l’année courante.",
+    "yearLockedBadge": "Lecture seule",
+    "yearLockedHint": "Année terminée : ouverture de séquences et saisie de notes impossibles, même pour le directeur.",
     "yearStatus": {
       "PLANNED": "Planifiée",
       "ACTIVE": "Active",
-      "CLOSED": "Clôturée"
+      "CLOSED": "Clôturée",
+      "ARCHIVED": "Archivée"
     },
     "statusActive": "Actif",
     "inactive": "Inactif",
@@ -1145,10 +1160,13 @@
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire configurée",
     "yearHint": "Les salles sont déjà disponibles ; la grille d’emploi du temps arrive ensuite.",
+    "yearLockedBadge": "Lecture seule",
+    "yearLockedHint": "Année terminée : consultation seule de l’emploi du temps de cette année.",
     "yearStatus": {
       "PLANNED": "Planifiée",
       "ACTIVE": "Active",
-      "CLOSED": "Clôturée"
+      "CLOSED": "Clôturée",
+      "ARCHIVED": "Archivée"
     },
     "statusActive": "Actif",
     "inactive": "Inactif",

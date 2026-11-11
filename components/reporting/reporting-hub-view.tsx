@@ -62,6 +62,7 @@ export function ReportingHubView() {
   const [yearId, setYearId] = useState<string | null>(null);
   const [yearLabel, setYearLabel] = useState<string | null>(null);
   const [yearStatus, setYearStatus] = useState<string | null>(null);
+  const [yearLocked, setYearLocked] = useState(false);
   const [templates, setTemplates] = useState<ReportTemplateResponse[]>([]);
   const [classes, setClasses] = useState<SchoolClassResponse[]>([]);
   const [classId, setClassId] = useState("");
@@ -86,6 +87,7 @@ export function ReportingHubView() {
         null;
       setYearLabel(year?.label ?? null);
       setYearStatus(year?.status ?? null);
+      setYearLocked(Boolean(year?.locked));
       setYearId(year?.id ?? null);
       setTemplates(templateRows);
 
@@ -209,6 +211,9 @@ export function ReportingHubView() {
             ? t(`yearStatus.${yearStatus}`)
             : yearStatus
         }
+        yearLocked={yearLocked}
+        lockedLabel={yearLocked ? t("yearLockedBadge") : null}
+        hint={yearLocked ? t("yearLockedHint") : undefined}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />

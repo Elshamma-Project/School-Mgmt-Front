@@ -542,8 +542,8 @@ export const HELP_CATALOG: HelpArticle[] = [
         },
         "paragraphs": [
           {
-            "fr": "Une seule année est courante. Sans choix manuel, le système sélectionne automatiquement celle qui contient la date du jour. Vous pouvez créer l’année suivante (ex. 2026-2027) sans la rendre courante tout de suite — utile pour préparer la rentrée — puis la définir comme courante au moment voulu.",
-            "en": "Only one year is current. Without a manual choice, the system auto-selects the year that contains today’s date. You can create the next year (e.g. 2026-2027) without making it current yet — useful for preparing the new intake — then set it as current when ready."
+            "fr": "Une seule année est courante. Changer d’année courante recharge les données de cette année (classes, inscriptions, notes). Sans choix manuel, le système sélectionne l’année opérationnelle (`début ≤ aujourd’hui < fin`). Dès le **dernier jour** (date de fin atteinte), l’année passe automatiquement en **CLOSED** et tout est **verrouillé** pour tout le monde (y compris le directeur) : consultation seule. Vous pouvez créer l’année suivante sans la rendre courante, puis la définir comme courante à la rentrée.",
+            "en": "Only one year is current. Switching the current year loads that year’s data (classes, enrollments, grades). Without a manual choice, the system picks the operational year (`start ≤ today < end`). From the **end date** onward the year is automatically **CLOSED** and **locked** for everyone (including the director): read-only. You can create the next year without making it current, then set it current at intake."
           }
         ]
       },

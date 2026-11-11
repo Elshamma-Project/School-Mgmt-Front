@@ -209,6 +209,10 @@ export function SettingsView() {
     () => years.find((y) => y.current) ?? null,
     [years],
   );
+  const selectedYear = useMemo(
+    () => years.find((y) => y.id === selectedYearId) ?? null,
+    [selectedYearId, years],
+  );
 
   useEffect(() => {
     if (user?.schoolId || user) {
@@ -504,11 +508,19 @@ export function SettingsView() {
                   {t("yearCurrentLabel")}
                 </p>
                 {currentYear ? (
-                  <Badge tone="success">{currentYear.label}</Badge>
+                  <Badge tone={currentYear.locked ? "warning" : "success"}>
+                    {currentYear.label}
+                  </Badge>
                 ) : (
                   <Badge tone="neutral">{t("yearNone")}</Badge>
                 )}
+                {currentYear?.locked ? (
+                  <Badge tone="warning">{t("yearLockedBadge")}</Badge>
+                ) : null}
               </div>
+              <p className="text-[11px] leading-relaxed text-[var(--ios-secondary-label)]">
+                {t("yearHint")}
+              </p>
               <Field id="settings-year" label={t("yearSelect")}>
                 <Select
                   id="settings-year"
@@ -523,11 +535,17 @@ export function SettingsView() {
                       <option key={year.id} value={year.id}>
                         {year.label}
                         {year.current ? ` · ${t("yearBadgeCurrent")}` : ""}
+                        {year.locked ? ` · ${t("yearBadgeLocked")}` : ""}
                       </option>
                     ))
                   )}
                 </Select>
               </Field>
+              {selectedYear?.locked ? (
+                <p className="text-[11px] leading-relaxed text-[var(--ios-warning)]">
+                  {t("yearLockedHint")}
+                </p>
+              ) : null}
             </div>
           </div>
           {canEdit ? (

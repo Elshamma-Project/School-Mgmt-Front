@@ -20,7 +20,9 @@ export type AcademicYearResponse = {
   startDate: string;
   endDate: string;
   current: boolean;
-  status: "PLANNED" | "ACTIVE" | "CLOSED";
+  status: "PLANNED" | "ACTIVE" | "CLOSED" | "ARCHIVED";
+  /** true si CLOSE/ARCHIVED ou today >= endDate — aucune écriture possible. */
+  locked: boolean;
   terms: Array<{
     number: number;
     name: LocalizedTextDto;

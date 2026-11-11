@@ -47,6 +47,7 @@ export function StudentsHubView() {
   const [loading, setLoading] = useState(true);
   const [yearLabel, setYearLabel] = useState<string | null>(null);
   const [yearStatus, setYearStatus] = useState<string | null>(null);
+  const [yearLocked, setYearLocked] = useState(false);
   const [yearId, setYearId] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentResponse[]>([]);
   const [enrollments, setEnrollments] = useState<EnrollmentResponse[]>([]);
@@ -69,6 +70,7 @@ export function StudentsHubView() {
         null;
       setYearLabel(year?.label ?? null);
       setYearStatus(year?.status ?? null);
+      setYearLocked(Boolean(year?.locked));
       setYearId(year?.id ?? null);
       setStudents(studentsPage.content);
 
@@ -143,6 +145,9 @@ export function StudentsHubView() {
             ? t(`yearStatus.${yearStatus}`)
             : yearStatus
         }
+        yearLocked={yearLocked}
+        lockedLabel={yearLocked ? t("yearLockedBadge") : null}
+        hint={yearLocked ? t("yearLockedHint") : undefined}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />

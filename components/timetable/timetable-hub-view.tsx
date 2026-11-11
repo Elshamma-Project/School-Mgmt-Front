@@ -42,6 +42,7 @@ export function TimetableHubView() {
   const [loading, setLoading] = useState(true);
   const [yearLabel, setYearLabel] = useState<string | null>(null);
   const [yearStatus, setYearStatus] = useState<string | null>(null);
+  const [yearLocked, setYearLocked] = useState(false);
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
 
   const selectTab = (next: TimetableTab) => {
@@ -62,6 +63,7 @@ export function TimetableHubView() {
         null;
       setYearLabel(year?.label ?? null);
       setYearStatus(year?.status ?? null);
+      setYearLocked(Boolean(year?.locked));
       setRooms(roomsPage.content);
     } catch (error) {
       if (isAuthFailure(error)) return;
@@ -96,6 +98,9 @@ export function TimetableHubView() {
             ? t(`yearStatus.${yearStatus}`)
             : yearStatus
         }
+        yearLocked={yearLocked}
+        lockedLabel={yearLocked ? t("yearLockedBadge") : null}
+        hint={yearLocked ? t("yearLockedHint") : undefined}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />

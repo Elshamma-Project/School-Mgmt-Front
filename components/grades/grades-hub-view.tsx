@@ -90,6 +90,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const [loading, setLoading] = useState(true);
   const [yearLabel, setYearLabel] = useState<string | null>(null);
   const [yearStatus, setYearStatus] = useState<string | null>(null);
+  const [yearLocked, setYearLocked] = useState(false);
   const [sessions, setSessions] = useState<EvaluationSessionResponse[]>([]);
   const [schemes, setSchemes] = useState<GradingSchemeResponse[]>([]);
   const [audits, setAudits] = useState<GradeAuditEntryResponse[]>([]);
@@ -129,6 +130,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
         null;
       setYearLabel(year?.label ?? null);
       setYearStatus(year?.status ?? null);
+      setYearLocked(Boolean(year?.locked));
       setSchemes(schemeRows);
       setAudits(auditRows);
 
@@ -285,6 +287,9 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
             ? t(`yearStatus.${yearStatus}`)
             : yearStatus
         }
+        yearLocked={yearLocked}
+        lockedLabel={yearLocked ? t("yearLockedBadge") : null}
+        hint={yearLocked ? t("yearLockedHint") : undefined}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />
@@ -362,9 +367,10 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
           <ul className="space-y-2.5 md:hidden">
             {filteredSessions.map((item) => {
               const interactive =
-                (item.status === "PLANNED" && canOpenClose) ||
-                (item.status === "OPEN" && canOpenClose) ||
-                (item.status === "CLOSED" && canReopen);
+                !yearLocked &&
+                ((item.status === "PLANNED" && canOpenClose) ||
+                  (item.status === "OPEN" && canOpenClose) ||
+                  (item.status === "CLOSED" && canReopen));
               return (
                 <li key={item.id}>
                   <button
@@ -427,11 +433,12 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
               <tbody>
                 {filteredSessions.map((item, index) => {
                   const interactive =
-                    (item.status === "PLANNED" && canOpenClose) ||
-                    (item.status === "OPEN" && canOpenClose) ||
-                    (item.status === "CLOSED" && canReopen) ||
-                    canOpenClose ||
-                    canReopen;
+                    !yearLocked &&
+                    ((item.status === "PLANNED" && canOpenClose) ||
+                      (item.status === "OPEN" && canOpenClose) ||
+                      (item.status === "CLOSED" && canReopen) ||
+                      canOpenClose ||
+                      canReopen);
                   return (
                     <tr
                       key={item.id}

@@ -19,6 +19,8 @@ type YearBannerProps = {
   yearLabel?: string | null;
   yearStatus?: string | null;
   yearStatusLabel?: string | null;
+  yearLocked?: boolean;
+  lockedLabel?: string | null;
   hint?: string;
   loading?: boolean;
   emptyLabel?: string;
@@ -29,12 +31,24 @@ export function HubYearBanner({
   yearLabel,
   yearStatus,
   yearStatusLabel,
+  yearLocked,
+  lockedLabel,
   hint,
   loading,
   emptyLabel,
 }: YearBannerProps) {
+  const displayHint = yearLocked
+    ? (lockedLabel ?? hint)
+    : hint;
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] px-4 py-3 shadow-[var(--ios-shadow)]">
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] border bg-[var(--ios-card)] px-4 py-3 shadow-[var(--ios-shadow)]",
+        yearLocked
+          ? "border-[var(--ios-orange)]/40"
+          : "border-[var(--ios-separator)]/55",
+      )}
+    >
       <div className="min-w-0">
         <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
           {label}
@@ -47,18 +61,29 @@ export function HubYearBanner({
               {yearLabel}
             </p>
             {yearStatusLabel ? (
-              <Badge tone={yearStatus === "ACTIVE" ? "success" : "neutral"}>
+              <Badge
+                tone={
+                  yearLocked
+                    ? "warning"
+                    : yearStatus === "ACTIVE"
+                      ? "success"
+                      : "neutral"
+                }
+              >
                 {yearStatusLabel}
               </Badge>
+            ) : null}
+            {yearLocked && lockedLabel ? (
+              <Badge tone="warning">{lockedLabel}</Badge>
             ) : null}
           </div>
         ) : (
           <p className="mt-1 text-[13px] text-[var(--ios-secondary-label)]">{emptyLabel}</p>
         )}
       </div>
-      {hint ? (
+      {displayHint ? (
         <p className="max-w-[280px] text-right text-[11px] leading-relaxed text-[var(--ios-secondary-label)]">
-          {hint}
+          {displayHint}
         </p>
       ) : null}
     </div>

@@ -391,7 +391,13 @@ export function AcademicHubView() {
 
   return (
     <div className="space-y-5 slide-up">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] px-4 py-3 shadow-[var(--ios-shadow)]">
+      <div
+        className={`flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] border bg-[var(--ios-card)] px-4 py-3 shadow-[var(--ios-shadow)] ${
+          year?.locked
+            ? "border-[var(--ios-orange)]/40"
+            : "border-[var(--ios-separator)]/55"
+        }`}
+      >
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
             {t("yearLabel")}
@@ -403,11 +409,22 @@ export function AcademicHubView() {
               <p className="truncate text-[15px] font-semibold tracking-[-0.015em] text-[var(--ios-label)]">
                 {year.label}
               </p>
-              <Badge tone={year.status === "ACTIVE" ? "success" : "neutral"}>
+              <Badge
+                tone={
+                  year.locked
+                    ? "warning"
+                    : year.status === "ACTIVE"
+                      ? "success"
+                      : "neutral"
+                }
+              >
                 {t.has(`yearStatus.${year.status}`)
                   ? t(`yearStatus.${year.status}`)
                   : year.status}
               </Badge>
+              {year.locked ? (
+                <Badge tone="warning">{t("yearLockedBadge")}</Badge>
+              ) : null}
             </div>
           ) : (
             <p className="mt-1 text-[13px] text-[var(--ios-secondary-label)]">
@@ -415,6 +432,11 @@ export function AcademicHubView() {
             </p>
           )}
         </div>
+        {year?.locked ? (
+          <p className="max-w-[280px] text-right text-[11px] leading-relaxed text-[var(--ios-secondary-label)]">
+            {t("yearLockedHint")}
+          </p>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
