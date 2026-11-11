@@ -34,6 +34,7 @@ import {
   type OfficialHeaderDto,
   type SchoolResponse,
 } from "@/lib/api/school";
+import { listStaff, type StaffResponse } from "@/lib/api/staff";
 import { Switch } from "@/components/ui/switch";
 import { userHasCapability } from "@/lib/auth/permissions";
 import { createMockLogin, listMockRoles } from "@/lib/auth/mock-users";
@@ -45,6 +46,14 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useSchoolBrandStore } from "@/stores/school-brand-store";
 import { ApiError, isAuthFailure } from "@/types/api";
 import { primaryRole, type AppRole } from "@/types/auth";
+
+const TIMEZONE_OPTIONS = [
+  "Africa/Douala",
+  "Africa/Yaounde",
+  "Africa/Lagos",
+  "Africa/Libreville",
+  "UTC",
+] as const;
 
 /** Unités sélectionnables : le secondaire (1er + 2nd) = une seule entité d’en-tête. */
 const CYCLE_GROUPS = [
@@ -91,6 +100,7 @@ type SchoolForm = {
   noticeEn: string;
   disclaimerFr: string;
   disclaimerEn: string;
+  headOfSchoolStaffId: string;
   headers: OfficialHeaderDto[];
 };
 
@@ -123,6 +133,7 @@ function schoolToForm(school: SchoolResponse): SchoolForm {
     noticeEn: school.reportCardNotice?.en ?? "",
     disclaimerFr: school.reportCardDisclaimer?.fr ?? "",
     disclaimerEn: school.reportCardDisclaimer?.en ?? "",
+    headOfSchoolStaffId: school.headOfSchoolStaffId ?? "",
     headers:
       school.officialHeaders.length > 0
         ? school.officialHeaders.map((h) => ({
@@ -186,6 +197,7 @@ export function SettingsView() {
   const [form, setForm] = useState<SchoolForm | null>(null);
   const [saving, setSaving] = useState(false);
   const [logoBusy, setLogoBusy] = useState(false);
+  const [staffOptions, setStaffOptions] = useState<StaffResponse[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function suggestNextYearDefaults(list: AcademicYearResponse[]) {
@@ -245,6 +257,21 @@ export function SettingsView() {
       cancelled = true;
     };
   }, [t, user?.schoolId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listStaff({ page: 0, size: 100, active: true, schoolId: user?.schoolId })
+      .then((page) => {
+        if (!cancelled) setStaffOptions(page.content);
+      })
+      .catch((error) => {
+        if (cancelled || isAuthFailure(error)) return;
+        setStaffOptions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.schoolId]);
 
   function switchRole(role: AppRole) {
     const response = createMockLogin(role);
@@ -379,7 +406,7 @@ export function SettingsView() {
             ),
           })),
         active: school.active,
-        headOfSchoolStaffId: school.headOfSchoolStaffId,
+        headOfSchoolStaffId: form.headOfSchoolStaffId.trim() || null,
       });
       setSchool(updated);
       setForm(schoolToForm(updated));
@@ -742,12 +769,22 @@ export function SettingsView() {
                   />
                 </Field>
                 <Field id="sch-tz" label={t("fields.timezone")}>
-                  <Input
+                  <Select
                     id="sch-tz"
                     value={form.timezone}
                     disabled={readOnly || saving}
                     onChange={(e) => patchForm({ timezone: e.target.value })}
-                  />
+                  >
+                    {TIMEZONE_OPTIONS.map((tz) => (
+                      <option key={tz} value={tz}>
+                        {tz}
+                      </option>
+                    ))}
+                    {form.timezone &&
+                    !(TIMEZONE_OPTIONS as readonly string[]).includes(form.timezone) ? (
+                      <option value={form.timezone}>{form.timezone}</option>
+                    ) : null}
+                  </Select>
                 </Field>
                 <Field id="sch-email" label={t("fields.email")}>
                   <Input
@@ -791,6 +828,17 @@ export function SettingsView() {
                   />
                 </Field>
               </div>
+              {canEdit ? (
+                <div className="flex justify-end pt-1">
+                  <Button
+                    type="button"
+                    disabled={saving || brandLoading}
+                    onClick={() => void onSaveSchool()}
+                  >
+                    {saving ? tCommon("loading") : tCommon("save")}
+                  </Button>
+                </div>
+              ) : null}
             </GroupedListItem>
           </GroupedList>
 
@@ -811,7 +859,36 @@ export function SettingsView() {
                     onChange={(e) => patchForm({ signaturePlace: e.target.value })}
                   />
                 </Field>
-                <div className="hidden sm:block" />
+                <Field
+                  id="sch-head-staff"
+                  label={t("fields.headOfSchool")}
+                  hint={t("fields.headOfSchoolHint")}
+                >
+                  <Select
+                    id="sch-head-staff"
+                    value={form.headOfSchoolStaffId}
+                    disabled={readOnly || saving}
+                    onChange={(e) =>
+                      patchForm({ headOfSchoolStaffId: e.target.value })
+                    }
+                  >
+                    <option value="">{t("fields.headOfSchoolNone")}</option>
+                    {staffOptions.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.fullName}
+                        {member.functions.length > 0
+                          ? ` · ${member.functions.join(", ")}`
+                          : ""}
+                      </option>
+                    ))}
+                    {form.headOfSchoolStaffId &&
+                    !staffOptions.some((m) => m.id === form.headOfSchoolStaffId) ? (
+                      <option value={form.headOfSchoolStaffId}>
+                        {t("fields.headOfSchoolUnknown")}
+                      </option>
+                    ) : null}
+                  </Select>
+                </Field>
                 <Field id="sch-head-fr" label={t("fields.headTitleFr")}>
                   <Input
                     id="sch-head-fr"
@@ -1096,6 +1173,7 @@ export function SettingsView() {
                 </Button>
                 <Button
                   type="button"
+                  size="sm"
                   disabled={saving || brandLoading}
                   onClick={() => void onSaveSchool()}
                 >

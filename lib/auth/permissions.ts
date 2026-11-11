@@ -43,6 +43,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
     "manageReportCards",
     "manageAbsences",
     "editOpenSequenceGrades",
+    "manageSchoolSettings",
     "viewAuditJournal",
   ],
   DIRECTOR: [

@@ -1,7 +1,11 @@
 "use client";
 
 import { create } from "zustand";
-import { getMySchool, type SchoolResponse } from "@/lib/api/school";
+import {
+  fetchPublicSchoolBrand,
+  getMySchool,
+  type SchoolResponse,
+} from "@/lib/api/school";
 import {
   clearSchoolLogoCache,
   ensureSchoolLogoUrl,
@@ -16,6 +20,8 @@ type SchoolBrandState = {
   loading: boolean;
   hydrated: boolean;
   hydrate: (schoolId: string | null, locale?: string) => Promise<void>;
+  /** Sans session — écran de connexion. */
+  hydratePublic: (schoolId: string | null) => Promise<void>;
   setSchool: (school: SchoolResponse | null) => void;
   refreshLogo: () => Promise<void>;
   clear: () => void;
@@ -80,6 +86,53 @@ export const useSchoolBrandStore = create<SchoolBrandState>((set, get) => ({
       if (!isAuthFailure(error)) {
         set({ school: null, logoUrl: null, hydrated: true });
       }
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  hydratePublic: async (schoolId) => {
+    const id = schoolId?.trim();
+    if (!id || get().loading) return;
+    set({ loading: true });
+    try {
+      const brand = await fetchPublicSchoolBrand(id);
+      if (!brand) {
+        set({ hydrated: true });
+        return;
+      }
+      const school: SchoolResponse = {
+        id: brand.id,
+        code: brand.code,
+        name: brand.name,
+        shortName: brand.shortName,
+        officialHeaders: [],
+        contact: { phones: [], email: null, address: null, city: null },
+        postalBox: null,
+        signaturePlace: null,
+        headTitle: null,
+        headOfSchoolStaffId: null,
+        logoFileId: brand.hasLogo ? "public" : null,
+        hasLogo: brand.hasLogo,
+        reportCardNotice: null,
+        reportCardDisclaimer: null,
+        timezone: "Africa/Douala",
+        active: true,
+      };
+      set({ school, hydrated: true });
+      if (brand.hasLogo) {
+        const url = await ensureSchoolLogoUrl({
+          schoolId: brand.id,
+          hasLogo: true,
+          publicAccess: true,
+        });
+        set({ logoUrl: url });
+      } else {
+        publishSchoolLogoUrl(brand.id, null);
+        set({ logoUrl: null });
+      }
+    } catch {
+      set({ hydrated: true });
     } finally {
       set({ loading: false });
     }

@@ -2,7 +2,7 @@
  * Cache mémoire ObjectURL du logo établissement (sidebar + réglages).
  */
 
-import { fetchSchoolLogoBlob } from "@/lib/api/school";
+import { fetchPublicSchoolLogoBlob, fetchSchoolLogoBlob } from "@/lib/api/school";
 
 type CacheEntry = {
   schoolId: string;
@@ -51,8 +51,10 @@ export function clearSchoolLogoCache(schoolId?: string) {
 export async function ensureSchoolLogoUrl(options: {
   schoolId: string;
   hasLogo?: boolean;
+  /** true = endpoint public (écran de connexion). */
+  publicAccess?: boolean;
 }): Promise<string | null> {
-  const { schoolId, hasLogo } = options;
+  const { schoolId, hasLogo, publicAccess = false } = options;
   if (!schoolId) return null;
   if (hasLogo === false) {
     publishSchoolLogoUrl(schoolId, null);
@@ -63,7 +65,9 @@ export async function ensureSchoolLogoUrl(options: {
 
   inflightSchoolId = schoolId;
   inflight = (async () => {
-    const blob = await fetchSchoolLogoBlob(schoolId);
+    const blob = publicAccess
+      ? await fetchPublicSchoolLogoBlob(schoolId)
+      : await fetchSchoolLogoBlob(schoolId);
     if (!blob || blob.size === 0) {
       publishSchoolLogoUrl(schoolId, null);
       return null;

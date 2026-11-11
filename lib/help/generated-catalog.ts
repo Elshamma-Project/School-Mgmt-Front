@@ -530,8 +530,8 @@ export const HELP_CATALOG: HelpArticle[] = [
         },
         "paragraphs": [
           {
-            "fr": "Les paramètres de l’établissement (année, logo, identité, documents) sont consultables par le personnel. Seul le **directeur** peut les modifier.",
-            "en": "School settings (year, logo, identity, documents) are viewable by staff. Only the **director** can edit them."
+            "fr": "Les paramètres de l’établissement (année, logo, identité, documents) sont consultables par le personnel. Seuls le **directeur** et l’**administration** peuvent les modifier ; les autres rôles sont en lecture seule.",
+            "en": "School settings (year, logo, identity, documents) are viewable by staff. Only the **director** and **administration** can edit them; other roles are read-only."
           }
         ]
       },
@@ -568,6 +568,10 @@ export const HELP_CATALOG: HelpArticle[] = [
           {
             "fr": "Sur les bulletins, l’en-tête suit le modèle officiel : colonne **FR** | **logo** | colonne **EN**. Chaque colonne reprend république, devise, ministère, délégations régionale et départementale, puis le nom de l’établissement et la ligne B.P. / téléphone (identité + contact). Renseignez ces textes ici ; le logo se définit dans la section Logo.",
             "en": "On report cards, the header follows the official layout: **FR** column | **logo** | **EN** column. Each column shows republic, motto, ministry, regional and divisional delegations, then the school name and P.O. box / phone line (identity + contact). Edit those texts here; set the logo in the Logo section."
+          },
+          {
+            "fr": "Choisissez aussi le **chef d’établissement** (personnel) : son nom est imprimé sous le titre (« LE PRINCIPAL » / « THE PRINCIPAL ») au bas du bulletin.",
+            "en": "Also pick the **head of school** (staff member): their name is printed under the title (“LE PRINCIPAL” / “THE PRINCIPAL”) at the bottom of the report card."
           }
         ]
       },

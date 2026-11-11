@@ -107,6 +107,39 @@ export async function fetchSchoolLogoBlob(schoolId: string): Promise<Blob | null
   }
 }
 
+export type SchoolPublicBrandResponse = {
+  id: string;
+  code: string;
+  name: LocalizedTextDto;
+  shortName: string | null;
+  hasLogo: boolean;
+};
+
+/** Branding login — sans authentification. */
+export async function fetchPublicSchoolBrand(
+  schoolId: string,
+): Promise<SchoolPublicBrandResponse | null> {
+  try {
+    return await apiRequest<SchoolPublicBrandResponse>(
+      `/api/v1/public/schools/${encodeURIComponent(schoolId)}/brand`,
+      { auth: false },
+    );
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchPublicSchoolLogoBlob(schoolId: string): Promise<Blob | null> {
+  try {
+    return await apiRequest<Blob>(
+      `/api/v1/public/schools/${encodeURIComponent(schoolId)}/logo`,
+      { auth: false, responseType: "blob", clearSessionOnFailure: false },
+    );
+  } catch {
+    return null;
+  }
+}
+
 export async function deleteSchoolLogo(schoolId: string): Promise<SchoolResponse> {
   return apiRequest<SchoolResponse>(`/api/v1/schools/${schoolId}/logo`, {
     method: "DELETE",
