@@ -154,6 +154,13 @@ export function TeacherGradesView() {
     () => sessions.filter((s) => s.termNumber === term),
     [sessions, term],
   );
+  /** BR-25 : les séquences OPEN appartiennent à un seul trimestre (paramètre admin). */
+  const activeOpenTerm = useMemo((): Term | null => {
+    const open = sessions.filter((s) => s.status === "OPEN");
+    if (open.length === 0) return null;
+    const termNumber = open[0]?.termNumber;
+    return termNumber === 1 || termNumber === 2 || termNumber === 3 ? termNumber : null;
+  }, [sessions]);
 
   function upsertSheet(next: GradeReportSheetResponse) {
     setSheets((prev) => {
@@ -325,7 +332,7 @@ export function TeacherGradesView() {
             </ul>
           </section>
 
-          <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
             <div className="space-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
                 {t("termLabel")}
@@ -334,21 +341,41 @@ export function TeacherGradesView() {
                 ariaLabel={t("termLabel")}
                 value={String(term)}
                 onChange={(value) => setTerm(Number(value) as Term)}
-                options={TERMS.map((n) => ({ value: String(n), label: t("termOption", { number: n }) }))}
+                options={TERMS.map((n) => ({
+                  value: String(n),
+                  label:
+                    activeOpenTerm === n
+                      ? t("termOptionActive", { number: n })
+                      : t("termOption", { number: n }),
+                }))}
               />
             </div>
-            <ul className="flex flex-wrap items-center gap-1.5" aria-label={t("entry.sequenceLabel")}>
-              {termSessions
-                .slice()
-                .sort((a, b) => a.number - b.number)
-                .map((s) => (
-                  <li key={s.id}>
-                    <Badge tone={s.status === "OPEN" ? "success" : s.status === "CLOSED" ? "neutral" : "blue"}>
-                      {t("entry.sequenceOption", { number: s.number })} · {t(`entry.sequenceStatus.${s.status}`)}
-                    </Badge>
-                  </li>
-                ))}
-            </ul>
+            {activeOpenTerm ? (
+              <ul
+                className="flex flex-wrap items-center gap-1.5 sm:justify-end"
+                aria-label={t("entry.sequenceLabel")}
+              >
+                {sessions
+                  .filter((s) => s.termNumber === activeOpenTerm)
+                  .sort((a, b) => a.number - b.number)
+                  .map((s) => (
+                    <li key={s.id}>
+                      <Badge
+                        tone={
+                          s.status === "OPEN"
+                            ? "success"
+                            : s.status === "CLOSED"
+                              ? "neutral"
+                              : "blue"
+                        }
+                      >
+                        {t("entry.sequenceOption", { number: s.number })} ·{" "}
+                        {t(`entry.sequenceStatus.${s.status}`)}
+                      </Badge>
+                    </li>
+                  ))}
+              </ul>
+            ) : null}
           </div>
 
           <HubToolbar
@@ -448,7 +475,13 @@ export function TeacherGradesView() {
               {sheetsLoading && !sheet ? (
                 <HubLoadingRows rows={5} />
               ) : sheet ? (
-                <ReportSheetPaper sheet={sheet} />
+                <ReportSheetPaper
+                  sheet={sheet}
+                  termSessions={termSessions}
+                  schoolId={schoolId}
+                  onSheetUpdated={upsertSheet}
+                  onOpenFullEntry={() => setTab("entry")}
+                />
               ) : (
                 <EmptyState
                   title={tReport("emptyTitle")}

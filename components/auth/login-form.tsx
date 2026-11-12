@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Eye, EyeOff, KeyRound, Mail } from "lucide-react";
 import { LoginLoading } from "@/components/auth/login-loading";
@@ -35,6 +35,8 @@ import { primaryRole } from "@/types/auth";
 
 /** Délai minimal loader — assez court pour ne pas ralentir inutilement. */
 const LOGIN_MIN_MS = 320;
+/** Filet de sécurité : si le serveur ne répond jamais, coupe l’overlay. */
+const LOGIN_MAX_MS = 15_000;
 
 type LoginFormProps = {
   /** schoolId lu côté serveur depuis .env (prioritaire). */
@@ -65,12 +67,17 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
   }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     setRememberMe(readRememberMe());
     const remembered = readRememberedEmail();
     if (remembered) setEmail(remembered);
   }, []);
+
+  useEffect(() => {
+    submittingRef.current = submitting;
+  }, [submitting]);
 
   // bfcache : une page login figée avec submitting=true réapparaissait à la déconnexion.
   useEffect(() => {
@@ -85,6 +92,17 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
       window.removeEventListener("popstate", resetLoader);
     };
   }, []);
+
+  // Serveur injoignable : après LOGIN_MAX_MS, stopper l’overlay même si fetch ne se termine pas.
+  useEffect(() => {
+    if (!submitting) return;
+    const timer = window.setTimeout(() => {
+      if (!submittingRef.current) return;
+      setSubmitting(false);
+      setFormError(t("networkError"));
+    }, LOGIN_MAX_MS);
+    return () => window.clearTimeout(timer);
+  }, [submitting, t]);
 
   function applyRememberPreference(emailValue: string) {
     writeRememberMe(rememberMe);

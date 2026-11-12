@@ -276,6 +276,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const runSessionAction = useCallback(async () => {
     if (!pending || acting) return;
     const { session, kind } = pending;
+    const sessionLabel = session.shortLabel || localizedLabel(session.name, locale);
     if (kind === "reopen" && !reopenReason.trim()) {
       setReopenInvalid(true);
       notify.error(t("sessionAction.reasonRequired"));
@@ -298,10 +299,14 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
       let updated: EvaluationSessionResponse;
       if (kind === "open") {
         updated = await openEvaluationSession(session.id, schoolId);
-        notify.success(t("sessionAction.openSuccess"));
+        notify.success(t("sessionAction.openSuccess"), {
+          description: sessionLabel,
+        });
       } else if (kind === "close") {
         updated = await closeEvaluationSession(session.id, { schoolId });
-        notify.success(t("sessionAction.closeSuccess"));
+        notify.success(t("sessionAction.closeSuccess"), {
+          description: sessionLabel,
+        });
       } else if (kind === "examDate") {
         updated = await updateEvaluationSessionSchedule(session.id, {
           examDate: examDateDraft.trim() || null,
@@ -310,20 +315,44 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
           entryDeadline: entryDeadlineDraft.trim() || null,
           schoolId,
         });
-        notify.success(t("sessionAction.examDateSuccess"));
+        notify.success(t("sessionAction.examDateSuccess"), {
+          description: sessionLabel,
+        });
       } else {
         updated = await reopenEvaluationSession(session.id, {
           reason: reopenReason,
           schoolId,
         });
-        notify.success(t("sessionAction.reopenSuccess"));
+        notify.success(t("sessionAction.reopenSuccess"), {
+          description: sessionLabel,
+        });
       }
       setSessions((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
+      setDetailSession((prev) => (prev?.id === updated.id ? updated : prev));
       clearPending();
     } catch (error) {
-      if (isAuthFailure(error)) return;
-      if (error instanceof ApiError) notify.error(error.message);
-      else notify.error(t("sessionAction.error"));
+      if (isAuthFailure(error)) {
+        notify.error(t("sessionAction.error"), {
+          description: t("sessionAction.authFailed"),
+        });
+        return;
+      }
+      if (error instanceof ApiError) {
+        const code = (error.code ?? "").toUpperCase();
+        if (code === "TOO_MANY_OPEN_SESSIONS") {
+          notify.error(t("sessionAction.tooManyOpen"), { description: sessionLabel });
+        } else if (code === "OPEN_TERM_CONFLICT") {
+          notify.error(t("sessionAction.openTermConflict"), { description: sessionLabel });
+        } else if (error.status === 0 || code === "NETWORK") {
+          notify.error(t("sessionAction.networkError"), { description: sessionLabel });
+        } else {
+          notify.error(t("sessionAction.error"), {
+            description: error.message?.trim() || sessionLabel,
+          });
+        }
+      } else {
+        notify.error(t("sessionAction.error"), { description: sessionLabel });
+      }
     } finally {
       setActing(false);
     }
@@ -333,6 +362,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
     endDateDraft,
     entryDeadlineDraft,
     examDateDraft,
+    locale,
     pending,
     reopenReason,
     schoolId,
@@ -651,6 +681,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                     yearLocked={yearLocked}
                     canOpenClose={canOpenClose}
                     canReopen={canReopen}
+                    busy={acting}
                     labels={{
                       open: t("sessionAction.openConfirm"),
                       close: t("sessionAction.closeConfirm"),
@@ -744,6 +775,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                         canOpenClose={canOpenClose}
                         canReopen={canReopen}
                         dense
+                        busy={acting}
                         labels={{
                           open: t("sessionAction.openConfirm"),
                           close: t("sessionAction.closeConfirm"),
@@ -1127,6 +1159,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
               <div
                 role="dialog"
                 aria-modal="true"
+                aria-busy={acting || undefined}
                 aria-labelledby="session-action-title"
                 className="relative z-10 flex max-h-[min(90dvh,620px)] w-full max-w-md flex-col overflow-hidden rounded-[var(--radius-xl)] bg-[var(--ios-card)] shadow-[var(--ios-shadow-md)] ring-1 ring-[color-mix(in_srgb,var(--ios-separator)_70%,transparent)] slide-up"
               >
@@ -1322,6 +1355,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                   <Button
                     type="button"
                     variant={pending.kind === "close" ? "destructive" : "primary"}
+                    loading={acting}
                     disabled={
                       acting ||
                       (pending.kind === "reopen" && !reopenReason.trim()) ||
@@ -1334,7 +1368,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                     onClick={() => void runSessionAction()}
                   >
                     {acting
-                      ? tCommon("loading")
+                      ? t("sessionAction.working")
                       : pending.kind === "open"
                         ? t("sessionAction.openConfirm")
                         : pending.kind === "close"
@@ -1359,6 +1393,7 @@ function SessionRowActions({
   canOpenClose,
   canReopen,
   dense = false,
+  busy = false,
   labels,
   onAction,
 }: {
@@ -1367,6 +1402,8 @@ function SessionRowActions({
   canOpenClose: boolean;
   canReopen: boolean;
   dense?: boolean;
+  /** Désactive les boutons pendant un appel API (dialog de confirmation). */
+  busy?: boolean;
   labels: {
     open: string;
     close: string;
@@ -1407,6 +1444,7 @@ function SessionRowActions({
         <Button
           type="button"
           size="sm"
+          disabled={busy}
           leadingIcon={<LockOpen className="size-3.5" aria-hidden />}
           onClick={() => onAction(item, "open")}
         >
@@ -1418,6 +1456,7 @@ function SessionRowActions({
           type="button"
           size="sm"
           variant="destructive"
+          disabled={busy}
           leadingIcon={<Lock className="size-3.5" aria-hidden />}
           onClick={() => onAction(item, "close")}
         >
@@ -1429,6 +1468,7 @@ function SessionRowActions({
           type="button"
           size="sm"
           variant="secondary"
+          disabled={busy}
           leadingIcon={<Unlock className="size-3.5" aria-hidden />}
           onClick={() => onAction(item, "reopen")}
         >
@@ -1440,6 +1480,7 @@ function SessionRowActions({
           type="button"
           size="sm"
           variant="ghost"
+          disabled={busy}
           leadingIcon={<Settings className="size-3.5" aria-hidden />}
           onClick={() => onAction(item, "examDate")}
         >

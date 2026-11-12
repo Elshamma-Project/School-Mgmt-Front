@@ -383,6 +383,12 @@ export const HELP_CATALOG: HelpArticle[] = [
       },
       {
         "path": "/grades/**"
+      },
+      {
+        "path": "/sequences"
+      },
+      {
+        "path": "/sequences/**"
       }
     ],
     "title": {
@@ -404,13 +410,59 @@ export const HELP_CATALOG: HelpArticle[] = [
       },
       {
         "heading": {
-          "fr": "Saisie",
-          "en": "Entry"
+          "fr": "Trimestre actif et ouverture (BR-25)",
+          "en": "Active term and opening (BR-25)"
         },
         "paragraphs": [
           {
-            "fr": "Les enseignants saisissent les notes de leurs ClassSubject lorsque la séquence est ouverte. Une note non saisie reste PENDING, jamais 0.",
-            "en": "Teachers enter grades for their ClassSubjects while the sequence is open. An unentered grade stays PENDING, never 0."
+            "fr": "Chaque séquence (DEV1…DEV6) correspond à une session d’évaluation. L’administration (ou le directeur) ouvre et clôture les sessions.",
+            "en": "Each sequence (DEV1…DEV6) is an evaluation session. Administration (or the director) opens and closes sessions."
+          }
+        ],
+        "bullets": [
+          {
+            "fr": "Au plus **2** séquences peuvent être **ouvertes** en même temps.",
+            "en": "At most **2** sequences can be **open** at the same time."
+          },
+          {
+            "fr": "Ces séquences ouvertes appartiennent forcément au **même trimestre** (T1 = séq. 1–2, T2 = 3–4, T3 = 5–6).",
+            "en": "Open sequences must belong to the **same term** (T1 = seq. 1–2, T2 = 3–4, T3 = 5–6)."
+          },
+          {
+            "fr": "Il n’y a donc qu’**un trimestre actif** à la fois, paramétré par l’administration — pas un choix libre de l’enseignant.",
+            "en": "So there is only **one active term** at a time, set by the administration — not a free teacher choice."
+          },
+          {
+            "fr": "La saisie des notes n’est possible que sur une séquence **ouverte**. Un autre trimestre reste en consultation / fiche de report seulement.",
+            "en": "Grade entry is only possible on an **open** sequence. Another term stays view / report-sheet only."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Saisie enseignant",
+          "en": "Teacher entry"
+        },
+        "paragraphs": [
+          {
+            "fr": "Les enseignants saisissent les notes de leurs ClassSubject lorsque la séquence est ouverte. Sur la fiche de report, seule la colonne **Comp. /20** est saisie ; Coef., Note × coef., Rang et App. sont calculés automatiquement. Une note non saisie reste PENDING, jamais 0.",
+            "en": "Teachers enter grades for their ClassSubjects while the sequence is open. On the report sheet, only **Mark /20** is entered; Coef., weighted mark, rank and appreciation are calculated automatically. An unentered grade stays PENDING, never 0."
+          },
+          {
+            "fr": "Bonus et malus se gèrent dans l’onglet saisie complète (formule : moyenne + bonus − malus, plafond 20).",
+            "en": "Bonus and malus are managed in the full entry tab (formula: average + bonus − malus, capped at 20)."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Fiche de report",
+          "en": "Report sheet"
+        },
+        "paragraphs": [
+          {
+            "fr": "La fiche de report est un instantané trimestriel. Affichez une séquence à la fois par défaut, ou les deux si besoin. Soumission → visa Surveillant Général → visa Principal.",
+            "en": "The report sheet is a term snapshot. Show one sequence by default, or both if needed. Submit → Supervisor visa → Principal visa."
           }
         ]
       }

@@ -3,6 +3,9 @@ import { getTenantConfig } from "@/lib/tenant/config";
 import { openSecret } from "@/lib/auth/token-vault";
 import { useAuthStore } from "@/stores/auth-store";
 
+/** Délai max par défaut : évite un overlay « Ouverture de la session » bloqué si l’API est down. */
+export const API_DEFAULT_TIMEOUT_MS = 12_000;
+
 type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
   auth?: boolean;
@@ -15,7 +18,31 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   clearSessionOnFailure?: boolean;
   /** Réponse binaire (avatar). */
   responseType?: "json" | "blob" | "void";
+  /** Timeout ms (AbortSignal). Défaut [API_DEFAULT_TIMEOUT_MS]. `0` = pas de timeout. */
+  timeoutMs?: number;
 };
+
+function createTimeoutSignal(ms: number): AbortSignal {
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+    return AbortSignal.timeout(ms);
+  }
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
+
+function mergeAbortSignals(
+  existing: AbortSignal | null | undefined,
+  timeoutMs: number,
+): AbortSignal | undefined {
+  if (timeoutMs <= 0) return existing ?? undefined;
+  const timeout = createTimeoutSignal(timeoutMs);
+  if (!existing) return timeout;
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.any === "function") {
+    return AbortSignal.any([existing, timeout]);
+  }
+  return timeout;
+}
 
 type RefreshOutcome = "ok" | "auth_failed" | "transient_failed" | "unavailable";
 
@@ -111,10 +138,13 @@ export async function apiRequest<T>(
     skipRefresh = false,
     clearSessionOnFailure = true,
     responseType = "json",
+    timeoutMs = API_DEFAULT_TIMEOUT_MS,
+    signal: userSignal,
     ...rest
   } = options;
   const requestHeaders = new Headers(headers);
   const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "") || "http://localhost:8090";
+  const signal = mergeAbortSignals(userSignal, timeoutMs);
 
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
   if (body !== undefined && !isFormData && !requestHeaders.has("Content-Type")) {
@@ -141,6 +171,7 @@ export async function apiRequest<T>(
   try {
     response = await fetch(`${baseUrl}${path}`, {
       ...rest,
+      signal,
       headers: requestHeaders,
       body:
         body === undefined
