@@ -6,7 +6,7 @@ export type StudentTab = (typeof STUDENT_TABS)[number];
 export const REPORTING_TABS = ["templates", "bulletins", "reviews"] as const;
 export type ReportingTab = (typeof REPORTING_TABS)[number];
 
-export const GRADES_TABS = ["sessions", "schemes", "audits"] as const;
+export const GRADES_TABS = ["sessions", "schemes", "audits", "reportSheets"] as const;
 export type GradesTab = (typeof GRADES_TABS)[number];
 
 export const TIMETABLE_TABS = ["overview", "rooms"] as const;

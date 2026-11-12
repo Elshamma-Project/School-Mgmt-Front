@@ -19,6 +19,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { GradingSchemePanel } from "@/components/grades/grading-scheme-panel";
+import { ReportSheetsPanel } from "@/components/grades/report-sheets-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DialogCloseButton } from "@/components/ui/dialog";
@@ -92,7 +93,27 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const canReopen = userHasCapability(roles, "reopenClosedSequence");
   const canManageSchemes = userHasCapability(roles, "manageGradeTemplates");
 
-  const tab = parseGradesTab(searchParams.get("tab"));
+  const canReviewReportSheets = userHasCapability(roles, "reviewReportSheets");
+  const canVisaPrincipal = userHasCapability(roles, "visaPrincipalReportSheet");
+
+  const requestedTab = parseGradesTab(searchParams.get("tab"));
+  // SG : atterrir sur les fiches de report (visas), pas sur les séances.
+  const preferredDefault: GradesTab =
+    role === "SURVEILLANT_GENERAL" && canReviewReportSheets ? "reportSheets" : "sessions";
+  const resolvedTab: GradesTab =
+    !searchParams.get("tab") ? preferredDefault : requestedTab;
+  const tab: GradesTab =
+    resolvedTab === "reportSheets" && !canReviewReportSheets
+      ? "sessions"
+      : resolvedTab === "schemes" && !canManageSchemes
+        ? preferredDefault
+        : resolvedTab;
+  const visibleTabs = GRADES_TABS.filter((key) => {
+    if (key === "reportSheets") return canReviewReportSheets;
+    if (key === "schemes") return canManageSchemes;
+    if (role === "SURVEILLANT_GENERAL") return key === "reportSheets";
+    return true;
+  });
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [ensuring, setEnsuring] = useState(false);
@@ -421,7 +442,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
       </div>
 
       <HubToolbar
-        tabs={GRADES_TABS.map((key) => ({ key, label: t(`tabs.${key}`) }))}
+        tabs={visibleTabs.map((key) => ({ key, label: t(`tabs.${key}`) }))}
         activeTab={tab}
         onTabChange={(key) => selectTab(key as GradesTab)}
         tabsAriaLabel={t("tabsNav")}
@@ -548,7 +569,17 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
         </div>
       ) : null}
 
-      {loading ? (
+      {tab === "reportSheets" ? (
+        <ReportSheetsPanel
+          schoolId={schoolId}
+          academicYearId={yearId}
+          yearLabel={yearLabel}
+          defaultTerm={sessions.find((s) => s.status === "OPEN")?.termNumber ?? 1}
+          query={query}
+          canVisaSupervisor={canReviewReportSheets}
+          canVisaPrincipal={canVisaPrincipal}
+        />
+      ) : loading ? (
         <HubLoadingRows />
       ) : rows.length === 0 ? (
         <EmptyState

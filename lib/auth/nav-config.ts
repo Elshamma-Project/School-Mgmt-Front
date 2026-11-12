@@ -178,6 +178,18 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
         item(`${home}/timetable`, "timetable", CalendarDays),
         ...sharedTail,
       ];
+    case "SURVEILLANT_GENERAL":
+      // Espace admin partagé (Q-38) : focus visas des fiches de report.
+      return [
+        item(home, "home", LayoutDashboard),
+        item(
+          `${home}/grades`,
+          "sequences",
+          ClipboardList,
+          gradesNavChildren(home, "grades").filter((child) => child.tab === "reportSheets"),
+        ),
+        ...sharedTail,
+      ];
     case "ADMINISTRATION":
       return [
         item(home, "home", LayoutDashboard),

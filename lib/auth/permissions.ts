@@ -19,6 +19,8 @@ export type UiCapability =
   | "manageReportCards"
   | "manageAbsences"
   | "reopenClosedSequence"
+  | "reviewReportSheets"
+  | "visaPrincipalReportSheet"
   | "manageAdminAccounts"
   | "manageGradeTemplates"
   | "manageSchoolSettings"
@@ -31,10 +33,12 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
   TEACHER: ["viewTeacherClasses", "editOpenSequenceGrades", "viewOwnProfile"],
   SURVEILLANT_GENERAL: [
     "manageReportCards",
+    "reviewReportSheets",
     "viewAuditJournal",
     "viewOwnProfile",
   ],
   ADMINISTRATION: [
+    "reviewReportSheets",
     "manageSchoolStructure",
     "manageStaff",
     "manageStudents",
@@ -47,6 +51,8 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
     "viewAuditJournal",
   ],
   DIRECTOR: [
+    "reviewReportSheets",
+    "visaPrincipalReportSheet",
     "manageSchoolStructure",
     "manageStaff",
     "manageStudents",
@@ -62,6 +68,8 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
     "viewAuditJournal",
   ],
   SUPER_ADMIN: [
+    "reviewReportSheets",
+    "visaPrincipalReportSheet",
     "manageSchoolStructure",
     "manageStaff",
     "manageStudents",

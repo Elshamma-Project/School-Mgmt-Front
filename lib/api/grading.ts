@@ -623,6 +623,49 @@ export async function submitGradeReportSheet(
   );
 }
 
+/** Visa du Surveillant Général (fiche SUBMITTED → VISA_SG). Rôles : SG, administration, directeur. */
+export async function visaSupervisorReportSheet(
+  id: string,
+  schoolId?: string | null,
+): Promise<GradeReportSheetResponse> {
+  const qs = toSearch({ ...schoolParams(schoolId) });
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<GradeReportSheetResponse>(
+    `/api/v1/grade-report-sheets/${encodeURIComponent(id)}/visa-supervisor${suffix}`,
+    { method: "POST" },
+  );
+}
+
+/** Visa final du Principal (fiche → VISA_PRINCIPAL). Réservé au directeur (et super-admin). */
+export async function visaPrincipalReportSheet(
+  id: string,
+  schoolId?: string | null,
+): Promise<GradeReportSheetResponse> {
+  const qs = toSearch({ ...schoolParams(schoolId) });
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<GradeReportSheetResponse>(
+    `/api/v1/grade-report-sheets/${encodeURIComponent(id)}/visa-principal${suffix}`,
+    { method: "POST" },
+  );
+}
+
+/** Rejette une fiche déjà soumise ; le motif est obligatoire. */
+export async function rejectGradeReportSheet(
+  id: string,
+  options: { reason: string; schoolId?: string | null },
+): Promise<GradeReportSheetResponse> {
+  return apiRequest<GradeReportSheetResponse>(
+    `/api/v1/grade-report-sheets/${encodeURIComponent(id)}/reject`,
+    {
+      method: "POST",
+      body: {
+        reason: options.reason.trim(),
+        schoolId: options.schoolId?.trim() || null,
+      },
+    },
+  );
+}
+
 /** PDF A4 paysage de la fiche de report (blob). */
 export async function downloadGradeReportSheetPdf(
   id: string,

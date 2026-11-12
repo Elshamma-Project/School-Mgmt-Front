@@ -1191,7 +1191,10 @@
         "sex": "Sexe",
         "comp": "Comp. /20",
         "status": "Statut",
-        "sequenceMark": "Moy. séquence"
+        "sequenceMark": "Moy. séquence",
+        "bonus": "Bonus",
+        "malus": "Malus",
+        "maxPoints": "max {max} pts"
       },
       "status": {
         "SCORED": "Note",
@@ -1207,7 +1210,12 @@
       "saveSuccess": "{count, plural, one {# note enregistrée} other {# notes enregistrées}}",
       "saveError": "L’enregistrement a échoué.",
       "invalidValue": "Note invalide : entre 0 et 20, deux décimales au maximum.",
-      "refresh": "Actualiser"
+      "refresh": "Actualiser",
+      "addBonus": "Ajouter bonus",
+      "addMalus": "Ajouter malus",
+      "bonusTitle": "Bonus",
+      "malusTitle": "Malus",
+      "bonusMalusHint": "Bonus et malus : points seulement (vide = aucun). Ils s’ajoutent ou se retranchent de la moyenne des colonnes."
     }
   },
   "gradesHub": {
@@ -1237,12 +1245,14 @@
     "tabs": {
       "sessions": "Sessions",
       "schemes": "Barèmes",
-      "audits": "Audits"
+      "audits": "Audits",
+      "reportSheets": "Fiches de report"
     },
     "search": {
       "sessions": "Libellé, statut…",
       "schemes": "Code ou libellé…",
-      "audits": "Action, cible, acteur…"
+      "audits": "Action, cible, acteur…",
+      "reportSheets": "Classe, matière, enseignant…"
     },
     "columns": {
       "session": "Session",
@@ -1257,6 +1267,38 @@
       "target": "Cible",
       "actor": "Acteur",
       "when": "Quand"
+    },
+    "reportSheets": {
+      "cardTitle": "Fiches de report de notes",
+      "cardHint": "Visa du Surveillant Général puis visa du Principal, ou rejet motivé.",
+      "termLabel": "Trimestre",
+      "termOption": "T{number}",
+      "columns": {
+        "class": "Classe",
+        "subject": "Matière",
+        "teacher": "Enseignant",
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "view": "Aperçu",
+      "close": "Fermer",
+      "previewTitle": "Fiche de report",
+      "visaSupervisor": "Visa SG",
+      "visaPrincipal": "Visa Principal",
+      "reject": "Rejeter",
+      "noAction": "Aucune action",
+      "visaSupervisorSuccess": "Visa SG enregistré",
+      "visaPrincipalSuccess": "Visa Principal enregistré",
+      "rejectSuccess": "Fiche rejetée",
+      "actionError": "Action impossible sur cette fiche.",
+      "loadError": "Impossible de charger les fiches de report.",
+      "rejectTitle": "Rejeter la fiche",
+      "rejectDescription": "L’enseignant verra le motif et pourra corriger puis soumettre à nouveau.",
+      "reasonLabel": "Motif du rejet",
+      "reasonPlaceholder": "Expliquez ce qui doit être corrigé…",
+      "reasonRequired": "Le motif est obligatoire pour rejeter une fiche.",
+      "rejectConfirm": "Rejeter",
+      "unknownTeacher": "Non affecté"
     },
     "sessionStatus": {
       "PLANNED": "Planifiée",
@@ -1406,6 +1448,10 @@
       "audits": {
         "title": "Aucun audit",
         "description": "Les corrections de notes (BR-18) apparaissent ici."
+      },
+      "reportSheets": {
+        "title": "Aucune fiche de report",
+        "description": "Aucune fiche n’a été générée pour ce trimestre. Les enseignants les génèrent depuis leur espace."
       }
     }
   },

@@ -1191,7 +1191,10 @@
         "sex": "Sex",
         "comp": "Mark /20",
         "status": "Status",
-        "sequenceMark": "Seq. average"
+        "sequenceMark": "Seq. average",
+        "bonus": "Bonus",
+        "malus": "Malus",
+        "maxPoints": "max {max} pts"
       },
       "status": {
         "SCORED": "Mark",
@@ -1207,7 +1210,12 @@
       "saveSuccess": "{count, plural, one {# mark saved} other {# marks saved}}",
       "saveError": "Could not save.",
       "invalidValue": "Invalid mark: between 0 and 20, at most two decimals.",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "addBonus": "Add bonus",
+      "addMalus": "Add malus",
+      "bonusTitle": "Bonus",
+      "malusTitle": "Malus",
+      "bonusMalusHint": "Bonus and malus are points only (empty = none). They are added to or subtracted from the column average."
     }
   },
   "gradesHub": {
@@ -1237,12 +1245,14 @@
     "tabs": {
       "sessions": "Sessions",
       "schemes": "Schemes",
-      "audits": "Audits"
+      "audits": "Audits",
+      "reportSheets": "Report sheets"
     },
     "search": {
       "sessions": "Label, status…",
       "schemes": "Code or label…",
-      "audits": "Action, target, actor…"
+      "audits": "Action, target, actor…",
+      "reportSheets": "Class, subject, teacher…"
     },
     "columns": {
       "session": "Session",
@@ -1257,6 +1267,38 @@
       "target": "Target",
       "actor": "Actor",
       "when": "When"
+    },
+    "reportSheets": {
+      "cardTitle": "Grade report sheets",
+      "cardHint": "Supervisor (SG) visa, then Principal visa, or a reasoned rejection.",
+      "termLabel": "Term",
+      "termOption": "T{number}",
+      "columns": {
+        "class": "Class",
+        "subject": "Subject",
+        "teacher": "Teacher",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "view": "Preview",
+      "close": "Close",
+      "previewTitle": "Report sheet",
+      "visaSupervisor": "SG visa",
+      "visaPrincipal": "Principal visa",
+      "reject": "Reject",
+      "noAction": "No action",
+      "visaSupervisorSuccess": "SG visa recorded",
+      "visaPrincipalSuccess": "Principal visa recorded",
+      "rejectSuccess": "Sheet rejected",
+      "actionError": "This action is not possible on this sheet.",
+      "loadError": "Could not load the report sheets.",
+      "rejectTitle": "Reject the sheet",
+      "rejectDescription": "The teacher will see the reason, fix the sheet and submit it again.",
+      "reasonLabel": "Rejection reason",
+      "reasonPlaceholder": "Explain what needs to be fixed…",
+      "reasonRequired": "A reason is required to reject a sheet.",
+      "rejectConfirm": "Reject",
+      "unknownTeacher": "Unassigned"
     },
     "sessionStatus": {
       "PLANNED": "Planned",
@@ -1405,6 +1447,10 @@
       "audits": {
         "title": "No audits",
         "description": "Grade corrections (BR-18) appear here."
+      },
+      "reportSheets": {
+        "title": "No report sheets",
+        "description": "No sheet has been generated for this term yet. Teachers generate them from their workspace."
       }
     }
   },

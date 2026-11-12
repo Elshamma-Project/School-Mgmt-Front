@@ -27,18 +27,32 @@ import {
   type GradeStatus,
   type SequenceMarkResponse,
 } from "@/lib/api/grading";
-import { formatMark, markToInput, parseMarkInput } from "@/lib/grading/marks";
+import { formatMark, markToInput, parseMarkInput, toNumber } from "@/lib/grading/marks";
 import { notify } from "@/lib/ui/notify";
 import { cn } from "@/lib/utils/cn";
 import { ApiError, isAuthFailure } from "@/types/api";
 
+type ColumnKind = "sequence" | "bonus" | "malus";
 type RowDraft = { value: string; status: GradeStatus };
 
-/** Statuts proposés dans la liste ; « SCORED » couvre aussi « non saisi » (champ vide). */
+const COLUMN_TYPE = {
+  sequence: "SEQUENCE_MARK",
+  bonus: "BONUS",
+  malus: "MALUS",
+} as const;
+
+const COLUMN_ORDER: ColumnKind[] = ["sequence", "bonus", "malus"];
+
+/** Valeur par défaut de la colonne créée (Q-25 : bonus / malus en points, pas sur 20). */
+const DEFAULT_MAX_SCORE: Record<ColumnKind, number> = { sequence: 20, bonus: 5, malus: 5 };
+
+/** Statuts proposés pour la note de séquence ; « SCORED » couvre aussi « non saisi » (champ vide). */
 const STATUS_CHOICES: GradeStatus[] = ["SCORED", "ABSENT", "ABSENT_EXCUSED", "EXEMPTED"];
 
 const th =
   "px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]";
+
+const draftKey = (assessmentId: string, studentId: string) => `${assessmentId}:${studentId}`;
 
 function toDraft(grade: GradeResponse | undefined): RowDraft {
   if (!grade) return { value: "", status: "SCORED" };
@@ -49,12 +63,23 @@ function toDraft(grade: GradeResponse | undefined): RowDraft {
 
 type EntryData = {
   sheet: GradeSheetResponse | null;
-  assessment: AssessmentResponse | null;
-  grades: GradeResponse[];
+  assessments: Record<ColumnKind, AssessmentResponse | null>;
+  /** Notes par `assessmentId`. */
+  grades: Record<string, GradeResponse[]>;
   marks: SequenceMarkResponse[];
 };
 
-const EMPTY_ENTRY: EntryData = { sheet: null, assessment: null, grades: [], marks: [] };
+const EMPTY_ENTRY: EntryData = {
+  sheet: null,
+  assessments: { sequence: null, bonus: null, malus: null },
+  grades: {},
+  marks: [],
+};
+
+function pickAssessments(all: AssessmentResponse[]): Record<ColumnKind, AssessmentResponse | null> {
+  const first = (kind: ColumnKind) => all.find((a) => a.type === COLUMN_TYPE[kind]) ?? null;
+  return { sequence: first("sequence"), bonus: first("bonus"), malus: first("malus") };
+}
 
 async function fetchEntry(
   sessionId: string,
@@ -64,13 +89,20 @@ async function fetchEntry(
   const sheets = await listGradeSheets(sessionId, schoolId);
   const sheet = sheets.find((s) => s.classSubjectId === classSubjectId) ?? null;
   if (!sheet) return EMPTY_ENTRY;
-  const [assessments, marks] = await Promise.all([
+  const [allAssessments, marks] = await Promise.all([
     listAssessments(sheet.id, schoolId),
     listSheetSequenceMarks(sheet.id, schoolId),
   ]);
-  const assessment = assessments.find((a) => a.type === "SEQUENCE_MARK") ?? null;
-  const grades = assessment ? await listGrades(assessment.id, schoolId) : [];
-  return { sheet, assessment, grades, marks };
+  const assessments = pickAssessments(allAssessments);
+  const present = COLUMN_ORDER.map((kind) => assessments[kind]).filter(
+    (a): a is AssessmentResponse => a !== null,
+  );
+  const rows = await Promise.all(present.map((a) => listGrades(a.id, schoolId)));
+  const grades: Record<string, GradeResponse[]> = {};
+  present.forEach((a, index) => {
+    grades[a.id] = rows[index] ?? [];
+  });
+  return { sheet, assessments, grades, marks };
 }
 
 type Props = {
@@ -83,7 +115,10 @@ type Props = {
   onLoadRoster: () => void;
 };
 
-/** Saisie de la colonne « Note de séquence » (Comp. /20) d’une matière pour une séquence. */
+/**
+ * Saisie d’une séquence : note de séquence (Comp. /20), bonus et malus (points), et note de
+ * séquence calculée (moyenne des colonnes + bonus − malus, plafonnée à 20 — Q-25).
+ */
 export function SequenceEntryPanel({
   schoolId,
   assignment,
@@ -106,15 +141,15 @@ export function SequenceEntryPanel({
     ordered.find((s) => s.status === "OPEN") ??
     ordered[0] ??
     null;
-  const sessionId = session?.id ?? null;  const activeSessionId = session?.id ?? null;
+  const sessionId = session?.id ?? null;
   const activeSessionStatus = session?.status ?? null;
 
   const [loading, setLoading] = useState(false);
   const [entry, setEntry] = useState<EntryData>(EMPTY_ENTRY);
-  const { sheet, assessment, grades, marks } = entry;
+  const { sheet, assessments, grades, marks } = entry;
   const [drafts, setDrafts] = useState<Record<string, RowDraft>>({});
   const [errors, setErrors] = useState<Record<string, boolean>>({});
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState<ColumnKind | null>(null);
   const [saving, setSaving] = useState(false);
 
   const classSubjectId = assignment.classSubjectId;
@@ -123,12 +158,11 @@ export function SequenceEntryPanel({
     setEntry(EMPTY_ENTRY);
     setDrafts({});
     setErrors({});
-    if (activeSessionId && activeSessionStatus !== "PLANNED") {
+    if (sessionId && activeSessionStatus !== "PLANNED") {
       setLoading(true);
       try {
-        const data = await fetchEntry(activeSessionId, classSubjectId, schoolId);
+        const data = await fetchEntry(sessionId, classSubjectId, schoolId);
         setEntry(data);
-        setDrafts(Object.fromEntries(data.grades.map((g) => [g.studentId, toDraft(g)])));
       } catch (error) {
         if (!isAuthFailure(error)) {
           notify.error(error instanceof ApiError && error.message ? error.message : t("loadError"));
@@ -137,15 +171,19 @@ export function SequenceEntryPanel({
         setLoading(false);
       }
     }
-  }, [activeSessionId, activeSessionStatus, classSubjectId, schoolId, t]);
+  }, [sessionId, activeSessionStatus, classSubjectId, schoolId, t]);
   useEffect(() => {
     void load();
   }, [load]);
 
-  const gradeByStudent = useMemo(
-    () => new Map(grades.map((g) => [g.studentId, g])),
-    [grades],
-  );
+  const gradeIndex = useMemo(() => {
+    const index = new Map<string, GradeResponse>();
+    for (const [assessmentId, rows] of Object.entries(grades)) {
+      for (const g of rows) index.set(draftKey(assessmentId, g.studentId), g);
+    }
+    return index;
+  }, [grades]);
+
   const markByStudent = useMemo(
     () => new Map(marks.map((m) => [m.studentId, m])),
     [marks],
@@ -159,78 +197,115 @@ export function SequenceEntryPanel({
     [rosterLines],
   );
 
-  const draftOf = (studentId: string): RowDraft =>
-    drafts[studentId] ?? toDraft(gradeByStudent.get(studentId));
+  const draftOf = useCallback(
+    (assessmentId: string, studentId: string): RowDraft => {
+      const key = draftKey(assessmentId, studentId);
+      return drafts[key] ?? toDraft(gradeIndex.get(key));
+    },
+    [drafts, gradeIndex],
+  );
 
-  const dirtyIds = useMemo(
-    () =>
-      roster
-        .map((line) => line.studentId)
-        .filter((id) => {
-          const current = drafts[id];
-          if (!current) return false;
-          const original = toDraft(gradeByStudent.get(id));
-          return current.value.trim() !== original.value.trim() || current.status !== original.status;
-        }),
-    [drafts, gradeByStudent, roster],
+  /** Clés `assessmentId:studentId` modifiées, groupées par colonne. */
+  const dirtyByAssessment = useMemo(() => {
+    const result = new Map<string, string[]>();
+    for (const kind of COLUMN_ORDER) {
+      const assessment = assessments[kind];
+      if (!assessment) continue;
+      for (const line of roster) {
+        const key = draftKey(assessment.id, line.studentId);
+        const current = drafts[key];
+        if (!current) continue;
+        const original = toDraft(gradeIndex.get(key));
+        if (current.value.trim() !== original.value.trim() || current.status !== original.status) {
+          const list = result.get(assessment.id) ?? [];
+          list.push(line.studentId);
+          result.set(assessment.id, list);
+        }
+      }
+    }
+    return result;
+  }, [assessments, drafts, gradeIndex, roster]);
+
+  const dirtyCount = useMemo(
+    () => [...dirtyByAssessment.values()].reduce((sum, ids) => sum + ids.length, 0),
+    [dirtyByAssessment],
   );
 
   const editable = session?.status === "OPEN" && sheet?.status !== "LOCKED";
 
-  function updateDraft(studentId: string, patch: Partial<RowDraft>) {
+  function updateDraft(assessmentId: string, studentId: string, patch: Partial<RowDraft>) {
+    const key = draftKey(assessmentId, studentId);
     setDrafts((prev) => ({
       ...prev,
-      [studentId]: { ...draftOf(studentId), ...patch },
+      [key]: { ...(prev[key] ?? toDraft(gradeIndex.get(key))), ...patch },
     }));
-    setErrors((prev) => (prev[studentId] ? { ...prev, [studentId]: false } : prev));
+    setErrors((prev) => (prev[key] ? { ...prev, [key]: false } : prev));
   }
 
-  async function onCreateColumn() {
+  async function onCreateColumn(kind: ColumnKind) {
     if (!sheet || creating) return;
-    setCreating(true);
+    setCreating(kind);
     try {
       const created = await createAssessment({
         sheetId: sheet.id,
-        title: t("columnTitle"),
-        type: "SEQUENCE_MARK",
-        maxScore: 20,
+        title: t(`${kind}Title`),
+        type: COLUMN_TYPE[kind],
+        maxScore: DEFAULT_MAX_SCORE[kind],
         weight: 1,
         schoolId,
       });
-      setEntry((prev) => ({ ...prev, assessment: created }));
+      setEntry((prev) => ({
+        ...prev,
+        assessments: { ...prev.assessments, [kind]: created },
+        grades: { ...prev.grades, [created.id]: [] },
+      }));
       notify.success(t("columnCreated"));
     } catch (error) {
       if (isAuthFailure(error)) return;
       if (error instanceof ApiError) notify.error(error.message);
       else notify.error(t("columnError"));
     } finally {
-      setCreating(false);
+      setCreating(null);
     }
   }
 
   async function onSave() {
-    if (!assessment || !sheet || saving || dirtyIds.length === 0) return;
+    if (!sheet || saving || dirtyCount === 0) return;
 
     const nextErrors: Record<string, boolean> = {};
-    const items: Array<{ studentId: string; status: GradeStatus; value: string | null }> = [];
-    for (const studentId of dirtyIds) {
-      const draft = draftOf(studentId);
-      if (draft.status !== "SCORED") {
-        items.push({ studentId, status: draft.status, value: null });
-        continue;
+    const batches: Array<{
+      assessmentId: string;
+      items: Array<{ studentId: string; status: GradeStatus; value: string | null }>;
+    }> = [];
+
+    for (const kind of COLUMN_ORDER) {
+      const assessment = assessments[kind];
+      if (!assessment) continue;
+      const ids = dirtyByAssessment.get(assessment.id) ?? [];
+      if (ids.length === 0) continue;
+      const max = toNumber(assessment.maxScore) ?? DEFAULT_MAX_SCORE[kind];
+      const items: Array<{ studentId: string; status: GradeStatus; value: string | null }> = [];
+      for (const studentId of ids) {
+        const draft = draftOf(assessment.id, studentId);
+        if (kind === "sequence" && draft.status !== "SCORED") {
+          items.push({ studentId, status: draft.status, value: null });
+          continue;
+        }
+        const parsed = parseMarkInput(draft.value, max);
+        if (!parsed.ok) {
+          nextErrors[draftKey(assessment.id, studentId)] = true;
+          continue;
+        }
+        // Case vide = PENDING (jamais 0).
+        items.push({
+          studentId,
+          status: parsed.value === null ? "PENDING" : "SCORED",
+          value: parsed.value,
+        });
       }
-      const parsed = parseMarkInput(draft.value, 20);
-      if (!parsed.ok) {
-        nextErrors[studentId] = true;
-        continue;
-      }
-      // Case vide = PENDING (jamais 0).
-      items.push({
-        studentId,
-        status: parsed.value === null ? "PENDING" : "SCORED",
-        value: parsed.value,
-      });
+      batches.push({ assessmentId: assessment.id, items });
     }
+
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       notify.error(t("invalidValue"));
@@ -239,18 +314,32 @@ export function SequenceEntryPanel({
 
     setSaving(true);
     try {
-      const saved = await batchUpsertGrades({
-        assessmentId: assessment.id,
-        grades: items,
-        schoolId,
-      });
-      const merged = new Map(grades.map((g) => [g.studentId, g]));
-      for (const row of saved) merged.set(row.studentId, row);
+      const results = await Promise.all(
+        batches.map((batch) =>
+          batchUpsertGrades({
+            assessmentId: batch.assessmentId,
+            grades: batch.items,
+            schoolId,
+          }),
+        ),
+      );
       const nextMarks = await listSheetSequenceMarks(sheet.id, schoolId);
-      setEntry((prev) => ({ ...prev, grades: [...merged.values()], marks: nextMarks }));
+      const saved = results.flat();
+
+      setEntry((prev) => {
+        const nextGrades = { ...prev.grades };
+        batches.forEach((batch, index) => {
+          const merged = new Map(
+            (nextGrades[batch.assessmentId] ?? []).map((g) => [g.studentId, g]),
+          );
+          for (const row of results[index] ?? []) merged.set(row.studentId, row);
+          nextGrades[batch.assessmentId] = [...merged.values()];
+        });
+        return { ...prev, grades: nextGrades, marks: nextMarks };
+      });
       setDrafts((prev) => {
         const next = { ...prev };
-        for (const row of saved) next[row.studentId] = toDraft(row);
+        for (const row of saved) next[draftKey(row.assessmentId, row.studentId)] = toDraft(row);
         return next;
       });
       notify.success(t("saveSuccess", { count: saved.length }));
@@ -263,8 +352,9 @@ export function SequenceEntryPanel({
     }
   }
 
-  function focusRow(index: number) {
-    const el = document.getElementById(`mark-input-${index}`);
+  /** Entrée : passe à l’élève suivant dans la même colonne. */
+  function focusCell(kind: ColumnKind, index: number) {
+    const el = document.getElementById(`mark-input-${kind}-${index}`);
     if (el instanceof HTMLInputElement) {
       el.focus();
       el.select();
@@ -282,6 +372,9 @@ export function SequenceEntryPanel({
       />
     );
   }
+
+  const sequenceColumn = assessments.sequence;
+  const missingExtras = (["bonus", "malus"] as const).filter((kind) => !assessments[kind]);
 
   return (
     <div className="space-y-4">
@@ -317,7 +410,7 @@ export function SequenceEntryPanel({
             <Alert tone="warning" title={t("closedTitle")} description={t("closedDescription")} />
           ) : null}
 
-          {!assessment ? (
+          {!sequenceColumn ? (
             <EmptyState
               title={t("createColumnTitle")}
               description={t("createColumnDescription")}
@@ -325,9 +418,10 @@ export function SequenceEntryPanel({
                 editable ? (
                   <Button
                     type="button"
-                    loading={creating}
+                    loading={creating === "sequence"}
+                    disabled={creating !== null}
                     leadingIcon={<Plus className="size-3.5" aria-hidden />}
-                    onClick={() => void onCreateColumn()}
+                    onClick={() => void onCreateColumn("sequence")}
                   >
                     {t("createColumn")}
                   </Button>
@@ -351,22 +445,38 @@ export function SequenceEntryPanel({
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ios-separator)]/55 px-4 py-3">
                 <div className="min-w-0">
                   <p className="text-[13px] font-semibold text-[var(--ios-label)]">
-                    {assessment.title}
+                    {sequenceColumn.title}
                   </p>
                   <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
                     {t("pendingHint")}
                   </p>
                 </div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {editable
+                    ? missingExtras.map((kind) => (
+                        <Button
+                          key={kind}
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          loading={creating === kind}
+                          disabled={creating !== null || saving}
+                          leadingIcon={<Plus className="size-3.5" aria-hidden />}
+                          onClick={() => void onCreateColumn(kind)}
+                        >
+                          {kind === "bonus" ? t("addBonus") : t("addMalus")}
+                        </Button>
+                      ))
+                    : null}
                   <span className="text-[11px] text-[var(--ios-secondary-label)]">
-                    {dirtyIds.length > 0 ? t("dirty", { count: dirtyIds.length }) : t("saved")}
+                    {dirtyCount > 0 ? t("dirty", { count: dirtyCount }) : t("saved")}
                   </span>
                   {editable ? (
                     <Button
                       type="button"
                       size="sm"
                       loading={saving}
-                      disabled={dirtyIds.length === 0}
+                      disabled={dirtyCount === 0}
                       leadingIcon={<Save className="size-3.5" aria-hidden />}
                       onClick={() => void onSave()}
                     >
@@ -377,7 +487,7 @@ export function SequenceEntryPanel({
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] border-collapse text-left">
+                <table className="w-full min-w-[820px] border-collapse text-left">
                   <thead>
                     <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
                       <th className={cn(th, "w-14 text-center")}>{t("table.number")}</th>
@@ -385,12 +495,33 @@ export function SequenceEntryPanel({
                       <th className={cn(th, "w-16 text-center")}>{t("table.sex")}</th>
                       <th className={cn(th, "w-28 text-center")}>{t("table.comp")}</th>
                       <th className={cn(th, "w-44")}>{t("table.status")}</th>
+                      {assessments.bonus ? (
+                        <th className={cn(th, "w-24 text-center")}>
+                          {t("table.bonus")}
+                          <span className="block text-[9px] font-normal normal-case tracking-normal">
+                            {t("table.maxPoints", {
+                              max: formatMark(assessments.bonus.maxScore, locale, 0),
+                            })}
+                          </span>
+                        </th>
+                      ) : null}
+                      {assessments.malus ? (
+                        <th className={cn(th, "w-24 text-center")}>
+                          {t("table.malus")}
+                          <span className="block text-[9px] font-normal normal-case tracking-normal">
+                            {t("table.maxPoints", {
+                              max: formatMark(assessments.malus.maxScore, locale, 0),
+                            })}
+                          </span>
+                        </th>
+                      ) : null}
                       <th className={cn(th, "w-28 text-center")}>{t("table.sequenceMark")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {roster.map((line, index) => {
-                      const draft = draftOf(line.studentId);
+                      const seqDraft = draftOf(sequenceColumn.id, line.studentId);
+                      const seqKey = draftKey(sequenceColumn.id, line.studentId);
                       const mark = markByStudent.get(line.studentId);
                       return (
                         <tr
@@ -412,22 +543,24 @@ export function SequenceEntryPanel({
                           </td>
                           <td className="px-3 py-1.5 text-center">
                             <Input
-                              id={`mark-input-${index}`}
+                              id={`mark-input-sequence-${index}`}
                               inputMode="decimal"
                               autoComplete="off"
                               aria-label={`${t("table.comp")} — ${line.studentLabel}`}
                               className="mx-auto h-9 w-24 text-center tabular-nums"
                               placeholder="—"
-                              value={draft.value}
-                              invalid={errors[line.studentId]}
-                              disabled={!editable || saving || draft.status !== "SCORED"}
+                              value={seqDraft.value}
+                              invalid={errors[seqKey]}
+                              disabled={!editable || saving || seqDraft.status !== "SCORED"}
                               onChange={(event) =>
-                                updateDraft(line.studentId, { value: event.target.value })
+                                updateDraft(sequenceColumn.id, line.studentId, {
+                                  value: event.target.value,
+                                })
                               }
                               onKeyDown={(event) => {
                                 if (event.key === "Enter") {
                                   event.preventDefault();
-                                  focusRow(index + 1);
+                                  focusCell("sequence", index + 1);
                                 }
                               }}
                             />
@@ -436,10 +569,10 @@ export function SequenceEntryPanel({
                             <Select
                               aria-label={`${t("table.status")} — ${line.studentLabel}`}
                               className="h-9"
-                              value={draft.status}
+                              value={seqDraft.status}
                               disabled={!editable || saving}
                               onChange={(event) =>
-                                updateDraft(line.studentId, {
+                                updateDraft(sequenceColumn.id, line.studentId, {
                                   status: event.target.value as GradeStatus,
                                   ...(event.target.value !== "SCORED" ? { value: "" } : {}),
                                 })
@@ -452,6 +585,39 @@ export function SequenceEntryPanel({
                               ))}
                             </Select>
                           </td>
+                          {(["bonus", "malus"] as const).map((kind) => {
+                            const assessment = assessments[kind];
+                            if (!assessment) return null;
+                            const draft = draftOf(assessment.id, line.studentId);
+                            const key = draftKey(assessment.id, line.studentId);
+                            return (
+                              <td key={kind} className="px-3 py-1.5 text-center">
+                                <Input
+                                  id={`mark-input-${kind}-${index}`}
+                                  inputMode="decimal"
+                                  autoComplete="off"
+                                  aria-label={`${t(`table.${kind}`)} — ${line.studentLabel}`}
+                                  className="mx-auto h-9 w-20 text-center tabular-nums"
+                                  placeholder="—"
+                                  value={draft.value}
+                                  invalid={errors[key]}
+                                  disabled={!editable || saving}
+                                  onChange={(event) =>
+                                    updateDraft(assessment.id, line.studentId, {
+                                      value: event.target.value,
+                                      status: "SCORED",
+                                    })
+                                  }
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                      event.preventDefault();
+                                      focusCell(kind, index + 1);
+                                    }
+                                  }}
+                                />
+                              </td>
+                            );
+                          })}
                           <td className="px-3 py-2 text-center text-[12px] font-semibold tabular-nums text-[var(--ios-label)]">
                             {mark && mark.status === "SCORED"
                               ? formatMark(mark.value, locale)
@@ -466,12 +632,14 @@ export function SequenceEntryPanel({
 
               <div className="border-t border-[var(--ios-separator)]/60 bg-[color-mix(in_srgb,var(--ios-fill)_28%,var(--ios-card))] px-4 py-2.5">
                 <p className="text-[11px] text-[var(--ios-secondary-label)]">{t("formula")}</p>
+                <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
+                  {t("bonusMalusHint")}
+                </p>
               </div>
             </div>
           )}
         </>
       )}
-
     </div>
   );
 }

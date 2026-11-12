@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
   HubLoadingRows,
@@ -248,7 +247,6 @@ export function TeacherGradesView() {
   if (!staffProfileId) {
     return (
       <div className="space-y-5 slide-up">
-        <PageHeader description={t("description")} />
         <EmptyState
           title={t("noStaffProfileTitle")}
           description={t("noStaffProfileDescription")}
@@ -263,8 +261,6 @@ export function TeacherGradesView() {
 
   return (
     <div className="space-y-5 slide-up">
-      <PageHeader description={t("description")} />
-
       <HubYearBanner
         label={t("yearLabel")}
         yearLabel={year?.label ?? null}
