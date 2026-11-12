@@ -121,9 +121,9 @@ export function ReportSheetPaper({
 
   const sessionStatusTone = (
     status: EvaluationSessionResponse["status"] | undefined,
-  ): "success" | "neutral" | "blue" | "warning" => {
+  ): "success" | "danger" | "blue" | "warning" => {
     if (status === "OPEN") return "success";
-    if (status === "CLOSED") return "neutral";
+    if (status === "CLOSED") return "danger";
     if (status === "PLANNED") return "blue";
     return "warning";
   };
@@ -451,11 +451,21 @@ export function ReportSheetPaper({
               options={[
                 {
                   value: "1",
-                  label: t("table.sequence", { number: sheet.sequence1Number ?? 1 }),
+                  label: [
+                    t("table.sequence", { number: sheet.sequence1Number ?? 1 }),
+                    seq1?.status === "CLOSED" ? sessionStatusLabel("CLOSED") : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · "),
                 },
                 {
                   value: "2",
-                  label: t("table.sequence", { number: sheet.sequence2Number ?? 2 }),
+                  label: [
+                    t("table.sequence", { number: sheet.sequence2Number ?? 2 }),
+                    seq2?.status === "CLOSED" ? sessionStatusLabel("CLOSED") : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · "),
                 },
                 { value: "both", label: t("sequenceViewBoth") },
               ]}
