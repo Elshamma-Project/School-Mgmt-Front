@@ -1,5 +1,8 @@
 import { apiRequest } from "./client";
 import type { LocalizedTextDto } from "./academic";
+import { getTenantConfig } from "@/lib/tenant/config";
+import { openSecret } from "@/lib/auth/token-vault";
+import { useAuthStore } from "@/stores/auth-store";
 
 export type EvaluationSessionResponse = {
   id: string;
@@ -278,4 +281,368 @@ export async function listGradeAudits(options: {
     ...schoolParams(options.schoolId),
   });
   return apiRequest<GradeAuditEntryResponse[]>(`/api/v1/grade-audits?${qs}`);
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Fiches de notes (GradeSheet) — saisie enseignant                           */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+export type SheetStatus = "DRAFT" | "SUBMITTED" | "LOCKED";
+
+export type AssessmentType =
+  | "SEQUENCE_MARK"
+  | "BONUS"
+  | "MALUS"
+  | "TEST"
+  | "QUIZ"
+  | "HOMEWORK"
+  | "ORAL"
+  | "PRACTICAL"
+  | "EXAM"
+  | "OTHER";
+
+export type GradeStatus =
+  | "SCORED"
+  | "PENDING"
+  | "ABSENT"
+  | "ABSENT_EXCUSED"
+  | "EXEMPTED";
+
+export type SexCode = "MALE" | "FEMALE";
+
+export type TotalizationRuleDto = {
+  formula: string;
+  minScore: string | number;
+  maxScore: string | number;
+  capAtMax: boolean;
+};
+
+export type GradeSheetResponse = {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  classId: string;
+  classSubjectId: string;
+  sessionId: string;
+  sessionNumber: number;
+  teacherId: string | null;
+  status: SheetStatus;
+  totalization: TotalizationRuleDto;
+  lastTotalizedAt: string | null;
+};
+
+export type AssessmentResponse = {
+  id: string;
+  schoolId: string;
+  sheetId: string | null;
+  classId: string;
+  classSubjectId: string;
+  sessionId: string;
+  sessionNumber: number;
+  title: string;
+  type: AssessmentType;
+  maxScore: string | number;
+  weight: string | number;
+  date: string | null;
+  published: boolean;
+};
+
+export type CreateAssessmentPayload = {
+  sheetId: string;
+  title: string;
+  type?: AssessmentType;
+  maxScore?: number | string;
+  weight?: number | string;
+  date?: string | null;
+  published?: boolean;
+  schoolId?: string | null;
+};
+
+export type GradeResponse = {
+  id: string;
+  schoolId: string;
+  assessmentId: string;
+  studentId: string;
+  enrollmentId: string;
+  classId: string;
+  classSubjectId: string;
+  sessionId: string;
+  value: string | number | null;
+  status: GradeStatus;
+  comment: string | null;
+};
+
+export type BatchGradeItemPayload = {
+  studentId: string;
+  status: GradeStatus;
+  /** Obligatoire si `status === "SCORED"` ; `null` sinon (jamais 0 pour « non saisi »). */
+  value?: number | string | null;
+  comment?: string | null;
+};
+
+export type BatchUpsertGradesPayload = {
+  assessmentId: string;
+  grades: BatchGradeItemPayload[];
+  /** Obligatoire si la séquence est CLOSED (BR-22). */
+  reason?: string | null;
+  schoolId?: string | null;
+};
+
+export type SequenceMarkResponse = {
+  id: string;
+  schoolId: string;
+  sheetId: string;
+  studentId: string;
+  classSubjectId: string;
+  sessionId: string;
+  sessionNumber: number;
+  termNumber: number;
+  value: string | number | null;
+  status: GradeStatus;
+  source: "COMPUTED" | "MANUAL_OVERRIDE";
+  computedAt: string | null;
+};
+
+/** Séquences de l’enseignant connecté (ou de toute l’école pour l’administration). */
+export async function listGradeSheets(
+  sessionId: string,
+  schoolId?: string | null,
+): Promise<GradeSheetResponse[]> {
+  const qs = toSearch({ sessionId, ...schoolParams(schoolId) });
+  return apiRequest<GradeSheetResponse[]>(`/api/v1/grade-sheets?${qs}`);
+}
+
+export async function getGradeSheet(
+  id: string,
+  schoolId?: string | null,
+): Promise<GradeSheetResponse> {
+  const qs = toSearch({ ...schoolParams(schoolId) });
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<GradeSheetResponse>(`/api/v1/grade-sheets/${encodeURIComponent(id)}${suffix}`);
+}
+
+export async function listAssessments(
+  sheetId: string,
+  schoolId?: string | null,
+): Promise<AssessmentResponse[]> {
+  const qs = toSearch({ sheetId, ...schoolParams(schoolId) });
+  return apiRequest<AssessmentResponse[]>(`/api/v1/assessments?${qs}`);
+}
+
+export async function createAssessment(
+  payload: CreateAssessmentPayload,
+): Promise<AssessmentResponse> {
+  return apiRequest<AssessmentResponse>("/api/v1/assessments", {
+    method: "POST",
+    body: {
+      sheetId: payload.sheetId,
+      title: payload.title.trim(),
+      type: payload.type ?? "SEQUENCE_MARK",
+      maxScore: payload.maxScore ?? 20,
+      weight: payload.weight ?? 1,
+      date: payload.date ?? null,
+      published: payload.published ?? true,
+      schoolId: payload.schoolId?.trim() || null,
+    },
+  });
+}
+
+export async function listGrades(
+  assessmentId: string,
+  schoolId?: string | null,
+): Promise<GradeResponse[]> {
+  const qs = toSearch({ assessmentId, ...schoolParams(schoolId) });
+  return apiRequest<GradeResponse[]>(`/api/v1/grades?${qs}`);
+}
+
+/** Enregistre plusieurs notes d’une colonne (passe par GradeService : BR-11 à BR-18). */
+export async function batchUpsertGrades(
+  payload: BatchUpsertGradesPayload,
+): Promise<GradeResponse[]> {
+  return apiRequest<GradeResponse[]>("/api/v1/grades/batch", {
+    method: "POST",
+    body: {
+      assessmentId: payload.assessmentId,
+      grades: payload.grades.map((g) => ({
+        studentId: g.studentId,
+        status: g.status,
+        value: g.status === "SCORED" ? (g.value ?? null) : null,
+        comment: g.comment?.trim() || null,
+      })),
+      reason: payload.reason?.trim() || null,
+      schoolId: payload.schoolId?.trim() || null,
+    },
+  });
+}
+
+/** Notes de séquence calculées (moyenne des colonnes + bonus − malus, plafonnée à 20 — Q-25). */
+export async function listSheetSequenceMarks(
+  sheetId: string,
+  schoolId?: string | null,
+): Promise<SequenceMarkResponse[]> {
+  const qs = toSearch({ ...schoolParams(schoolId) });
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<SequenceMarkResponse[]>(
+    `/api/v1/grade-sheets/${encodeURIComponent(sheetId)}/sequence-marks${suffix}`,
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Fiche de report de notes (GradeReportSheet)                                */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+export type ReportSheetStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "VISA_SG"
+  | "VISA_PRINCIPAL"
+  | "REJECTED";
+
+export type ReportSheetVisaDto = {
+  userId: string;
+  at: string;
+};
+
+export type ReportSheetSequenceCellDto = {
+  mark: string | number | null;
+  markStatus: GradeStatus;
+  coefficient: string | number | null;
+  weightedMark: string | number | null;
+  rank: number | null;
+  appreciation: string | null;
+  appreciationOverride: string | null;
+  displayedAppreciation: string | null;
+};
+
+export type GradeReportSheetLineDto = {
+  rollNumber: number | null;
+  studentId: string;
+  studentLabel: string;
+  sex: SexCode | null;
+  sequence1: ReportSheetSequenceCellDto;
+  sequence2: ReportSheetSequenceCellDto;
+};
+
+export type GradeReportSheetResponse = {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  classId: string;
+  classSubjectId: string;
+  termNumber: number;
+  teacherId: string | null;
+  status: ReportSheetStatus;
+  teacherLabel: string | null;
+  subjectLabel: LocalizedTextDto;
+  classLabel: string | null;
+  coefficient: string | number;
+  headcount: number;
+  boysCount: number;
+  girlsCount: number;
+  sexCountWarning: boolean;
+  sequence1ExamDate: string | null;
+  sequence2ExamDate: string | null;
+  sequence1Number: number | null;
+  sequence2Number: number | null;
+  appreciationScaleCode: string | null;
+  deadlineWarning: boolean;
+  lines: GradeReportSheetLineDto[];
+  submittedAt: string | null;
+  visaSupervisor: ReportSheetVisaDto | null;
+  visaPrincipal: ReportSheetVisaDto | null;
+  rejectionReason: string | null;
+};
+
+export type GenerateReportSheetPayload = {
+  classSubjectId: string;
+  termNumber: number;
+  /** true : noms seuls, cellules vides (saisie manuscrite — Q-36). */
+  blank?: boolean;
+  schoolId?: string | null;
+};
+
+export async function listGradeReportSheets(
+  academicYearId: string,
+  termNumber: number,
+  schoolId?: string | null,
+): Promise<GradeReportSheetResponse[]> {
+  const qs = toSearch({ academicYearId, termNumber, ...schoolParams(schoolId) });
+  return apiRequest<GradeReportSheetResponse[]>(`/api/v1/grade-report-sheets?${qs}`);
+}
+
+export async function getGradeReportSheet(
+  id: string,
+  schoolId?: string | null,
+): Promise<GradeReportSheetResponse> {
+  const qs = toSearch({ ...schoolParams(schoolId) });
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<GradeReportSheetResponse>(
+    `/api/v1/grade-report-sheets/${encodeURIComponent(id)}${suffix}`,
+  );
+}
+
+/** Crée (ou régénère en brouillon) la fiche de report d’une matière pour un trimestre. */
+export async function generateGradeReportSheet(
+  payload: GenerateReportSheetPayload,
+): Promise<GradeReportSheetResponse> {
+  return apiRequest<GradeReportSheetResponse>("/api/v1/grade-report-sheets/generate", {
+    method: "POST",
+    body: {
+      classSubjectId: payload.classSubjectId,
+      termNumber: payload.termNumber,
+      blank: payload.blank ?? false,
+      schoolId: payload.schoolId?.trim() || null,
+    },
+  });
+}
+
+/** Régénère une fiche existante (remplie ou vierge) ; repasse en DRAFT. */
+export async function regenerateGradeReportSheet(
+  id: string,
+  options: { blank?: boolean; schoolId?: string | null } = {},
+): Promise<GradeReportSheetResponse> {
+  const qs = toSearch({
+    blank: options.blank ? "true" : "false",
+    ...schoolParams(options.schoolId),
+  });
+  return apiRequest<GradeReportSheetResponse>(
+    `/api/v1/grade-report-sheets/${encodeURIComponent(id)}/regenerate?${qs}`,
+    { method: "POST" },
+  );
+}
+
+export async function submitGradeReportSheet(
+  id: string,
+  schoolId?: string | null,
+): Promise<GradeReportSheetResponse> {
+  const qs = toSearch({ ...schoolParams(schoolId) });
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<GradeReportSheetResponse>(
+    `/api/v1/grade-report-sheets/${encodeURIComponent(id)}/submit${suffix}`,
+    { method: "POST" },
+  );
+}
+
+/** PDF A4 paysage de la fiche de report (blob). */
+export async function downloadGradeReportSheetPdf(
+  id: string,
+  options: { schoolId?: string | null; language?: "FR" | "EN" } = {},
+): Promise<Blob> {
+  const baseUrl = getTenantConfig().apiBaseUrl.replace(/\/$/, "") || "http://localhost:8090";
+  const token = openSecret(useAuthStore.getState().accessToken);
+  const qs = toSearch({
+    language: options.language ?? null,
+    ...schoolParams(options.schoolId),
+  });
+  const suffix = qs ? `?${qs}` : "";
+  const response = await fetch(
+    `${baseUrl}/api/v1/grade-report-sheets/${encodeURIComponent(id)}/pdf${suffix}`,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`PDF ${response.status}`);
+  }
+  return response.blob();
 }

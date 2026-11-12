@@ -493,8 +493,9 @@ export function AcademicHubView() {
         hideSearch
       />
 
+      {/* Carte d’action — même pattern que gradesHub schemes (titre + badge + hint + CTA). */}
       <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
-        <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+        <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:p-4">
           <div className="flex min-w-0 flex-1 items-start gap-3">
             <span
               className={cn(
@@ -519,7 +520,7 @@ export function AcademicHubView() {
                 <Layers3 className="size-[18px] stroke-[1.75]" />
               )}
             </span>
-            <div className="min-w-0 flex-1 space-y-1">
+            <div className="min-w-0 flex-1 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
                   {t(`cardTitle.${tab}`)}
@@ -541,30 +542,29 @@ export function AcademicHubView() {
               <p className="text-[11px] leading-snug text-[var(--ios-secondary-label)]">
                 {canManage ? t(`cardHint.${tab}`) : t("cardManageHint")}
               </p>
+              <div className="max-w-md">
+                <IconInput
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t(`search.${tab}`)}
+                  icon={<Search className="size-4 stroke-[1.75]" />}
+                  aria-label={tCommon("search")}
+                />
+              </div>
             </div>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5">
-            <div className="min-w-0 w-full sm:w-[220px]">
-              <IconInput
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t(`search.${tab}`)}
-                icon={<Search className="size-4 stroke-[1.75]" />}
-                aria-label={tCommon("search")}
-              />
-            </div>
-            {canManage ? (
-              <Button
-                type="button"
-                className="w-full shrink-0 sm:w-auto"
-                leadingIcon={<Plus className="size-3.5" aria-hidden />}
-                aria-label={t(`add.${tab}`)}
-                onClick={openCreate}
-              >
-                {t("addShort")}
-              </Button>
-            ) : null}
-          </div>
+          {canManage ? (
+            <Button
+              type="button"
+              className="w-full shrink-0 sm:w-auto"
+              leadingIcon={<Plus className="size-3.5" aria-hidden />}
+              aria-label={t("addShort")}
+              title={t(`add.${tab}`)}
+              onClick={openCreate}
+            >
+              {t("addShort")}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -604,10 +604,13 @@ export function AcademicHubView() {
             canManage ? (
               <Button
                 type="button"
-                leadingIcon={<Plus className="size-4 stroke-[1.75]" aria-hidden />}
+                className="w-full shrink-0 sm:w-auto"
+                leadingIcon={<Plus className="size-3.5" aria-hidden />}
+                aria-label={t("addShort")}
+                title={t(`add.${tab}`)}
                 onClick={openCreate}
               >
-                {t(`add.${tab}`)}
+                {t("addShort")}
               </Button>
             ) : undefined
           }

@@ -16,7 +16,9 @@ title:
 
 Code, libellés FR/EN, abrégés, type et alias EDT. Pas de coefficient ni d’enseignant ici.
 
-Pour le coef et l’enseignant : ouvrez une classe → Matières de la classe.
+### Affectation aux classes
+
+Pour attribuer cette matière à un enseignant ou fixer son coefficient, ouvrez la fiche d’une classe puis ajoutez / modifiez la matière dans « Matières de la classe ».
 
 ## EN
 
@@ -24,4 +26,6 @@ Pour le coef et l’enseignant : ouvrez une classe → Matières de la classe.
 
 Code, FR/EN labels, shorts, kind and timetable alias. No coefficient or teacher here.
 
-For coefficient and teacher: open a class → Class subjects.
+### Assignment to classes
+
+To assign a teacher or set the coefficient for this subject, open a class record then add / edit the subject under “Class subjects”.

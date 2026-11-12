@@ -1153,68 +1153,70 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
           {entity.kind === "subjects" ? (
             <>
-              <GroupedList header={t("detail.identitySection")}>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("columns.code")}
-                    value={entity.data.code}
-                    icon={<Hash className="size-4 stroke-[1.75]" />}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.nameFr")}
-                    value={entity.data.name.fr || "—"}
-                    icon={<Languages className="size-4 stroke-[1.75]" />}
-                    stacked
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.nameEn")}
-                    value={entity.data.name.en || "—"}
-                    icon={<Languages className="size-4 stroke-[1.75]" />}
-                    stacked
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.shortFr")}
-                    value={entity.data.shortName?.fr || "—"}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.shortEn")}
-                    value={entity.data.shortName?.en || "—"}
-                  />
-                </GroupedListItem>
-              </GroupedList>
+              <div className="grid grid-cols-1 items-stretch gap-6 lg:col-span-2 lg:grid-cols-2">
+                <GroupedList header={t("detail.identitySection")} className="h-full">
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("columns.code")}
+                      value={entity.data.code}
+                      icon={<Hash className="size-4 stroke-[1.75]" />}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.nameFr")}
+                      value={entity.data.name.fr || "—"}
+                      icon={<Languages className="size-4 stroke-[1.75]" />}
+                      stacked
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.nameEn")}
+                      value={entity.data.name.en || "—"}
+                      icon={<Languages className="size-4 stroke-[1.75]" />}
+                      stacked
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.shortFr")}
+                      value={entity.data.shortName?.fr || "—"}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.shortEn")}
+                      value={entity.data.shortName?.en || "—"}
+                    />
+                  </GroupedListItem>
+                </GroupedList>
 
-              <GroupedList header={t("detail.teachingSection")}>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.kind")}
-                    value={t(`subjectKind.${entity.data.kind}`)}
-                    icon={<BookOpen className="size-4 stroke-[1.75]" />}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.teachingLanguage")}
-                    value={entity.data.teachingLanguage ?? t("fields.teachingLanguageAny")}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow
-                    label={t("fields.timetableAlias")}
-                    value={dash(entity.data.timetableAlias)}
-                  />
-                </GroupedListItem>
-                <GroupedListItem>
-                  <DetailRow label={t("columns.status")} value={active ? t("statusActive") : t("inactive")} />
-                </GroupedListItem>
-              </GroupedList>
+                <GroupedList header={t("detail.teachingSection")} className="h-full">
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.kind")}
+                      value={t(`subjectKind.${entity.data.kind}`)}
+                      icon={<BookOpen className="size-4 stroke-[1.75]" />}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.teachingLanguage")}
+                      value={entity.data.teachingLanguage ?? t("fields.teachingLanguageAny")}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow
+                      label={t("fields.timetableAlias")}
+                      value={dash(entity.data.timetableAlias)}
+                    />
+                  </GroupedListItem>
+                  <GroupedListItem>
+                    <DetailRow label={t("columns.status")} value={active ? t("statusActive") : t("inactive")} />
+                  </GroupedListItem>
+                </GroupedList>
+              </div>
 
               <GroupedList header={t("detail.assignmentSection")} className="lg:col-span-2">
                 <GroupedListItem className="block py-3">
@@ -1344,7 +1346,6 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
 
               <GroupedList
                 header={t("detail.classesSection")}
-                footer={yearLabel ? t("detail.classesOfYear", { year: yearLabel }) : undefined}
                 className="lg:col-span-2"
               >
                 {relatedLoading ? (
@@ -1504,8 +1505,8 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
           ) : null}
 
           {entity.kind === "groups" ? (
-            <>
-              <GroupedList header={t("detail.identitySection")}>
+            <div className="grid grid-cols-1 items-stretch gap-6 lg:col-span-2 lg:grid-cols-2">
+              <GroupedList header={t("detail.identitySection")} className="h-full">
                 <GroupedListItem>
                   <DetailRow
                     label={t("columns.code")}
@@ -1520,7 +1521,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                   <DetailRow label={t("fields.nameEn")} value={entity.data.name.en || "—"} stacked />
                 </GroupedListItem>
               </GroupedList>
-              <GroupedList header={t("detail.bulletinSection")}>
+              <GroupedList header={t("detail.bulletinSection")} className="h-full">
                 <GroupedListItem>
                   <DetailRow
                     label={t("fields.displayOrder")}
@@ -1535,7 +1536,7 @@ export function AcademicDetailView({ tab, slug }: AcademicDetailViewProps) {
                   />
                 </GroupedListItem>
               </GroupedList>
-            </>
+            </div>
           ) : null}
 
           {entity.kind === "rooms" ? (

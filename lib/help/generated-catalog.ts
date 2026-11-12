@@ -287,10 +287,18 @@ export const HELP_CATALOG: HelpArticle[] = [
           {
             "fr": "Code, libellés FR/EN, abrégés, type et alias EDT. Pas de coefficient ni d’enseignant ici.",
             "en": "Code, FR/EN labels, shorts, kind and timetable alias. No coefficient or teacher here."
-          },
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Affectation aux classes",
+          "en": "Assignment to classes"
+        },
+        "paragraphs": [
           {
-            "fr": "Pour le coef et l’enseignant : ouvrez une classe → Matières de la classe.",
-            "en": "For coefficient and teacher: open a class → Class subjects."
+            "fr": "Pour attribuer cette matière à un enseignant ou fixer son coefficient, ouvrez la fiche d’une classe puis ajoutez / modifiez la matière dans « Matières de la classe ».",
+            "en": "To assign a teacher or set the coefficient for this subject, open a class record then add / edit the subject under “Class subjects”."
           }
         ]
       }

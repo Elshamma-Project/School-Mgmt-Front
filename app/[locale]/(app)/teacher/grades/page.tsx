@@ -1,7 +1,7 @@
-import { ModulePage } from "@/components/workspace/module-page";
+import { TeacherGradesView } from "@/components/teacher/teacher-grades-view";
 
 export const instant = false;
 
 export default function TeacherGradesPage() {
-  return <ModulePage ns="teacherGrades" />;
+  return <TeacherGradesView />;
 }
