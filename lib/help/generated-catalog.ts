@@ -465,8 +465,16 @@ export const HELP_CATALOG: HelpArticle[] = [
         },
         "paragraphs": [
           {
-            "fr": "La fiche de report est un instantané trimestriel. Affichez une séquence à la fois par défaut, ou les deux si besoin. Soumission → visa Surveillant Général → visa Principal.",
-            "en": "The report sheet is a term snapshot. Show one sequence by default, or both if needed. Submit → Supervisor visa → Principal visa."
+            "fr": "La fiche de report est un instantané trimestriel. Affichez une séquence à la fois par défaut, ou les deux si besoin. Soumission enseignant → visa Surveillant Général → visa Principal.",
+            "en": "The report sheet is a term snapshot. Show one sequence by default, or both if needed. Teacher submit → Supervisor visa → Principal visa."
+          },
+          {
+            "fr": "**Visa enseignant automatique (BR-79)** : lorsqu’un administrateur ou le directeur **clôture** une séquence, toutes les fiches de report du trimestre encore en brouillon (ou rejetées) passent automatiquement en « soumise » — le visa enseignant est posé sans action manuelle. Les fiches déjà visées SG / Principal ne sont pas touchées.",
+            "en": "**Automatic teacher visa (BR-79)**: when an administrator or the director **closes** a sequence, every still-draft (or rejected) report sheet for that term is auto-submitted — the teacher visa is stamped without a manual action. Sheets already visaed by Supervisor / Principal are left unchanged."
+          },
+          {
+            "fr": "**Correction après clôture (BR-80)** : une fois la séquence **clôturée**, une colonne **Corr.** apparaît sur la fiche de report. L’enseignant propose une nouvelle Comp./20 avec un **motif** (≥ 15 caractères) et jusqu’à **3 pièces** (JPEG/PNG/WebP/PDF, 5 Mo). La demande reste en attente. **Seul le directeur** (onglet Corrections) peut **approuver** (écrit la note + audit) ou **rejeter** (motif de revue).",
+            "en": "**Post-close correction (BR-80)**: once a sequence is **closed**, a **Corr.** column appears on the report sheet. The teacher proposes a new Mark/20 with a **reason** (≥ 15 characters) and up to **3 files** (JPEG/PNG/WebP/PDF, 5 MB). The request stays pending. **Only the director** (Corrections tab) can **approve** (persists the mark + audit) or **reject** (review note)."
           },
           {
             "fr": "Délai indicatif : déposer la fiche dans les **72 h** après la séquence (avertissement seulement tant que le barème ne bloque pas — BR-77).",

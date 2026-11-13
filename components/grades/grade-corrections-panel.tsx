@@ -114,7 +114,7 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
     });
   };
 
-  const openEvidence = async (row: GradeCorrectionRequestResponse, evidenceId: string, fileName: string) => {
+  const openEvidence = async (row: GradeCorrectionRequestResponse, evidenceId: string) => {
     try {
       const blob = await fetchGradeCorrectionEvidence(row.id, evidenceId, schoolId);
       const url = URL.createObjectURL(blob);
@@ -269,7 +269,7 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
                         key={item.id}
                         type="button"
                         className="pressable inline-flex h-8 items-center gap-1 rounded-[var(--radius-sm)] bg-[var(--ios-fill)] px-2 text-[11px] font-medium"
-                        onClick={() => void openEvidence(row, item.id, item.fileName)}
+                        onClick={() => void openEvidence(row, item.id)}
                       >
                         <Paperclip className="size-3" aria-hidden />
                         {item.fileName}
@@ -352,7 +352,7 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
                               className="pressable inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--ios-fill)] text-[var(--ios-label)]"
                               title={t("viewEvidence", { name: item.fileName })}
                               aria-label={t("viewEvidence", { name: item.fileName })}
-                              onClick={() => void openEvidence(row, item.id, item.fileName)}
+                              onClick={() => void openEvidence(row, item.id)}
                             >
                               <Paperclip className="size-3.5" aria-hidden />
                             </button>
