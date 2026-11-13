@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Save } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,9 @@ const COLUMN_TYPE = {
 } as const;
 
 const COLUMN_ORDER: ColumnKind[] = ["sequence", "bonus", "malus"];
+
+/** Pause avant enregistrement auto des notes (ms). */
+const AUTO_SAVE_MS = 750;
 
 /** Valeur par défaut de la colonne créée (Q-25 : bonus / malus en points, pas sur 20). */
 const DEFAULT_MAX_SCORE: Record<ColumnKind, number> = { sequence: 20, bonus: 5, malus: 5 };
@@ -151,6 +154,11 @@ export function SequenceEntryPanel({
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [creating, setCreating] = useState<ColumnKind | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savePulse, setSavePulse] = useState(false);
+  const savingLockRef = useRef(false);
+  const resaveRef = useRef(false);
+  const draftsRef = useRef(drafts);
+  draftsRef.current = drafts;
 
   const classSubjectId = assignment.classSubjectId;
 
@@ -230,6 +238,10 @@ export function SequenceEntryPanel({
     () => [...dirtyByAssessment.values()].reduce((sum, ids) => sum + ids.length, 0),
     [dirtyByAssessment],
   );
+  const dirtyByAssessmentRef = useRef(dirtyByAssessment);
+  dirtyByAssessmentRef.current = dirtyByAssessment;
+  const dirtyCountRef = useRef(dirtyCount);
+  dirtyCountRef.current = dirtyCount;
 
   const editable = session?.status === "OPEN" && sheet?.status !== "LOCKED";
 
@@ -240,6 +252,7 @@ export function SequenceEntryPanel({
       [key]: { ...(prev[key] ?? toDraft(gradeIndex.get(key))), ...patch },
     }));
     setErrors((prev) => (prev[key] ? { ...prev, [key]: false } : prev));
+    setSavePulse(false);
   }
 
   async function onCreateColumn(kind: ColumnKind) {
@@ -269,88 +282,126 @@ export function SequenceEntryPanel({
     }
   }
 
-  async function onSave() {
-    if (!sheet || saving || dirtyCount === 0) return;
-
-    const nextErrors: Record<string, boolean> = {};
-    const batches: Array<{
-      assessmentId: string;
-      items: Array<{ studentId: string; status: GradeStatus; value: string | null }>;
-    }> = [];
-
-    for (const kind of COLUMN_ORDER) {
-      const assessment = assessments[kind];
-      if (!assessment) continue;
-      const ids = dirtyByAssessment.get(assessment.id) ?? [];
-      if (ids.length === 0) continue;
-      const max = toNumber(assessment.maxScore) ?? DEFAULT_MAX_SCORE[kind];
-      const items: Array<{ studentId: string; status: GradeStatus; value: string | null }> = [];
-      for (const studentId of ids) {
-        const draft = draftOf(assessment.id, studentId);
-        if (kind === "sequence" && draft.status !== "SCORED") {
-          items.push({ studentId, status: draft.status, value: null });
-          continue;
-        }
-        const parsed = parseMarkInput(draft.value, max);
-        if (!parsed.ok) {
-          nextErrors[draftKey(assessment.id, studentId)] = true;
-          continue;
-        }
-        // Case vide = PENDING (jamais 0).
-        items.push({
-          studentId,
-          status: parsed.value === null ? "PENDING" : "SCORED",
-          value: parsed.value,
-        });
+  const flushSave = useCallback(
+    async (options?: { announceInvalid?: boolean }) => {
+      if (!sheet || !editable) return;
+      if (savingLockRef.current) {
+        resaveRef.current = true;
+        return;
       }
-      batches.push({ assessmentId: assessment.id, items });
-    }
+      if (dirtyCountRef.current === 0) return;
 
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
-      notify.error(t("invalidValue"));
-      return;
-    }
+      const currentDirty = dirtyByAssessmentRef.current;
+      const currentDrafts = draftsRef.current;
+      const nextErrors: Record<string, boolean> = {};
+      const batches: Array<{
+        assessmentId: string;
+        items: Array<{ studentId: string; status: GradeStatus; value: string | null }>;
+      }> = [];
 
-    setSaving(true);
-    try {
-      const results = await Promise.all(
-        batches.map((batch) =>
-          batchUpsertGrades({
-            assessmentId: batch.assessmentId,
-            grades: batch.items,
-            schoolId,
-          }),
-        ),
-      );
-      const nextMarks = await listSheetSequenceMarks(sheet.id, schoolId);
-      const saved = results.flat();
+      for (const kind of COLUMN_ORDER) {
+        const assessment = assessments[kind];
+        if (!assessment) continue;
+        const ids = currentDirty.get(assessment.id) ?? [];
+        if (ids.length === 0) continue;
+        const max = toNumber(assessment.maxScore) ?? DEFAULT_MAX_SCORE[kind];
+        const items: Array<{ studentId: string; status: GradeStatus; value: string | null }> = [];
+        for (const studentId of ids) {
+          const key = draftKey(assessment.id, studentId);
+          const draft = currentDrafts[key] ?? toDraft(gradeIndex.get(key));
+          if (kind === "sequence" && draft.status !== "SCORED") {
+            items.push({ studentId, status: draft.status, value: null });
+            continue;
+          }
+          const parsed = parseMarkInput(draft.value, max);
+          if (!parsed.ok) {
+            nextErrors[key] = true;
+            continue;
+          }
+          // Case vide = PENDING (jamais 0).
+          items.push({
+            studentId,
+            status: parsed.value === null ? "PENDING" : "SCORED",
+            value: parsed.value,
+          });
+        }
+        batches.push({ assessmentId: assessment.id, items });
+      }
 
-      setEntry((prev) => {
-        const nextGrades = { ...prev.grades };
-        batches.forEach((batch, index) => {
-          const merged = new Map(
-            (nextGrades[batch.assessmentId] ?? []).map((g) => [g.studentId, g]),
-          );
-          for (const row of results[index] ?? []) merged.set(row.studentId, row);
-          nextGrades[batch.assessmentId] = [...merged.values()];
+      if (Object.keys(nextErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...nextErrors }));
+        if (options?.announceInvalid) notify.error(t("invalidValue"));
+        return;
+      }
+      if (batches.length === 0) return;
+
+      savingLockRef.current = true;
+      setSaving(true);
+      try {
+        const results = await Promise.all(
+          batches.map((batch) =>
+            batchUpsertGrades({
+              assessmentId: batch.assessmentId,
+              grades: batch.items,
+              schoolId,
+            }),
+          ),
+        );
+        const nextMarks = await listSheetSequenceMarks(sheet.id, schoolId);
+        const saved = results.flat();
+
+        setEntry((prev) => {
+          const nextGrades = { ...prev.grades };
+          batches.forEach((batch, index) => {
+            const merged = new Map(
+              (nextGrades[batch.assessmentId] ?? []).map((g) => [g.studentId, g]),
+            );
+            for (const row of results[index] ?? []) merged.set(row.studentId, row);
+            nextGrades[batch.assessmentId] = [...merged.values()];
+          });
+          return { ...prev, grades: nextGrades, marks: nextMarks };
         });
-        return { ...prev, grades: nextGrades, marks: nextMarks };
-      });
-      setDrafts((prev) => {
-        const next = { ...prev };
-        for (const row of saved) next[draftKey(row.assessmentId, row.studentId)] = toDraft(row);
-        return next;
-      });
-      notify.success(t("saveSuccess", { count: saved.length }));
-    } catch (error) {
-      if (isAuthFailure(error)) return;
-      if (error instanceof ApiError) notify.error(error.message);
-      else notify.error(t("saveError"));
-    } finally {
-      setSaving(false);
-    }
-  }
+        setDrafts((prev) => {
+          const next = { ...prev };
+          for (const row of saved) {
+            const key = draftKey(row.assessmentId, row.studentId);
+            const fromServer = toDraft(row);
+            const local = next[key];
+            // Garde une saisie plus récente que la réponse serveur (course auto-save).
+            if (
+              local &&
+              (local.value.trim() !== fromServer.value.trim() || local.status !== fromServer.status)
+            ) {
+              continue;
+            }
+            next[key] = fromServer;
+          }
+          return next;
+        });
+        setSavePulse(true);
+      } catch (error) {
+        if (isAuthFailure(error)) return;
+        if (error instanceof ApiError) notify.error(error.message);
+        else notify.error(t("saveError"));
+      } finally {
+        savingLockRef.current = false;
+        setSaving(false);
+        if (resaveRef.current) {
+          resaveRef.current = false;
+          void flushSave();
+        }
+      }
+    },
+    [assessments, editable, gradeIndex, schoolId, sheet, t],
+  );
+
+  useEffect(() => {
+    if (!editable || dirtyCount === 0) return;
+    const timer = window.setTimeout(() => {
+      void flushSave();
+    }, AUTO_SAVE_MS);
+    return () => window.clearTimeout(timer);
+  }, [dirtyCount, dirtyByAssessment, editable, flushSave]);
 
   /** Entrée : passe à l’élève suivant dans la même colonne. */
   function focusCell(kind: ColumnKind, index: number) {
@@ -460,7 +511,7 @@ export function SequenceEntryPanel({
                           size="sm"
                           variant="secondary"
                           loading={creating === kind}
-                          disabled={creating !== null || saving}
+                          disabled={creating !== null}
                           leadingIcon={<Plus className="size-3.5" aria-hidden />}
                           onClick={() => void onCreateColumn(kind)}
                         >
@@ -468,21 +519,33 @@ export function SequenceEntryPanel({
                         </Button>
                       ))
                     : null}
-                  <span className="text-[11px] text-[var(--ios-secondary-label)]">
-                    {dirtyCount > 0 ? t("dirty", { count: dirtyCount }) : t("saved")}
-                  </span>
                   {editable ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      loading={saving}
-                      disabled={dirtyCount === 0}
-                      leadingIcon={<Save className="size-3.5" aria-hidden />}
-                      onClick={() => void onSave()}
+                    <span
+                      className={cn(
+                        "text-[11px] font-medium",
+                        saving
+                          ? "text-[var(--ios-blue)]"
+                          : dirtyCount > 0
+                            ? "text-[var(--ios-warning)]"
+                            : savePulse
+                              ? "text-[var(--ios-success)]"
+                              : "text-[var(--ios-secondary-label)]",
+                      )}
+                      aria-live="polite"
                     >
-                      {saving ? t("saving") : t("save")}
-                    </Button>
-                  ) : null}
+                      {saving
+                        ? t("saving")
+                        : dirtyCount > 0
+                          ? t("dirty", { count: dirtyCount })
+                          : savePulse
+                            ? t("autoSaved")
+                            : t("autoSaveHint")}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-[var(--ios-secondary-label)]">
+                      {t("saved")}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -551,12 +614,16 @@ export function SequenceEntryPanel({
                               placeholder="—"
                               value={seqDraft.value}
                               invalid={errors[seqKey]}
-                              disabled={!editable || saving || seqDraft.status !== "SCORED"}
+                              disabled={!editable || seqDraft.status !== "SCORED"}
                               onChange={(event) =>
                                 updateDraft(sequenceColumn.id, line.studentId, {
                                   value: event.target.value,
                                 })
                               }
+                              onBlur={() => {
+                                if (dirtyCountRef.current === 0) return;
+                                void flushSave({ announceInvalid: true });
+                              }}
                               onKeyDown={(event) => {
                                 if (event.key === "Enter") {
                                   event.preventDefault();
@@ -570,13 +637,17 @@ export function SequenceEntryPanel({
                               aria-label={`${t("table.status")} — ${line.studentLabel}`}
                               className="h-9"
                               value={seqDraft.status}
-                              disabled={!editable || saving}
+                              disabled={!editable}
                               onChange={(event) =>
                                 updateDraft(sequenceColumn.id, line.studentId, {
                                   status: event.target.value as GradeStatus,
                                   ...(event.target.value !== "SCORED" ? { value: "" } : {}),
                                 })
                               }
+                              onBlur={() => {
+                                if (dirtyCountRef.current === 0) return;
+                                void flushSave({ announceInvalid: true });
+                              }}
                             >
                               {STATUS_CHOICES.map((status) => (
                                 <option key={status} value={status}>
@@ -601,13 +672,17 @@ export function SequenceEntryPanel({
                                   placeholder="—"
                                   value={draft.value}
                                   invalid={errors[key]}
-                                  disabled={!editable || saving}
+                                  disabled={!editable}
                                   onChange={(event) =>
                                     updateDraft(assessment.id, line.studentId, {
                                       value: event.target.value,
                                       status: "SCORED",
                                     })
                                   }
+                                  onBlur={() => {
+                                    if (dirtyCountRef.current === 0) return;
+                                    void flushSave({ announceInvalid: true });
+                                  }}
                                   onKeyDown={(event) => {
                                     if (event.key === "Enter") {
                                       event.preventDefault();

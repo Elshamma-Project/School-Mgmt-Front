@@ -1041,7 +1041,6 @@
     }
   },
   "teacherClasses": {
-    "description": "Classes et matières qui vous sont affectées pour l’année en cours.",
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire",
     "loadError": "Impossible de charger vos classes.",
@@ -1147,7 +1146,6 @@
         "rank": "Rang",
         "appreciation": "App.",
         "autoHint": "Calculé automatiquement",
-        "columnsLegend": "Saisissez Comp. /20 dans les cases bleues (séquence ouverte), puis Enregistrer. Coef., Note × coef., Rang et App. se recalculent automatiquement.",
         "editable": "saisie",
         "empty": "Aucun élève inscrit dans cette classe.",
         "absentShort": "ABS",
@@ -1166,9 +1164,12 @@
       "sessionClosedTitle": "Séquence {number} clôturée",
       "sessionsClosedTitle": "Séquences clôturées",
       "sessionClosedDescription": "La saisie enseignant est bloquée sur cette séquence. Seule l’administration peut encore corriger avec un motif.",
-      "compEditHint": "Modifiez Comp. /20 ci-dessous, puis enregistrez. La fiche se régénère avec les colonnes automatiques.",
+      "compEditHint": "Modifiez Comp. /20 ci-dessous : l’enregistrement est automatique et la fiche se régénère.",
       "compSave": "Enregistrer Comp. /20",
       "compSaving": "Enregistrement…",
+      "compSavePending": "Enregistrement automatique…",
+      "compSaveAutoHint": "Enregistrement automatique",
+      "compSaveAutoDone": "Enregistré",
       "compSaveSuccess": "{count, plural, one {# note enregistrée — fiche mise à jour} other {# notes enregistrées — fiche mise à jour}}",
       "compSaveError": "Impossible d’enregistrer les notes Comp. /20.",
       "compSaveNoSheet": "Fiche de notes manquante pour cette séquence. Demandez à l’administration d’ouvrir la séquence.",
@@ -1183,8 +1184,7 @@
         "principalVisa": "Visa du Principal",
         "signedOn": "Visé le {date}",
         "submittedOn": "Soumise le {date}",
-        "pending": "En attente",
-        "deadlineNotice": "La fiche doit être déposée dans un délai de {hours} h après la séquence."
+        "pending": "En attente"
       }
     },
     "entry": {
@@ -1234,8 +1234,10 @@
         "EXEMPTED": "Dispensé",
         "PENDING": "Non saisi"
       },
-      "dirty": "{count, plural, one {# modification non enregistrée} other {# modifications non enregistrées}}",
+      "dirty": "{count, plural, one {# modification en cours…} other {# modifications en cours…}}",
       "saved": "À jour",
+      "autoSaveHint": "Enregistrement automatique",
+      "autoSaved": "Enregistré",
       "save": "Enregistrer",
       "saving": "Enregistrement…",
       "saveSuccess": "{count, plural, one {# note enregistrée} other {# notes enregistrées}}",

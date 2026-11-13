@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ClipboardList, Save } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ClipboardList } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,9 @@ import { ApiError, isAuthFailure } from "@/types/api";
 
 /** Délai de dépôt affiché sur la fiche papier (72 h) ; la valeur effective vient du barème. */
 export const REPORT_SHEET_DEADLINE_HOURS = 72;
+
+/** Pause avant enregistrement auto des Comp. /20 (ms). */
+const AUTO_SAVE_MS = 750;
 
 const STATUS_TONE: Record<ReportSheetStatus, "neutral" | "blue" | "success" | "warning" | "danger"> = {
   DRAFT: "neutral",
@@ -104,6 +107,11 @@ export function ReportSheetPaper({
   const [drafts, setDrafts] = useState<DraftMap>({});
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
+  const [savePulse, setSavePulse] = useState(false);
+  const savingLockRef = useRef(false);
+  const resaveRef = useRef(false);
+  const draftsRef = useRef(drafts);
+  draftsRef.current = drafts;
 
   const showSeq1 = seqView === "1" || seqView === "both";
   const showSeq2 = seqView === "2" || seqView === "both";
@@ -137,16 +145,26 @@ export function ReportSheetPaper({
     setSeqView(defaultSeqView(seq1Editable, seq2Editable));
   }, [sheet.id, seq1Editable, seq2Editable]);
 
+  // Conserve les saisies locales encore plus récentes que la fiche (course avec l’auto-save).
   useEffect(() => {
-    const next: DraftMap = {};
-    for (const line of sheet.lines) {
-      const n1 = sheet.sequence1Number ?? 1;
-      const n2 = sheet.sequence2Number ?? 2;
-      next[draftKey(n1, line.studentId)] = cellToDraft(line.sequence1);
-      next[draftKey(n2, line.studentId)] = cellToDraft(line.sequence2);
-    }
-    setDrafts(next);
-    setErrors({});
+    setDrafts((prev) => {
+      const next: DraftMap = {};
+      for (const line of sheet.lines) {
+        const n1 = sheet.sequence1Number ?? 1;
+        const n2 = sheet.sequence2Number ?? 2;
+        for (const [seq, cell] of [
+          [n1, line.sequence1],
+          [n2, line.sequence2],
+        ] as const) {
+          const key = draftKey(seq, line.studentId);
+          const fromSheet = cellToDraft(cell);
+          const local = prev[key];
+          next[key] =
+            local !== undefined && local.trim() !== fromSheet.trim() ? local : fromSheet;
+        }
+      }
+      return next;
+    });
   }, [sheet]);
 
   const dirtyKeys = useMemo(() => {
@@ -164,6 +182,9 @@ export function ReportSheetPaper({
     }
     return dirty;
   }, [drafts, seq1Editable, seq2Editable, sheet]);
+
+  const dirtyKeysRef = useRef(dirtyKeys);
+  dirtyKeysRef.current = dirtyKeys;
 
   const formatDate = (value: string | null | undefined): string => {
     if (!value) return t("header.unknownDate");
@@ -216,63 +237,111 @@ export function ReportSheetPaper({
     const key = draftKey(sequenceNumber, studentId);
     setDrafts((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => (prev[key] ? { ...prev, [key]: false } : prev));
+    setSavePulse(false);
   }
 
-  async function onSaveComp() {
-    if (!anyEditable || saving || dirtyKeys.length === 0) return;
-
-    const items: CompSaveItem[] = [];
-    const nextErrors: Record<string, boolean> = {};
-
-    for (const key of dirtyKeys) {
-      const [seqRaw, studentId] = key.split(":");
-      const sequenceNumber = Number(seqRaw);
-      const session =
-        sequenceNumber === (sheet.sequence1Number ?? 1)
-          ? seq1
-          : sequenceNumber === (sheet.sequence2Number ?? 2)
-            ? seq2
-            : null;
-      if (!session || session.status !== "OPEN") continue;
-      const raw = drafts[key] ?? "";
-      const parsed = parseMarkInput(raw, 20);
-      if (!parsed.ok) {
-        nextErrors[key] = true;
-        continue;
+  const flushCompSave = useCallback(
+    async (options?: { announceInvalid?: boolean }) => {
+      if (!anyEditable) return;
+      if (savingLockRef.current) {
+        resaveRef.current = true;
+        return;
       }
-      items.push({ sessionId: session.id, studentId, raw });
-    }
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
-      notify.error(tEntry("invalidValue"));
-      return;
-    }
 
-    setSaving(true);
-    try {
-      const result = await saveCompMarks({
-        classSubjectId: sheet.classSubjectId,
-        schoolId,
-        items,
-        columnTitle: tEntry("columnTitle"),
-      });
-      const refreshed = await regenerateGradeReportSheet(sheet.id, { blank: false, schoolId });
-      onSheetUpdated?.(refreshed);
-      notify.success(t("compSaveSuccess", { count: result.saved }));
-    } catch (error) {
-      if (isAuthFailure(error)) return;
-      if (error instanceof ApiError) notify.error(error.message);
-      else if (error instanceof Error && error.message.startsWith("GRADE_SHEET_MISSING")) {
-        notify.error(t("compSaveNoSheet"));
-      } else if (error instanceof Error && error.message === "SHEET_LOCKED") {
-        notify.error(tEntry("closedDescription"));
-      } else {
-        notify.error(t("compSaveError"));
+      const currentDrafts = draftsRef.current;
+      const keys = dirtyKeysRef.current;
+      if (keys.length === 0) return;
+
+      const items: CompSaveItem[] = [];
+      const nextErrors: Record<string, boolean> = {};
+
+      for (const key of keys) {
+        const [seqRaw, studentId] = key.split(":");
+        const sequenceNumber = Number(seqRaw);
+        const session =
+          sequenceNumber === (sheet.sequence1Number ?? 1)
+            ? seq1
+            : sequenceNumber === (sheet.sequence2Number ?? 2)
+              ? seq2
+              : null;
+        if (!session || session.status !== "OPEN") continue;
+        const raw = currentDrafts[key] ?? "";
+        const parsed = parseMarkInput(raw, 20);
+        if (!parsed.ok) {
+          nextErrors[key] = true;
+          continue;
+        }
+        items.push({ sessionId: session.id, studentId, raw });
       }
-    } finally {
-      setSaving(false);
-    }
-  }
+
+      if (Object.keys(nextErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...nextErrors }));
+        if (options?.announceInvalid) notify.error(tEntry("invalidValue"));
+        return;
+      }
+      if (items.length === 0) return;
+
+      savingLockRef.current = true;
+      setSaving(true);
+      try {
+        await saveCompMarks({
+          classSubjectId: sheet.classSubjectId,
+          schoolId,
+          items,
+          columnTitle: tEntry("columnTitle"),
+        });
+        const refreshed = await regenerateGradeReportSheet(sheet.id, { blank: false, schoolId });
+        onSheetUpdated?.(refreshed);
+        setSavePulse(true);
+      } catch (error) {
+        if (isAuthFailure(error)) return;
+        if (error instanceof ApiError) notify.error(error.message);
+        else if (error instanceof Error && error.message.startsWith("GRADE_SHEET_MISSING")) {
+          notify.error(t("compSaveNoSheet"));
+        } else if (error instanceof Error && error.message === "SHEET_LOCKED") {
+          notify.error(tEntry("closedDescription"));
+        } else {
+          notify.error(t("compSaveError"));
+        }
+      } finally {
+        savingLockRef.current = false;
+        setSaving(false);
+        if (resaveRef.current) {
+          resaveRef.current = false;
+          void flushCompSave();
+        }
+      }
+    },
+    [
+      anyEditable,
+      onSheetUpdated,
+      schoolId,
+      seq1,
+      seq2,
+      sheet.classSubjectId,
+      sheet.id,
+      sheet.sequence1Number,
+      sheet.sequence2Number,
+      t,
+      tEntry,
+    ],
+  );
+
+  useEffect(() => {
+    if (!visibleEditable || dirtyKeys.length === 0) return;
+    const timer = window.setTimeout(() => {
+      void flushCompSave();
+    }, AUTO_SAVE_MS);
+    return () => window.clearTimeout(timer);
+  }, [dirtyKeys, flushCompSave, visibleEditable]);
+
+  const autoSaveLabel = saving
+    ? t("compSaving")
+    : dirtyKeys.length > 0
+      ? t("compSavePending")
+      : savePulse
+        ? t("compSaveAutoDone")
+        : t("compSaveAutoHint");
 
   const renderCompCell = (
     cell: ReportSheetSequenceCellDto,
@@ -296,8 +365,11 @@ export function ReportSheetPaper({
             placeholder="—"
             value={drafts[key] ?? ""}
             invalid={errors[key]}
-            disabled={saving}
             onChange={(event) => updateDraft(sequenceNumber, studentId, event.target.value)}
+            onBlur={() => {
+              if (!dirtyKeysRef.current.includes(key)) return;
+              void flushCompSave({ announceInvalid: true });
+            }}
           />
         </td>
       );
@@ -393,11 +465,11 @@ export function ReportSheetPaper({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="rounded-[var(--radius-md)] border border-[var(--ios-separator)]/60 bg-[color-mix(in_srgb,var(--ios-fill)_55%,var(--ios-card))] px-3 py-2 text-right">
+            <div className="inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--ios-separator)]/60 bg-[color-mix(in_srgb,var(--ios-fill)_55%,var(--ios-card))] px-3 py-2">
               <p className="text-[9px] font-semibold uppercase tracking-[0.07em] text-[var(--ios-secondary-label)]">
                 {t("header.class")}
               </p>
-              <p className="mt-0.5 text-[14px] font-semibold tabular-nums text-[var(--ios-label)]">
+              <p className="text-[14px] font-semibold tabular-nums text-[var(--ios-label)]">
                 {classLabel}
               </p>
             </div>
@@ -510,21 +582,26 @@ export function ReportSheetPaper({
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--ios-blue)_5%,var(--ios-card))] px-3 py-2">
             <p className="text-[12px] text-[var(--ios-label)]">{t("compEditHint")}</p>
             <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={cn(
+                  "text-[11px] font-medium",
+                  saving
+                    ? "text-[var(--ios-blue)]"
+                    : dirtyKeys.length > 0
+                      ? "text-[var(--ios-warning)]"
+                      : savePulse
+                        ? "text-[var(--ios-success)]"
+                        : "text-[var(--ios-secondary-label)]",
+                )}
+                aria-live="polite"
+              >
+                {autoSaveLabel}
+              </span>
               {onOpenFullEntry ? (
                 <Button type="button" size="sm" variant="ghost" onClick={onOpenFullEntry}>
                   {t("openFullEntry")}
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                size="sm"
-                loading={saving}
-                disabled={dirtyKeys.length === 0 || saving}
-                leadingIcon={<Save className="size-3.5" aria-hidden />}
-                onClick={() => void onSaveComp()}
-              >
-                {saving ? t("compSaving") : t("compSave")}
-              </Button>
             </div>
           </div>
         ) : null}
@@ -662,9 +739,6 @@ export function ReportSheetPaper({
             )}
           </tbody>
         </table>
-        <p className="border-t border-[var(--ios-separator)]/45 px-5 py-2.5 text-[11px] leading-snug text-[var(--ios-secondary-label)]">
-          {t("table.columnsLegend")}
-        </p>
       </div>
 
       <footer className="border-t border-[var(--ios-separator)]/50 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-5 py-4">
@@ -695,9 +769,6 @@ export function ReportSheetPaper({
             </div>
           ))}
         </div>
-        <p className="mt-3.5 text-[11px] leading-snug text-[var(--ios-secondary-label)]">
-          {t("footer.deadlineNotice", { hours: REPORT_SHEET_DEADLINE_HOURS })}
-        </p>
       </footer>
     </section>
   );

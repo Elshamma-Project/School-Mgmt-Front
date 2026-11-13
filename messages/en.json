@@ -1041,7 +1041,6 @@
     }
   },
   "teacherClasses": {
-    "description": "Classes and subjects assigned to you for the current year.",
     "yearLabel": "School year",
     "yearEmpty": "No school year",
     "loadError": "Could not load your classes.",
@@ -1147,7 +1146,6 @@
         "rank": "Rank",
         "appreciation": "Rem.",
         "autoHint": "Calculated automatically",
-        "columnsLegend": "Enter Mark /20 in the blue cells (open sequence), then Save. Coef., weighted mark, rank and appreciation recalculate automatically.",
         "editable": "editable",
         "empty": "No student enrolled in this class.",
         "absentShort": "ABS",
@@ -1166,9 +1164,12 @@
       "sessionClosedTitle": "Sequence {number} closed",
       "sessionsClosedTitle": "Sequences closed",
       "sessionClosedDescription": "Teacher entry is locked for this sequence. Only the administration can still correct grades with a reason.",
-      "compEditHint": "Edit Mark /20 below, then save. The sheet regenerates with the automatic columns.",
+      "compEditHint": "Edit Mark /20 below: saving is automatic and the sheet regenerates.",
       "compSave": "Save Mark /20",
       "compSaving": "Saving…",
+      "compSavePending": "Auto-saving…",
+      "compSaveAutoHint": "Auto-save on",
+      "compSaveAutoDone": "Saved",
       "compSaveSuccess": "{count, plural, one {# mark saved — sheet updated} other {# marks saved — sheet updated}}",
       "compSaveError": "Could not save Mark /20 values.",
       "compSaveNoSheet": "No grade sheet for this sequence. Ask the administration to open the sequence.",
@@ -1183,8 +1184,7 @@
         "principalVisa": "Principal’s visa",
         "signedOn": "Signed on {date}",
         "submittedOn": "Submitted on {date}",
-        "pending": "Pending",
-        "deadlineNotice": "The sheet must be submitted within {hours} h after the sequence."
+        "pending": "Pending"
       }
     },
     "entry": {
@@ -1234,8 +1234,10 @@
         "EXEMPTED": "Exempted",
         "PENDING": "Not entered"
       },
-      "dirty": "{count, plural, one {# unsaved change} other {# unsaved changes}}",
+      "dirty": "{count, plural, one {# change pending…} other {# changes pending…}}",
       "saved": "Up to date",
+      "autoSaveHint": "Auto-save on",
+      "autoSaved": "Saved",
       "save": "Save",
       "saving": "Saving…",
       "saveSuccess": "{count, plural, one {# mark saved} other {# marks saved}}",

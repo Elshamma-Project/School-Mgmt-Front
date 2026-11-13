@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ClipboardList, Download, FilePlus2, FileText, RefreshCw, Send } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ReportSheetPaper, REPORT_SHEET_DEADLINE_HOURS } from "@/components/teacher/report-sheet-paper";
 import { SequenceEntryPanel } from "@/components/teacher/sequence-entry-panel";
@@ -57,6 +58,8 @@ export function TeacherGradesView() {
   const tCommon = useTranslations("common");
   const tHub = useTranslations("gradesHub");
   const locale = useLocale();
+  const searchParams = useSearchParams();
+  const requestedClassSubjectId = searchParams.get("classSubjectId");
   const user = useAuthStore((s) => s.user);
   const schoolId = user?.schoolId;
   // L’identifiant de fiche personnel (Staff.id) est le profileId du compte de type STAFF.
@@ -104,9 +107,16 @@ export function TeacherGradesView() {
       const active = assignmentRows.filter((a) => a.active);
       setSessions(sessionRows);
       setAssignments(active);
-      setSelectedId((prev) =>
-        prev && active.some((a) => a.classSubjectId === prev) ? prev : (active[0]?.classSubjectId ?? null),
-      );
+      setSelectedId((prev) => {
+        if (
+          requestedClassSubjectId &&
+          active.some((a) => a.classSubjectId === requestedClassSubjectId)
+        ) {
+          return requestedClassSubjectId;
+        }
+        if (prev && active.some((a) => a.classSubjectId === prev)) return prev;
+        return active[0]?.classSubjectId ?? null;
+      });
       const open = sessionRows.find((s) => s.status === "OPEN");
       if (open && (open.termNumber === 1 || open.termNumber === 2 || open.termNumber === 3)) {
         setTerm(open.termNumber);
@@ -117,7 +127,7 @@ export function TeacherGradesView() {
     } finally {
       setLoading(false);
     }
-  }, [schoolId, staffProfileId, t]);
+  }, [requestedClassSubjectId, schoolId, staffProfileId, t]);
 
   useEffect(() => {
     void loadBase();
