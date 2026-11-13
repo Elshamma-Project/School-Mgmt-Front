@@ -509,7 +509,7 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
-              variant="secondary"
+              variant="ghostDestructive"
               disabled={saving}
               onClick={cancelEditing}
             >

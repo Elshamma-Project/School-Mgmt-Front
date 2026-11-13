@@ -414,6 +414,12 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
     [audits.length, schemes, sessions],
   );
 
+  /** BR-25 : trimestre des séquences OPEN (un seul à la fois). */
+  const activeOpenTerm = useMemo((): 1 | 2 | 3 | null => {
+    const openTerm = sessions.find((s) => s.status === "OPEN")?.termNumber;
+    return openTerm === 1 || openTerm === 2 || openTerm === 3 ? openTerm : null;
+  }, [sessions]);
+
   const rows =
     tab === "sessions"
       ? filteredSessions
@@ -609,7 +615,8 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
           schoolId={schoolId}
           academicYearId={yearId}
           yearLabel={yearLabel}
-          defaultTerm={sessions.find((s) => s.status === "OPEN")?.termNumber ?? 1}
+          defaultTerm={activeOpenTerm ?? 1}
+          activeTerm={activeOpenTerm}
           query={query}
           canVisaSupervisor={canReviewReportSheets}
           canVisaPrincipal={canVisaPrincipal}
@@ -1125,8 +1132,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                 <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-5 py-3.5 sm:flex-row sm:justify-end">
                   <Button
                     type="button"
-                    variant="ghost"
-                    className="text-[var(--ios-blue)]"
+                    variant="ghostDestructive"
                     onClick={() => setDetailSession(null)}
                   >
                     {t("sessionAction.detailClose")}
@@ -1350,15 +1356,14 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                 </div>
 
                 <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-5 py-3.5 sm:flex-row sm:justify-end">
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
-                    className="text-[var(--ios-blue)]"
                     disabled={acting}
                     onClick={() => clearPending()}
+                    className="pressable inline-flex h-[var(--control-height-md)] cursor-pointer items-center justify-center rounded-[var(--radius-md)] px-4 text-[12px] font-semibold text-[var(--ios-danger)] transition-colors hover:bg-[var(--ios-danger-soft)] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {tCommon("cancel")}
-                  </Button>
+                  </button>
                   <Button
                     type="button"
                     variant={pending.kind === "close" ? "destructive" : "primary"}

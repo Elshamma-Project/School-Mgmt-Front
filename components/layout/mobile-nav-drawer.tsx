@@ -6,9 +6,11 @@ import { ChevronDown, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/layout/brand-mark";
+import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
 import { Link, usePathname } from "@/i18n/navigation";
 import { isNavChildActive, isNavItemActive } from "@/lib/auth/nav-active";
 import { getNavItemsForRole, type NavChildItem, type NavItem } from "@/lib/auth/nav-config";
+import { useUnreadNotificationCount } from "@/lib/notifications/use-unread-count";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSchoolBrandStore } from "@/stores/school-brand-store";
@@ -37,6 +39,7 @@ export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
   const user = useAuthStore((s) => s.user);
   const schoolName = useSchoolBrandStore((s) => s.displayName(locale));
   const items = getNavItemsForRole(primaryRole(user));
+  const unreadNotifications = useUnreadNotificationCount();
   const titleId = useId();
 
   function childLabel(child: NavChildItem): string {
@@ -126,6 +129,7 @@ export function MobileNavDrawer({ open, onOpenChange }: MobileNavDrawerProps) {
                 label={t(entry.key)}
                 childLabel={childLabel}
                 onNavigate={() => onOpenChange(false)}
+                unreadNotifications={unreadNotifications}
               />
             ))}
           </ul>
@@ -153,6 +157,7 @@ type MobileNavEntryProps = {
   label: string;
   childLabel: (child: NavChildItem) => string;
   onNavigate: () => void;
+  unreadNotifications: number;
 };
 
 function MobileNavEntry({
@@ -162,11 +167,13 @@ function MobileNavEntry({
   label,
   childLabel,
   onNavigate,
+  unreadNotifications,
 }: MobileNavEntryProps) {
   const { href, key, icon: Icon, children } = entry;
   const active = isNavItemActive(key, href, pathname);
   const hasChildren = Boolean(children?.length);
   const [open, setOpen] = useState(active);
+  const showNotifBadge = key === "notifications" && unreadNotifications > 0;
 
   useEffect(() => {
     if (active) setOpen(true);
@@ -187,7 +194,8 @@ function MobileNavEntry({
           )}
         >
           <Icon className="size-4 shrink-0 stroke-[1.75]" aria-hidden />
-          <span className="truncate">{label}</span>
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+          {showNotifBadge ? <NotificationCountBadge count={unreadNotifications} /> : null}
         </Link>
       </li>
     );

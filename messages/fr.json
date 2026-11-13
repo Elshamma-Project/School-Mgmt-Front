@@ -179,6 +179,13 @@
     "actionError": "Action impossible.",
     "professionalTitle": "Espace professionnel uniquement",
     "professionalHint": "Pas de discussion entre enseignants. Les signalements partent vers l’administration ou la direction, avec suivi et accusé de réception.",
+    "menu": {
+      "title": "Notifications",
+      "loading": "Chargement…",
+      "close": "Fermer",
+      "closeOverlay": "Fermer le menu notifications",
+      "viewAll": "Voir toutes les notifications"
+    },
     "tabsAria": "Sections notifications",
     "tabs": {
       "inbox": "Boîte de réception",
@@ -208,6 +215,8 @@
       "SYSTEM": "Système"
     },
     "markRead": "Marquer lu",
+    "markUnread": "Marquer non lu",
+    "tapToOpen": "Appuyer pour ouvrir",
     "acknowledge": "Accuser réception",
     "ackSuccess": "Accusé de réception enregistré",
     "open": "Ouvrir",
@@ -1207,6 +1216,7 @@
         "girls": "F",
         "total": "Total",
         "examDate": "Date de la séquence {number}",
+        "examDateLabel": "Date {label}",
         "unknownDate": "—"
       },
       "table": {
@@ -1454,6 +1464,7 @@
       "cardHint": "Visa du Surveillant Général puis visa du Principal, ou rejet motivé.",
       "termLabel": "Trimestre",
       "termOption": "T{number}",
+      "termOptionActive": "T{number} · actif",
       "columns": {
         "class": "Classe",
         "subject": "Matière",

@@ -561,7 +561,7 @@ export function GradingSchemePanel({
                   : t("schemePanel.notFoundHint")}
               </p>
               <div className="mt-4 flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
-                <Button type="button" variant="secondary" onClick={onClose}>
+                <Button type="button" variant="ghostDestructive" onClick={onClose}>
                   {tCommon("cancel")}
                 </Button>
                 <Button

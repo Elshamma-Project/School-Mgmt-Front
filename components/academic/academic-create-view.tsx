@@ -766,7 +766,7 @@ export function AcademicCreateView({ tab }: AcademicCreateViewProps) {
         </div>
 
         <div className="flex flex-col-reverse gap-2 border-t border-[var(--ios-separator)]/55 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
-          <Button type="button" variant="secondary" onClick={() => router.push(listHref)}>
+          <Button type="button" variant="ghostDestructive" onClick={() => router.push(listHref)}>
             {tCommon("cancel")}
           </Button>
           <Button type="submit" disabled={saving || (tab === "classes" && loadingRefs)}>

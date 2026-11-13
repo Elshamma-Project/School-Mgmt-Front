@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
 import { Link, usePathname } from "@/i18n/navigation";
 import { isNavChildActive, isNavItemActive } from "@/lib/auth/nav-active";
 import { getNavItemsForRole, type NavChildItem, type NavItem } from "@/lib/auth/nav-config";
+import { useUnreadNotificationCount } from "@/lib/notifications/use-unread-count";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
@@ -27,6 +29,7 @@ export function SidebarNav({ collapsed = false }: SidebarNavProps) {
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const items = getNavItemsForRole(primaryRole(user));
+  const unreadNotifications = useUnreadNotificationCount();
 
   function childLabel(child: NavChildItem): string {
     switch (child.kind) {
@@ -64,6 +67,7 @@ export function SidebarNav({ collapsed = false }: SidebarNavProps) {
           searchParams={searchParams}
           label={t(entry.key)}
           childLabel={childLabel}
+          unreadNotifications={unreadNotifications}
         />
       ))}
     </nav>
@@ -77,6 +81,7 @@ type NavEntryProps = {
   searchParams: { get: (key: string) => string | null };
   label: string;
   childLabel: (child: NavChildItem) => string;
+  unreadNotifications: number;
 };
 
 function NavEntry({
@@ -86,11 +91,13 @@ function NavEntry({
   searchParams,
   label,
   childLabel,
+  unreadNotifications,
 }: NavEntryProps) {
   const { href, key, icon: Icon, children } = entry;
   const active = isNavItemActive(key, href, pathname);
   const hasChildren = Boolean(children?.length) && !collapsed;
   const [open, setOpen] = useState(active);
+  const showNotifBadge = key === "notifications" && unreadNotifications > 0;
 
   useEffect(() => {
     if (active) setOpen(true);
@@ -101,10 +108,16 @@ function NavEntry({
       <Link
         href={href}
         title={collapsed ? label : undefined}
-        aria-label={collapsed ? label : undefined}
+        aria-label={
+          collapsed
+            ? showNotifBadge
+              ? `${label} (${unreadNotifications})`
+              : label
+            : undefined
+        }
         aria-current={active ? "page" : undefined}
         className={cn(
-          "pressable flex items-center rounded-[var(--radius-sm)] text-[11px] font-medium transition-colors duration-[var(--duration-fast)] focus-visible:shadow-[var(--focus-ring)]",
+          "pressable relative flex items-center rounded-[var(--radius-sm)] text-[11px] font-medium transition-colors duration-[var(--duration-fast)] focus-visible:shadow-[var(--focus-ring)]",
           collapsed ? "size-9 justify-center" : "gap-2 px-2 py-1.5",
           active
             ? "bg-[var(--ios-blue)]/10 text-[var(--ios-blue)]"
@@ -112,7 +125,19 @@ function NavEntry({
         )}
       >
         <Icon className="size-3.5 shrink-0 stroke-[1.75]" aria-hidden />
-        {!collapsed ? <span className="truncate">{label}</span> : null}
+        {!collapsed ? (
+          <>
+            <span className="min-w-0 flex-1 truncate">{label}</span>
+            {showNotifBadge ? (
+              <NotificationCountBadge count={unreadNotifications} />
+            ) : null}
+          </>
+        ) : showNotifBadge ? (
+          <NotificationCountBadge
+            count={unreadNotifications}
+            className="absolute -right-0.5 -top-0.5"
+          />
+        ) : null}
       </Link>
     );
   }

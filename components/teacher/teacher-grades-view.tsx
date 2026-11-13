@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ClipboardList, Download, FilePlus2, FileText, RefreshCw, Send } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { ReportSheetPaper, REPORT_SHEET_DEADLINE_HOURS } from "@/components/teacher/report-sheet-paper";
 import { SequenceEntryPanel } from "@/components/teacher/sequence-entry-panel";
 import { Alert } from "@/components/ui/alert";
@@ -59,7 +60,15 @@ export function TeacherGradesView() {
   const tHub = useTranslations("gradesHub");
   const locale = useLocale();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const requestedClassSubjectId = searchParams.get("classSubjectId");
+  const requestedTermRaw = Number(searchParams.get("term"));
+  const requestedTerm: Term | null =
+    requestedTermRaw === 1 || requestedTermRaw === 2 || requestedTermRaw === 3
+      ? requestedTermRaw
+      : null;
+  const deepLinkTermApplied = useRef(false);
   const user = useAuthStore((s) => s.user);
   const schoolId = user?.schoolId;
   // L’identifiant de fiche personnel (Staff.id) est le profileId du compte de type STAFF.
@@ -118,16 +127,19 @@ export function TeacherGradesView() {
         return active[0]?.classSubjectId ?? null;
       });
       const open = sessionRows.find((s) => s.status === "OPEN");
-      if (open && (open.termNumber === 1 || open.termNumber === 2 || open.termNumber === 3)) {
-        setTerm(open.termNumber);
-      }
+      const openTerm =
+        open && (open.termNumber === 1 || open.termNumber === 2 || open.termNumber === 3)
+          ? (open.termNumber as Term)
+          : null;
+      // DeepLink `?term=` prioritaire, sinon trimestre des sessions OPEN (BR-25).
+      setTerm(requestedTerm ?? openTerm ?? 1);
     } catch (error) {
       if (isAuthFailure(error)) return;
       notify.error(apiMessage(error, t("loadError")));
     } finally {
       setLoading(false);
     }
-  }, [requestedClassSubjectId, schoolId, staffProfileId, t]);
+  }, [requestedClassSubjectId, requestedTerm, schoolId, staffProfileId, t]);
 
   useEffect(() => {
     void loadBase();
@@ -171,6 +183,22 @@ export function TeacherGradesView() {
     const termNumber = open[0]?.termNumber;
     return termNumber === 1 || termNumber === 2 || termNumber === 3 ? termNumber : null;
   }, [sessions]);
+
+  // DeepLink `?term=` une fois à l’arrivée, puis sync BR-25 sur les sessions OPEN.
+  useEffect(() => {
+    if (requestedTerm != null && !deepLinkTermApplied.current) {
+      deepLinkTermApplied.current = true;
+      setTerm(requestedTerm);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("term");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+      return;
+    }
+    if (requestedTerm == null && activeOpenTerm != null) {
+      setTerm(activeOpenTerm);
+    }
+  }, [activeOpenTerm, pathname, requestedTerm, router, searchParams]);
 
   function upsertSheet(next: GradeReportSheetResponse) {
     setSheets((prev) => {
@@ -359,14 +387,20 @@ export function TeacherGradesView() {
                       : t("termOption", { number: n }),
                 }))}
               />
+              <p className="max-w-xl text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                {activeOpenTerm
+                  ? term === activeOpenTerm
+                    ? t("activeTermHint", { term: activeOpenTerm })
+                    : t("otherTermReadOnly")
+                  : t("noOpenTermHint")}
+              </p>
             </div>
-            {activeOpenTerm ? (
+            {termSessions.length > 0 ? (
               <ul
                 className="flex flex-wrap items-center gap-1.5 sm:justify-end"
                 aria-label={t("entry.sequenceLabel")}
               >
-                {sessions
-                  .filter((s) => s.termNumber === activeOpenTerm)
+                {[...termSessions]
                   .sort((a, b) => a.number - b.number)
                   .map((s) => (
                     <li key={s.id}>
@@ -379,8 +413,9 @@ export function TeacherGradesView() {
                               : "blue"
                         }
                       >
-                        {t("entry.sequenceOption", { number: s.number })} ·{" "}
-                        {t(`entry.sequenceStatus.${s.status}`)}
+                        {localizedLabel(s.name, locale) ||
+                          t("entry.sequenceOption", { number: s.number })}{" "}
+                        · {t(`entry.sequenceStatus.${s.status}`)}
                       </Badge>
                     </li>
                   ))}

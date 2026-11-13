@@ -179,6 +179,13 @@
     "actionError": "Action failed.",
     "professionalTitle": "Professional channel only",
     "professionalHint": "No teacher-to-teacher chat. Reports go to administration or the director, with tracking and acknowledgement.",
+    "menu": {
+      "title": "Notifications",
+      "loading": "Loading…",
+      "close": "Close",
+      "closeOverlay": "Close notifications menu",
+      "viewAll": "View all notifications"
+    },
     "tabsAria": "Notification sections",
     "tabs": {
       "inbox": "Inbox",
@@ -208,6 +215,8 @@
       "SYSTEM": "System"
     },
     "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "tapToOpen": "Tap to open",
     "acknowledge": "Acknowledge",
     "ackSuccess": "Acknowledgement recorded",
     "open": "Open",
@@ -1207,6 +1216,7 @@
         "girls": "G",
         "total": "Total",
         "examDate": "Sequence {number} date",
+        "examDateLabel": "{label} date",
         "unknownDate": "—"
       },
       "table": {
@@ -1454,6 +1464,7 @@
       "cardHint": "Supervisor (SG) visa, then Principal visa, or a reasoned rejection.",
       "termLabel": "Term",
       "termOption": "T{number}",
+      "termOptionActive": "T{number} · active",
       "columns": {
         "class": "Class",
         "subject": "Subject",

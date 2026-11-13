@@ -105,6 +105,7 @@ export async function fetchUnreadNotificationCount(
   return res.count ?? 0;
 }
 
+/** Ouverture : lu + accusé expéditeur si requis (ne s’annule pas avec unread). */
 export async function markNotificationRead(
   id: string,
   schoolId?: string | null,
@@ -117,16 +118,24 @@ export async function markNotificationRead(
   );
 }
 
-export async function acknowledgeNotification(
+/** Non lu pour soi uniquement ; l’accusé reste. */
+export async function markNotificationUnread(
   id: string,
   schoolId?: string | null,
 ): Promise<InAppNotificationResponse> {
   const qs = toSearch({ ...schoolParams(schoolId) });
   const suffix = qs ? `?${qs}` : "";
   return apiRequest<InAppNotificationResponse>(
-    `/api/v1/notifications/${encodeURIComponent(id)}/ack${suffix}`,
+    `/api/v1/notifications/${encodeURIComponent(id)}/unread${suffix}`,
     { method: "POST" },
   );
+}
+
+export async function acknowledgeNotification(
+  id: string,
+  schoolId?: string | null,
+): Promise<InAppNotificationResponse> {
+  return markNotificationRead(id, schoolId);
 }
 
 export async function createStaffSignal(

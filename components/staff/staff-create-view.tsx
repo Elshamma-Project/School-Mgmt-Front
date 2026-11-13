@@ -443,7 +443,7 @@ export function StaffCreateView() {
                 type="button"
                 disabled={saving}
                 onClick={() => router.push(listHref)}
-                className="pressable cursor-pointer py-2 text-center text-[13px] font-medium text-[var(--ios-blue)] transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-45"
+                className="pressable cursor-pointer py-2 text-center text-[13px] font-medium text-[var(--ios-danger)] transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {tCommon("cancel")}
               </button>

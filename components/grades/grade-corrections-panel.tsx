@@ -417,7 +417,7 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="ghostDestructive"
                     onClick={() => {
                       setRejectTarget(null);
                       setReviewNote("");

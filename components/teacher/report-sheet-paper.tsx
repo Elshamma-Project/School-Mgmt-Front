@@ -319,13 +319,23 @@ export function ReportSheetPaper({
     { label: t("header.term"), value: `T${sheet.termNumber}` },
   ];
 
+  const seq1Label =
+    seq1?.shortLabel?.trim() ||
+    t("table.sequence", { number: sheet.sequence1Number ?? 1 });
+  const seq2Label =
+    seq2?.shortLabel?.trim() ||
+    t("table.sequence", { number: sheet.sequence2Number ?? 2 });
+  const seq1ExamDate = seq1?.examDate ?? sheet.sequence1ExamDate;
+  const seq2ExamDate = seq2?.examDate ?? sheet.sequence2ExamDate;
+
   const examDateCards = [
     ...(showSeq1
       ? [
           {
             number: sheet.sequence1Number ?? 1,
-            value: formatDate(sheet.sequence1ExamDate),
-            missing: !sheet.sequence1ExamDate,
+            label: seq1Label,
+            value: formatDate(seq1ExamDate),
+            missing: !seq1ExamDate,
           },
         ]
       : []),
@@ -333,8 +343,9 @@ export function ReportSheetPaper({
       ? [
           {
             number: sheet.sequence2Number ?? 2,
-            value: formatDate(sheet.sequence2ExamDate),
-            missing: !sheet.sequence2ExamDate,
+            label: seq2Label,
+            value: formatDate(seq2ExamDate),
+            missing: !seq2ExamDate,
           },
         ]
       : []),
@@ -654,7 +665,7 @@ export function ReportSheetPaper({
               </span>
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-tertiary-label)]">
-                  {t("header.examDate", { number: card.number })}
+                  {t("header.examDateLabel", { label: card.label })}
                 </p>
                 <p
                   className={cn(
@@ -687,7 +698,7 @@ export function ReportSheetPaper({
                   {
                     value: "1",
                     label: [
-                      t("table.sequence", { number: sheet.sequence1Number ?? 1 }),
+                      seq1Label,
                       seq1?.status === "CLOSED" ? sessionStatusLabel("CLOSED") : null,
                     ]
                       .filter(Boolean)
@@ -696,7 +707,7 @@ export function ReportSheetPaper({
                   {
                     value: "2",
                     label: [
-                      t("table.sequence", { number: sheet.sequence2Number ?? 2 }),
+                      seq2Label,
                       seq2?.status === "CLOSED" ? sessionStatusLabel("CLOSED") : null,
                     ]
                       .filter(Boolean)
@@ -729,20 +740,19 @@ export function ReportSheetPaper({
           <ul className="flex flex-wrap items-center gap-1.5" aria-label={t("sessionStatusList")}>
             {[
               {
-                number: sheet.sequence1Number ?? 1,
+                key: "s1",
+                label: seq1Label,
                 status: seq1?.status,
               },
               {
-                number: sheet.sequence2Number ?? 2,
+                key: "s2",
+                label: seq2Label,
                 status: seq2?.status,
               },
             ].map((row) => (
-              <li key={row.number}>
+              <li key={row.key}>
                 <Badge tone={sessionStatusTone(row.status)}>
-                  {t("sessionStatusBadge", {
-                    number: row.number,
-                    status: sessionStatusLabel(row.status),
-                  })}
+                  {row.label} · {sessionStatusLabel(row.status)}
                 </Badge>
               </li>
             ))}
@@ -843,7 +853,7 @@ export function ReportSheetPaper({
                   colSpan={showCorr1 ? 6 : 5}
                   className={cn(th, "bg-[color-mix(in_srgb,var(--ios-blue)_10%,var(--ios-card))] text-[var(--ios-blue)]")}
                 >
-                  {t("table.sequence", { number: sheet.sequence1Number ?? 1 })}
+                  {seq1Label}
                   {seq1Editable
                     ? ` · ${t("table.editable")}`
                     : seq1?.status === "CLOSED"
@@ -863,7 +873,7 @@ export function ReportSheetPaper({
                       : "bg-[color-mix(in_srgb,var(--ios-blue)_10%,var(--ios-card))] text-[var(--ios-blue)]",
                   )}
                 >
-                  {t("table.sequence", { number: sheet.sequence2Number ?? 2 })}
+                  {seq2Label}
                   {seq2Editable
                     ? ` · ${t("table.editable")}`
                     : seq2?.status === "CLOSED"

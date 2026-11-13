@@ -517,12 +517,6 @@ export function SettingsView() {
 
   return (
     <div className="space-y-6 slide-up">
-      {!canEdit ? (
-        <p className="rounded-[var(--radius-md)] bg-[var(--ios-info-soft)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[var(--ios-blue)]">
-          {t("readOnlyHint")}
-        </p>
-      ) : null}
-
       <GroupedList header={t("yearSection")}>
         <GroupedListItem className="flex-col items-stretch gap-3 py-3 sm:flex-row sm:items-end">
           <div className="flex min-w-0 flex-1 items-start gap-3">

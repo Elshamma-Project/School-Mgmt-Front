@@ -45,6 +45,8 @@ type Props = {
   yearLabel: string | null;
   /** Trimestre sélectionné au premier affichage (ex. celui de la séquence ouverte). */
   defaultTerm?: number;
+  /** Trimestre des séquences OPEN (BR-25) ; null si aucune n’est ouverte. */
+  activeTerm?: number | null;
   query: string;
   canVisaSupervisor: boolean;
   canVisaPrincipal: boolean;
@@ -56,6 +58,7 @@ export function ReportSheetsPanel({
   academicYearId,
   yearLabel,
   defaultTerm = 1,
+  activeTerm = null,
   query,
   canVisaSupervisor,
   canVisaPrincipal,
@@ -69,6 +72,13 @@ export function ReportSheetsPanel({
   const [term, setTerm] = useState<number>(
     TERMS.includes(defaultTerm as (typeof TERMS)[number]) ? defaultTerm : 1,
   );
+
+  // Aligne le trimestre sur les sessions ouvertes du hub (BR-25).
+  useEffect(() => {
+    if (TERMS.includes(defaultTerm as (typeof TERMS)[number])) {
+      setTerm(defaultTerm);
+    }
+  }, [defaultTerm]);
   const [sheets, setSheets] = useState<GradeReportSheetResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
@@ -290,7 +300,13 @@ export function ReportSheetsPanel({
               ariaLabel={t("termLabel")}
               value={String(term)}
               onChange={(value) => setTerm(Number(value))}
-              options={TERMS.map((n) => ({ value: String(n), label: t("termOption", { number: n }) }))}
+              options={TERMS.map((n) => ({
+                value: String(n),
+                label:
+                  activeTerm === n
+                    ? t("termOptionActive", { number: n })
+                    : t("termOption", { number: n }),
+              }))}
             />
           </div>
         </div>
@@ -414,8 +430,7 @@ export function ReportSheetsPanel({
                 <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-5 py-3.5 sm:flex-row sm:items-center sm:justify-end">
                   <Button
                     type="button"
-                    variant="ghost"
-                    className="text-[var(--ios-blue)]"
+                    variant="ghostDestructive"
                     onClick={() => setPreviewId(null)}
                   >
                     {t("close")}
@@ -483,8 +498,7 @@ export function ReportSheetsPanel({
                 <div className="flex flex-col-reverse gap-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-5 py-3.5 sm:flex-row sm:justify-end">
                   <Button
                     type="button"
-                    variant="ghost"
-                    className="text-[var(--ios-blue)]"
+                    variant="ghostDestructive"
                     disabled={acting !== null}
                     onClick={closeReject}
                   >

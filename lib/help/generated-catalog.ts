@@ -861,10 +861,26 @@ export const HELP_CATALOG: HelpArticle[] = [
     "sections": [
       {
         "heading": {
+          "fr": "À propos",
+          "en": "About"
+        },
+        "paragraphs": [
+          {
+            "fr": "Canal officiel de l’établissement : alertes, accusés de réception et signalements.",
+            "en": "Official school channel: alerts, acknowledgements and reports."
+          }
+        ]
+      },
+      {
+        "heading": {
           "fr": "Canal professionnel",
           "en": "Professional channel"
         },
         "paragraphs": [
+          {
+            "fr": "Espace professionnel uniquement. Pas de discussion entre enseignants. Les signalements partent vers l’administration ou la direction, avec suivi et accusé de réception.",
+            "en": "Professional space only. No teacher-to-teacher chat. Reports go to administration or the director, with tracking and acknowledgement."
+          },
           {
             "fr": "La page Notifications est le **canal officiel** de l’établissement. Il n’y a **pas de discussion** entre enseignants, ni de messagerie libre.",
             "en": "The Notifications page is the school’s **official channel**. There is **no teacher-to-teacher chat** and no free messaging."
@@ -878,8 +894,8 @@ export const HELP_CATALOG: HelpArticle[] = [
         },
         "paragraphs": [
           {
-            "fr": "Quand l’administration ou le directeur **clôture** une séquence, chaque enseignant titulaire concerné reçoit une notification bilingue. Un **accusé de réception** est demandé (bouton dédié). Tant qu’il n’est pas posé, la notif reste « à accuser ».",
-            "en": "When administration or the director **closes** a sequence, each concerned assigned teacher gets a bilingual notification. An **acknowledgement** is required. Until acknowledged, it stays under “to acknowledge”."
+            "fr": "Quand l’administration ou le directeur **clôture** une séquence, chaque enseignant titulaire concerné reçoit une notification bilingue. **Ouvrir** le message le marque lu et pose l’**accusé de réception** pour l’expéditeur. Vous pouvez le remettre **non lu** pour vous (relecture) : l’accusé reste.",
+            "en": "When administration or the director **closes** a sequence, each concerned assigned teacher gets a bilingual notification. **Opening** the message marks it read and records the **acknowledgement** for the sender. You may mark it **unread** for yourself (to re-read later); the acknowledgement stays."
           }
         ]
       },
