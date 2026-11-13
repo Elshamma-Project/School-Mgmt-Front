@@ -116,6 +116,9 @@ export type GradeAuditEntryResponse = {
   classSubjectId: string;
   sessionId: string | null;
   studentId: string | null;
+  reportSheetId: string | null;
+  gradeId: string | null;
+  sequenceMarkId: string | null;
   changedBy: string;
   /** Username lisible ; repli = `changedBy` (id). */
   changedByLabel: string | null;
@@ -125,6 +128,8 @@ export type GradeAuditEntryResponse = {
   afterSessionClosed: boolean;
   previousValue: string | number | null;
   newValue: string | number | null;
+  previousReportStatus: string | null;
+  newReportStatus: string | null;
 };
 
 function schoolParams(schoolId?: string | null): Record<string, string> {

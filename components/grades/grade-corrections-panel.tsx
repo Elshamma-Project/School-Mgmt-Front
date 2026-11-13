@@ -267,7 +267,12 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
                     {markLabel(row.proposedValue, row.proposedStatus, locale)}
                   </span>
                 </p>
-                <p className="text-[11px] leading-snug text-[var(--ios-secondary-label)]">{row.reason}</p>
+                <p
+                  className="line-clamp-2 break-words text-[11px] leading-snug text-[var(--ios-secondary-label)]"
+                  title={row.reason}
+                >
+                  {row.reason}
+                </p>
                 {row.evidence.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {row.evidence.map((item) => (
@@ -342,7 +347,9 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
                       {markLabel(row.proposedValue, row.proposedStatus, locale)}
                     </td>
                     <td className="max-w-[220px] px-4 py-3 text-[12px] text-[var(--ios-secondary-label)]">
-                      <span className="line-clamp-3">{row.reason}</span>
+                      <span className="line-clamp-2 break-words" title={row.reason}>
+                        {row.reason}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       {row.evidence.length === 0 ? (

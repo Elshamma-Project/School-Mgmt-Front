@@ -7,6 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  ExternalLink,
+  FileText,
   Lock,
   LockOpen,
   Pencil,
@@ -23,14 +25,17 @@ import { useSearchParams } from "next/navigation";
 import { GradeCorrectionsPanel } from "@/components/grades/grade-corrections-panel";
 import { GradingSchemePanel } from "@/components/grades/grading-scheme-panel";
 import { ReportSheetsPanel } from "@/components/grades/report-sheets-panel";
+import { ReportSheetPaper } from "@/components/teacher/report-sheet-paper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DetailRow } from "@/components/ui/detail-row";
 import { DialogCloseButton } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { IconInput } from "@/components/ui/icon-input";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { StatCard } from "@/components/ui/stat-card";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -45,6 +50,7 @@ import { listAcademicYears, localizedLabel } from "@/lib/api/academic";
 import {
   closeEvaluationSession,
   ensureEvaluationSessions,
+  getGradeReportSheet,
   listEvaluationSessions,
   listGradeAudits,
   listGradingSchemes,
@@ -53,6 +59,7 @@ import {
   updateEvaluationSessionSchedule,
   type EvaluationSessionResponse,
   type GradeAuditEntryResponse,
+  type GradeReportSheetResponse,
   type GradingSchemeResponse,
 } from "@/lib/api/grading";
 import { userHasCapability } from "@/lib/auth/permissions";
@@ -155,6 +162,9 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const [auditActionFilter, setAuditActionFilter] = useState("");
   const [auditTargetFilter, setAuditTargetFilter] = useState("");
   const [auditClosedFilter, setAuditClosedFilter] = useState<AuditClosedFilter>("all");
+  const [auditDetail, setAuditDetail] = useState<GradeAuditEntryResponse | null>(null);
+  const [auditSheet, setAuditSheet] = useState<GradeReportSheetResponse | null>(null);
+  const [auditSheetLoading, setAuditSheetLoading] = useState(false);
   const [detailSession, setDetailSession] = useState<EvaluationSessionResponse | null>(
     null,
   );
@@ -521,6 +531,106 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
     },
     [locale],
   );
+
+  const auditReportStatusLabel = useCallback(
+    (status: string | null | undefined) => {
+      if (!status?.trim()) return t("auditNoValue");
+      return t.has(`auditReportStatus.${status}`)
+        ? t(`auditReportStatus.${status}` as "auditReportStatus.DRAFT")
+        : status;
+    },
+    [t],
+  );
+
+  const auditReasonLabel = useCallback(
+    (reason: string | null | undefined) => {
+      const raw = reason?.trim();
+      if (!raw) return null;
+      const autoClose = /^AUTO_ON_SESSION_CLOSE:(\d+)$/i.exec(raw);
+      if (autoClose) {
+        return t("auditReasonAutoClose", { number: autoClose[1] });
+      }
+      if (/^CORRECTION_APPROVED:/i.test(raw)) {
+        return t("auditReasonCorrectionApproved");
+      }
+      return t("auditReasonGeneric", { reason: raw });
+    },
+    [t],
+  );
+
+  const auditDetailSummary = useCallback(
+    (item: GradeAuditEntryResponse) => {
+      const parts: string[] = [];
+      if (item.previousReportStatus || item.newReportStatus) {
+        parts.push(
+          t("auditStatusChange", {
+            from: auditReportStatusLabel(item.previousReportStatus),
+            to: auditReportStatusLabel(item.newReportStatus),
+          }),
+        );
+      } else if (item.previousValue != null || item.newValue != null) {
+        parts.push(
+          t("auditValueChange", {
+            from: auditValueText(item.previousValue),
+            to: auditValueText(item.newValue),
+          }),
+        );
+      }
+      const reason = auditReasonLabel(item.reason);
+      if (reason) parts.push(reason);
+      return parts.length > 0 ? parts.join(" · ") : t("auditNoValue");
+    },
+    [auditReasonLabel, auditReportStatusLabel, auditValueText, t],
+  );
+
+  const openAuditDetail = useCallback((item: GradeAuditEntryResponse) => {
+    setAuditDetail(item);
+    setAuditSheet(null);
+  }, []);
+
+  const closeAuditDetail = useCallback(() => {
+    setAuditDetail(null);
+    setAuditSheet(null);
+    setAuditSheetLoading(false);
+  }, []);
+
+  const openAuditLinkedSheet = useCallback(async () => {
+    if (!auditDetail?.reportSheetId) {
+      notify.error(t("auditNoLink"));
+      return;
+    }
+    setAuditSheetLoading(true);
+    try {
+      const sheet = await getGradeReportSheet(auditDetail.reportSheetId, schoolId);
+      setAuditSheet(sheet);
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      notify.error(
+        error instanceof ApiError && error.message ? error.message : t("auditSheetError"),
+      );
+    } finally {
+      setAuditSheetLoading(false);
+    }
+  }, [auditDetail, schoolId, t]);
+
+  const openAuditCorrections = useCallback(() => {
+    closeAuditDetail();
+    selectTab("corrections");
+  }, [closeAuditDetail, selectTab]);
+
+  const openAuditSession = useCallback(() => {
+    if (!auditDetail?.sessionId) {
+      notify.error(t("auditNoLink"));
+      return;
+    }
+    const session = sessions.find((s) => s.id === auditDetail.sessionId);
+    closeAuditDetail();
+    if (session) {
+      setDetailSession(session);
+      return;
+    }
+    selectTab("sessions");
+  }, [auditDetail, closeAuditDetail, selectTab, sessions, t]);
 
   const filteredAudits = useMemo(() => {
     if (!q) return audits;
@@ -1137,15 +1247,17 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
       ) : (
         <>
           <ul className="space-y-2.5 md:hidden">
-            {filteredAudits.map((item) => {
-              const hasValues =
-                item.previousValue != null ||
-                item.newValue != null ||
-                Boolean(item.reason?.trim());
-              return (
-                <li
-                  key={item.id}
-                  className="space-y-2 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
+            {filteredAudits.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => openAuditDetail(item)}
+                  className={cn(
+                    "pressable w-full space-y-2 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 text-left shadow-[var(--ios-shadow)] transition-colors",
+                    "hover:border-[color-mix(in_srgb,var(--ios-blue)_35%,var(--ios-separator))] hover:bg-[color-mix(in_srgb,var(--ios-blue)_5%,var(--ios-card))]",
+                    auditDetail?.id === item.id &&
+                      "border-[color-mix(in_srgb,var(--ios-blue)_45%,var(--ios-separator))] bg-[color-mix(in_srgb,var(--ios-blue)_7%,var(--ios-card))]",
+                  )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -1163,27 +1275,15 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                       <Badge tone="warning">{t("afterClosed")}</Badge>
                     ) : null}
                   </div>
-                  {hasValues ? (
-                    <div className="space-y-1 text-[12px] text-[var(--ios-secondary-label)]">
-                      {item.previousValue != null || item.newValue != null ? (
-                        <p className="font-medium text-[var(--ios-label)]">
-                          {t("auditValueChange", {
-                            from: auditValueText(item.previousValue),
-                            to: auditValueText(item.newValue),
-                          })}
-                        </p>
-                      ) : null}
-                      {item.reason?.trim() ? (
-                        <p>{t("auditReason", { reason: item.reason.trim() })}</p>
-                      ) : null}
-                    </div>
-                  ) : null}
+                  <p className="text-[12px] leading-snug text-[var(--ios-label)]">
+                    {auditDetailSummary(item)}
+                  </p>
                   <p className="text-[11px] text-[var(--ios-secondary-label)]">
                     {auditActorLabel(item)}
                   </p>
-                </li>
-              );
-            })}
+                </button>
+              </li>
+            ))}
           </ul>
 
           <HubTableShell
@@ -1217,10 +1317,23 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                 {filteredAudits.map((item, index) => (
                   <tr
                     key={item.id}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={t("auditClickHint")}
+                    onClick={() => openAuditDetail(item)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openAuditDetail(item);
+                      }
+                    }}
                     className={cn(
-                      "border-b border-[var(--ios-separator)]/55 last:border-b-0",
+                      "cursor-pointer border-b border-[var(--ios-separator)]/55 last:border-b-0 transition-colors",
+                      "hover:bg-[color-mix(in_srgb,var(--ios-blue)_6%,transparent)] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
                       index % 2 === 1 &&
                         "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
+                      auditDetail?.id === item.id &&
+                        "bg-[color-mix(in_srgb,var(--ios-blue)_8%,transparent)]",
                     )}
                   >
                     <td className="px-5 py-3.5">
@@ -1236,22 +1349,8 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                         </Badge>
                       ) : null}
                     </td>
-                    <td className="px-3 py-3.5 text-[12px] text-[var(--ios-secondary-label)]">
-                      {item.previousValue != null || item.newValue != null ? (
-                        <p className="font-medium text-[var(--ios-label)]">
-                          {t("auditValueChange", {
-                            from: auditValueText(item.previousValue),
-                            to: auditValueText(item.newValue),
-                          })}
-                        </p>
-                      ) : (
-                        <p>{t("auditNoValue")}</p>
-                      )}
-                      {item.reason?.trim() ? (
-                        <p className="mt-1 text-[11px] leading-snug">
-                          {t("auditReason", { reason: item.reason.trim() })}
-                        </p>
-                      ) : null}
+                    <td className="px-3 py-3.5 text-[12px] leading-snug text-[var(--ios-label)]">
+                      {auditDetailSummary(item)}
                     </td>
                     <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
                       {auditActorLabel(item)}
@@ -1347,6 +1446,175 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
           });
         }}
       />
+
+      {mounted && auditDetail
+        ? createPortal(
+            <div className="fixed inset-0 z-[200] flex items-end justify-center p-4 sm:items-center">
+              <button
+                type="button"
+                aria-label={tCommon("cancel")}
+                className="absolute inset-0 cursor-default border-0 bg-[color-mix(in_srgb,var(--ios-label)_22%,transparent)] backdrop-blur-[6px]"
+                onClick={closeAuditDetail}
+              />
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="audit-detail-title"
+                className="relative z-10 flex max-h-[min(92dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-[var(--radius-xl)] bg-[var(--ios-card)] shadow-[var(--ios-shadow-md)] ring-1 ring-[color-mix(in_srgb,var(--ios-separator)_70%,transparent)] slide-up"
+              >
+                <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--ios-separator)]/55 px-5 pb-3.5 pt-4">
+                  <div className="min-w-0">
+                    <h2
+                      id="audit-detail-title"
+                      className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]"
+                    >
+                      {t("auditDetailTitle")}
+                    </h2>
+                    <p className="mt-1 text-[11px] text-[var(--ios-secondary-label)]">
+                      {t("auditDetailHint")}
+                    </p>
+                  </div>
+                  <DialogCloseButton aria-label={tCommon("cancel")} onClick={closeAuditDetail} />
+                </div>
+                <div className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 py-2">
+                  <DetailRow
+                    label={t("auditFieldEvent")}
+                    value={t("auditEvent", {
+                      target: auditTargetLabel(auditDetail.target),
+                      action: auditActionLabel(auditDetail.action),
+                    })}
+                    stacked
+                  />
+                  <DetailRow
+                    label={t("auditFieldWhen")}
+                    value={auditWhenLabel(auditDetail.changedAt)}
+                    stacked
+                  />
+                  <DetailRow
+                    label={t("auditFieldActor")}
+                    value={auditActorLabel(auditDetail)}
+                    stacked
+                  />
+                  <DetailRow
+                    label={t("auditFieldDetail")}
+                    value={auditDetailSummary(auditDetail)}
+                    stacked
+                  />
+                  <DetailRow
+                    label={t("auditFieldContext")}
+                    value={
+                      auditDetail.afterSessionClosed
+                        ? t("afterClosed")
+                        : t("auditFilterBeforeClosed")
+                    }
+                    stacked
+                  />
+                </div>
+                <div className="flex shrink-0 flex-col gap-2 border-t border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_18%,var(--ios-card))] px-5 py-3.5">
+                  {auditDetail.reportSheetId ? (
+                    <Button
+                      type="button"
+                      loading={auditSheetLoading}
+                      leadingIcon={<FileText className="size-3.5" aria-hidden />}
+                      onClick={() => void openAuditLinkedSheet()}
+                    >
+                      {t("auditOpenSheet")}
+                    </Button>
+                  ) : null}
+                  {auditDetail.reason &&
+                  /^CORRECTION_APPROVED:/i.test(auditDetail.reason) &&
+                  canApproveCorrections ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      leadingIcon={<ExternalLink className="size-3.5" aria-hidden />}
+                      onClick={openAuditCorrections}
+                    >
+                      {t("auditOpenCorrections")}
+                    </Button>
+                  ) : null}
+                  {auditDetail.sessionId ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      leadingIcon={<ClipboardList className="size-3.5" aria-hidden />}
+                      onClick={openAuditSession}
+                    >
+                      {t("auditOpenSession")}
+                    </Button>
+                  ) : null}
+                  {!auditDetail.reportSheetId &&
+                  !auditDetail.sessionId &&
+                  !(auditDetail.reason && /^CORRECTION_APPROVED:/i.test(auditDetail.reason)) ? (
+                    <p className="text-center text-[12px] text-[var(--ios-secondary-label)]">
+                      {t("auditNoLink")}
+                    </p>
+                  ) : null}
+                  <Button type="button" variant="ghostDestructive" onClick={closeAuditDetail}>
+                    {tCommon("cancel")}
+                  </Button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {mounted && auditSheet
+        ? createPortal(
+            <div className="fixed inset-0 z-[210] flex items-end justify-center p-4 sm:items-center">
+              <button
+                type="button"
+                aria-label={tCommon("cancel")}
+                className="absolute inset-0 cursor-default border-0 bg-[color-mix(in_srgb,var(--ios-label)_22%,transparent)] backdrop-blur-[6px]"
+                onClick={() => setAuditSheet(null)}
+              />
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="audit-sheet-title"
+                className="relative z-10 flex max-h-[min(92dvh,900px)] w-full max-w-6xl flex-col overflow-hidden rounded-[var(--radius-xl)] bg-[var(--ios-card)] shadow-[var(--ios-shadow-md)] ring-1 ring-[color-mix(in_srgb,var(--ios-separator)_70%,transparent)] slide-up"
+              >
+                <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--ios-separator)]/55 px-5 pb-3.5 pt-4">
+                  <div className="min-w-0">
+                    <h2
+                      id="audit-sheet-title"
+                      className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]"
+                    >
+                      {t("auditOpenSheet")}
+                      {" · "}
+                      {localizedLabel(auditSheet.subjectLabel, locale)}
+                    </h2>
+                    <p className="mt-1 text-[11px] text-[var(--ios-secondary-label)]">
+                      {auditSheet.classLabel ?? "—"}
+                      {" · "}
+                      {t("columns.term")} T{auditSheet.termNumber}
+                    </p>
+                  </div>
+                  <DialogCloseButton
+                    aria-label={tCommon("cancel")}
+                    onClick={() => setAuditSheet(null)}
+                  />
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+                  {auditSheetLoading ? (
+                    <div className="flex justify-center py-10">
+                      <Spinner size="lg" tone="blue" label={t("auditSheetLoading")} />
+                    </div>
+                  ) : (
+                    <ReportSheetPaper sheet={auditSheet} />
+                  )}
+                </div>
+                <div className="flex shrink-0 justify-end border-t border-[var(--ios-separator)]/55 px-5 py-3.5">
+                  <Button type="button" variant="secondary" onClick={() => setAuditSheet(null)}>
+                    {tCommon("cancel")}
+                  </Button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
 
       {mounted && detailSession
         ? createPortal(
