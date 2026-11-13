@@ -10,24 +10,24 @@ title:
 
 ## FR
 
-### Votre espace
+### Tableau de bord
 
-Résumé du rôle actif, du compte et des capacités indicatives. Le serveur applique toujours les règles du jeton : la liste affichée est un aperçu UI.
+L’accueil appelle `GET /api/v1/dashboard/summary` (module portal) : un seul agrégat adapté au rôle.
 
-En mode démo, certaines actions restent locales (badge Démo).
+Blocs possibles : indicateurs (élèves, inscrits, personnel, séquences, fiches, corrections, notifications), répartition des séquences, progression de saisie, file des fiches de report, effectifs par cycle, échéances de saisie, charge enseignant (affectations / heures), activité récente et raccourcis modules.
 
-### Modules
+Les pastilles d’attention signalent ce qui attend une action (visa, correction, échéance, non lues).
 
-Les tuiles mènent aux modules autorisés pour votre rôle (académique, notes, personnel…).
+En mode démo, le badge Démo reste visible ; aucune donnée réelle d’élève n’est inventée.
 
 ## EN
 
-### Your workspace
+### Dashboard
 
-Summary of the active role, account and indicative capabilities. The server always enforces token rules: the list is a UI preview.
+Home calls `GET /api/v1/dashboard/summary` (portal module): one role-aware aggregate.
 
-In demo mode, some actions stay local (Demo badge).
+Possible blocks: indicators (students, enrolled, staff, sequences, sheets, corrections, notifications), sequence breakdown, entry progress, report-sheet queue, headcount by cycle, entry deadlines, teacher workload, recent activity and module shortcuts.
 
-### Modules
+Attention chips highlight what needs action (visa, correction, deadline, unread).
 
-Tiles lead to modules allowed for your role (academic, grades, staff…).
+In demo mode, the Demo badge stays visible; no real student data is invented.

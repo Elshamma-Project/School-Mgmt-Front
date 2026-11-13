@@ -8,8 +8,8 @@ export const REMEMBER_ME_KEY = "smels-remember-me";
 export const REMEMBER_EMAIL_KEY = "smels-remember-email";
 
 export function readRememberMe(): boolean {
-  if (typeof window === "undefined") return true;
-  return window.localStorage.getItem(REMEMBER_ME_KEY) !== "0";
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(REMEMBER_ME_KEY) === "1";
 }
 
 export function writeRememberMe(remember: boolean): void {

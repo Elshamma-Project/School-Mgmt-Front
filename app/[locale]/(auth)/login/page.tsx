@@ -5,6 +5,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import { SessionRestorer } from "@/components/auth/session-restorer";
 import { AppFooter } from "@/components/layout/app-footer";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { getTenantConfig } from "@/lib/tenant/config";
 
 /** Traductions next-intl = runtime locale → hors shell Instant pour l’instant. */
@@ -35,8 +36,9 @@ export default async function LoginPage() {
           <LoginForm schoolId={schoolId} />
         </div>
 
-        <div className="mt-8">
-          <LocaleSwitcher />
+        <div className="mt-8 flex items-center justify-center gap-2">
+          <ThemeToggle />
+          <LocaleSwitcher className="w-auto" />
         </div>
       </div>
 

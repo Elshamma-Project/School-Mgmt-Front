@@ -274,10 +274,69 @@
     "roleLabel": "Rôle",
     "accountLabel": "Compte",
     "schoolLabel": "Établissement",
-    "modulesSection": "Modules de cet espace",
+    "modulesSection": "Raccourcis",
+    "moduleOpen": "Ouvrir",
     "scopeSection": "Périmètre (UI)",
     "scopeFooter": "Indicatif — le serveur applique toujours les règles du jeton.",
-    "demoFooter": "Session fictive — aucune donnée réelle d’élève n’est chargée."
+    "demoFooter": "Session fictive — aucune donnée réelle d’élève n’est chargée.",
+    "yearLockedShort": "verrouillée",
+    "statsSection": "Indicateurs",
+    "stats": {
+      "students": "Élèves",
+      "staff": "Personnel",
+      "enrolled": "Inscrits",
+      "openSessions": "Séquences ouvertes",
+      "assignments": "Affectations",
+      "weeklyHours": "Heures / sem.",
+      "unread": "Non lues",
+      "pendingSheets": "Fiches en attente",
+      "pendingCorrections": "Corrections"
+    },
+    "attention": {
+      "unread": "{count, plural, one {# notification non lue} other {# notifications non lues}}",
+      "sheets": "{count, plural, one {# fiche à viser} other {# fiches à viser}}",
+      "corrections": "{count, plural, one {# correction en attente} other {# corrections en attente}}",
+      "sessions": "{count, plural, one {# séquence ouverte} other {# séquences ouvertes}}",
+      "deadline": "{count, plural, one {# échéance proche} other {# échéances proches}}",
+      "yearLocked": "Année scolaire verrouillée"
+    },
+    "sessionsChartTitle": "Séquences de l’année",
+    "sessionsChartEmpty": "Aucune séquence chargée pour l’année courante.",
+    "sessionsChartAria": "Ouvertes {open}, clôturées {closed}, planifiées {planned}",
+    "openSessionsList": "Ouvertes maintenant",
+    "sessionStatus": {
+      "open": "Ouverte",
+      "closed": "Clôturée",
+      "planned": "Planifiée"
+    },
+    "activitySection": "Activité récente",
+    "activitySeeAll": "Tout voir",
+    "activityEmpty": "Aucune notification récente.",
+    "entryProgressTitle": "Progression de saisie",
+    "entryProgressHint": "{submitted} / {expected} fiches terminées",
+    "entryProgress": {
+      "draft": "En cours",
+      "submitted": "Soumises"
+    },
+    "reportSheetsTitle": "Fiches de report — T{term}",
+    "reportSheetStatus": {
+      "draft": "Brouillon",
+      "submitted": "Soumises",
+      "visaSg": "Visa SG",
+      "visaPrincipal": "Visa directeur",
+      "rejected": "Rejetées"
+    },
+    "enrollmentsTitle": "Effectifs inscrits",
+    "enrollmentsHint": "Répartition par cycle",
+    "cycles": {
+      "MATERNELLE": "Maternelle",
+      "PRIMAIRE": "Primaire",
+      "SECONDAIRE_1ER_CYCLE": "1er cycle",
+      "SECONDAIRE_2ND_CYCLE": "2nd cycle"
+    },
+    "deadlinesTitle": "Échéances de saisie",
+    "deadlineSoon": "Bientôt",
+    "deadlineOverdue": "Dépassée"
   },
   "settings": {
     "title": "Réglages",

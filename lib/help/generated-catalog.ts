@@ -469,8 +469,16 @@ export const HELP_CATALOG: HelpArticle[] = [
             "en": "The report sheet is a term snapshot. Show one sequence by default, or both if needed. Teacher submit → Supervisor visa → Principal visa."
           },
           {
+            "fr": "Le bouton **Actualiser** s’exécute immédiatement (sans confirmation) : il recharge l’effectif (nouveaux élèves ajoutés), recalcule rangs / appréciations **sans effacer** les notes déjà saisies, et **repasse la fiche en brouillon**. **Générer vierge** vide volontairement toutes les cellules de notes.",
+            "en": "The **Refresh** button runs immediately (no confirmation): it updates the roster (new students added), recalculates ranks / appreciations **without clearing** existing marks, and **returns the sheet to draft**. **Generate blank** intentionally clears all mark cells."
+          },
+          {
             "fr": "**Visa enseignant automatique (BR-79)** : lorsqu’un administrateur ou le directeur **clôture** une séquence, toutes les fiches de report du trimestre encore en brouillon (ou rejetées) passent automatiquement en « soumise » — le visa enseignant est posé sans action manuelle. Les fiches déjà visées SG / Principal ne sont pas touchées.",
             "en": "**Automatic teacher visa (BR-79)**: when an administrator or the director **closes** a sequence, every still-draft (or rejected) report sheet for that term is auto-submitted — the teacher visa is stamped without a manual action. Sheets already visaed by Supervisor / Principal are left unchanged."
+          },
+          {
+            "fr": "**Visa Principal (BR-83)** : dès que le Principal (directeur) pose son visa, les visas encore manquants (enseignant et Surveillant Général) sont **complétés automatiquement**. Les trois pastilles « verified » apparaissent alors sur la fiche.",
+            "en": "**Principal visa (BR-83)**: as soon as the Principal (director) stamps their visa, any still-missing teacher and Supervisor visas are **completed automatically**. All three verified badges then appear on the sheet."
           },
           {
             "fr": "**Correction après clôture (BR-80)** : une fois la séquence **clôturée**, une colonne **Corr.** apparaît sur la fiche de report. L’enseignant propose une nouvelle Comp./20 avec un **motif** (≥ 15 caractères) et jusqu’à **3 pièces** (JPEG/PNG/WebP/PDF, 5 Mo). La demande reste en attente. **Seul le directeur** (onglet Corrections) peut **approuver** (écrit la note + audit) ou **rejeter** (motif de revue).",
@@ -913,13 +921,25 @@ export const HELP_CATALOG: HelpArticle[] = [
       },
       {
         "heading": {
+          "fr": "Liens et synchronisation",
+          "en": "Links and sync"
+        },
+        "paragraphs": [
+          {
+            "fr": "Chaque notification peut porter un **lien métier** (deep link) : clôture → fiches enseignant (`/teacher/grades?term=…`), correction à revoir → `/director/sequences?tab=corrections`, fiche rejetée → matière concernée, signalement → onglet Signalements. Ouvrir le message le marque lu (et pose l’accusé si requis) ; le bouton d’action suit le lien dans l’espace de votre rôle.",
+            "en": "Each notification may carry a **deep link**: sequence close → teacher grades (`/teacher/grades?term=…`), correction review → `/director/sequences?tab=corrections`, rejected sheet → the related subject, staff report → Signals tab. Opening the message marks it read (and acknowledges when required); the action button follows the link in your role workspace."
+          }
+        ]
+      },
+      {
+        "heading": {
           "fr": "Cloche",
           "en": "Bell"
         },
         "paragraphs": [
           {
-            "fr": "Le badge dans l’en-tête indique le nombre de notifications non lues.",
-            "en": "The header badge shows the unread notification count."
+            "fr": "Le badge dans l’en-tête indique le nombre de notifications non lues. Depuis la cloche, un clic ouvre la notification dans la boîte (`?open=`).",
+            "en": "The header badge shows the unread notification count. From the bell, a click opens the notification in the inbox (`?open=`)."
           }
         ]
       }
@@ -941,29 +961,25 @@ export const HELP_CATALOG: HelpArticle[] = [
     "sections": [
       {
         "heading": {
-          "fr": "Votre espace",
-          "en": "Your workspace"
+          "fr": "Tableau de bord",
+          "en": "Dashboard"
         },
         "paragraphs": [
           {
-            "fr": "Résumé du rôle actif, du compte et des capacités indicatives. Le serveur applique toujours les règles du jeton : la liste affichée est un aperçu UI.",
-            "en": "Summary of the active role, account and indicative capabilities. The server always enforces token rules: the list is a UI preview."
+            "fr": "L’accueil appelle `GET /api/v1/dashboard/summary` (module portal) : un seul agrégat adapté au rôle.",
+            "en": "Home calls `GET /api/v1/dashboard/summary` (portal module): one role-aware aggregate."
           },
           {
-            "fr": "En mode démo, certaines actions restent locales (badge Démo).",
-            "en": "In demo mode, some actions stay local (Demo badge)."
-          }
-        ]
-      },
-      {
-        "heading": {
-          "fr": "Modules",
-          "en": "Modules"
-        },
-        "paragraphs": [
+            "fr": "Blocs possibles : indicateurs (élèves, inscrits, personnel, séquences, fiches, corrections, notifications), répartition des séquences, progression de saisie, file des fiches de report, effectifs par cycle, échéances de saisie, charge enseignant (affectations / heures), activité récente et raccourcis modules.",
+            "en": "Possible blocks: indicators (students, enrolled, staff, sequences, sheets, corrections, notifications), sequence breakdown, entry progress, report-sheet queue, headcount by cycle, entry deadlines, teacher workload, recent activity and module shortcuts."
+          },
           {
-            "fr": "Les tuiles mènent aux modules autorisés pour votre rôle (académique, notes, personnel…).",
-            "en": "Tiles lead to modules allowed for your role (academic, grades, staff…)."
+            "fr": "Les pastilles d’attention signalent ce qui attend une action (visa, correction, échéance, non lues).",
+            "en": "Attention chips highlight what needs action (visa, correction, deadline, unread)."
+          },
+          {
+            "fr": "En mode démo, le badge Démo reste visible ; aucune donnée réelle d’élève n’est inventée.",
+            "en": "In demo mode, the Demo badge stays visible; no real student data is invented."
           }
         ]
       }

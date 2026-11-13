@@ -3,6 +3,7 @@ import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { ChangePasswordGuard } from "@/components/auth/change-password-guard";
 import { AppFooter } from "@/components/layout/app-footer";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 export const instant = false;
 
@@ -35,8 +36,9 @@ export default async function ChangePasswordPage() {
             <ChangePasswordForm />
           </div>
 
-          <div className="mt-8">
-            <LocaleSwitcher />
+          <div className="mt-8 flex items-center justify-center gap-2">
+            <ThemeToggle />
+            <LocaleSwitcher className="w-auto" />
           </div>
         </div>
 

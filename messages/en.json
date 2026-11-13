@@ -274,10 +274,69 @@
     "roleLabel": "Role",
     "accountLabel": "Account",
     "schoolLabel": "School",
-    "modulesSection": "Modules in this workspace",
+    "modulesSection": "Shortcuts",
+    "moduleOpen": "Open",
     "scopeSection": "Scope (UI)",
     "scopeFooter": "Indicative — the server always enforces token rules.",
-    "demoFooter": "Demo session — no real student data is loaded."
+    "demoFooter": "Demo session — no real student data is loaded.",
+    "yearLockedShort": "locked",
+    "statsSection": "Indicators",
+    "stats": {
+      "students": "Students",
+      "staff": "Staff",
+      "enrolled": "Enrolled",
+      "openSessions": "Open sequences",
+      "assignments": "Assignments",
+      "weeklyHours": "Hours / week",
+      "unread": "Unread",
+      "pendingSheets": "Pending sheets",
+      "pendingCorrections": "Corrections"
+    },
+    "attention": {
+      "unread": "{count, plural, one {# unread notification} other {# unread notifications}}",
+      "sheets": "{count, plural, one {# sheet to visa} other {# sheets to visa}}",
+      "corrections": "{count, plural, one {# pending correction} other {# pending corrections}}",
+      "sessions": "{count, plural, one {# open sequence} other {# open sequences}}",
+      "deadline": "{count, plural, one {# upcoming deadline} other {# upcoming deadlines}}",
+      "yearLocked": "Academic year locked"
+    },
+    "sessionsChartTitle": "Year sequences",
+    "sessionsChartEmpty": "No sequences loaded for the current year.",
+    "sessionsChartAria": "Open {open}, closed {closed}, planned {planned}",
+    "openSessionsList": "Open now",
+    "sessionStatus": {
+      "open": "Open",
+      "closed": "Closed",
+      "planned": "Planned"
+    },
+    "activitySection": "Recent activity",
+    "activitySeeAll": "See all",
+    "activityEmpty": "No recent notifications.",
+    "entryProgressTitle": "Grade entry progress",
+    "entryProgressHint": "{submitted} / {expected} sheets completed",
+    "entryProgress": {
+      "draft": "In progress",
+      "submitted": "Submitted"
+    },
+    "reportSheetsTitle": "Report sheets — T{term}",
+    "reportSheetStatus": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "visaSg": "SG visa",
+      "visaPrincipal": "Principal visa",
+      "rejected": "Rejected"
+    },
+    "enrollmentsTitle": "Enrollment headcount",
+    "enrollmentsHint": "By cycle",
+    "cycles": {
+      "MATERNELLE": "Nursery",
+      "PRIMAIRE": "Primary",
+      "SECONDAIRE_1ER_CYCLE": "Junior secondary",
+      "SECONDAIRE_2ND_CYCLE": "Senior secondary"
+    },
+    "deadlinesTitle": "Entry deadlines",
+    "deadlineSoon": "Soon",
+    "deadlineOverdue": "Overdue"
   },
   "settings": {
     "title": "Settings",

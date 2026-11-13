@@ -60,7 +60,7 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   /** Se souvenir : e-mail + session durable — jamais le mot de passe en clair. */
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
     password?: string;
