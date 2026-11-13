@@ -170,8 +170,82 @@
   },
   "notifications": {
     "title": "Notifications",
-    "description": "Alertes et messages liés à votre profil.",
-    "empty": "Aucune notification pour le moment."
+    "description": "Canal officiel de l’établissement : alertes, accusés de réception et signalements.",
+    "empty": "Aucune notification pour le moment.",
+    "emptyHint": "Les clôtures de séquence, décisions et accusés apparaîtront ici.",
+    "bell": "Notifications",
+    "bellUnread": "{count, plural, one {# notification non lue} other {# notifications non lues}}",
+    "loadError": "Impossible de charger les notifications.",
+    "actionError": "Action impossible.",
+    "professionalTitle": "Espace professionnel uniquement",
+    "professionalHint": "Pas de discussion entre enseignants. Les signalements partent vers l’administration ou la direction, avec suivi et accusé de réception.",
+    "tabsAria": "Sections notifications",
+    "tabs": {
+      "inbox": "Boîte de réception",
+      "signals": "Signalements"
+    },
+    "filterAria": "Filtrer les notifications",
+    "filter": {
+      "all": "Toutes",
+      "unread": "Non lues",
+      "ack": "À accuser"
+    },
+    "stats": {
+      "unread": "{count} non lue(s)",
+      "pendingAck": "{count} accusé(s) requis"
+    },
+    "badge": {
+      "unread": "Non lue",
+      "pendingAck": "Accusé requis",
+      "acked": "Accusé"
+    },
+    "category": {
+      "SESSION_CLOSED": "Clôture de séquence",
+      "CORRECTION_REQUESTED": "Correction demandée",
+      "CORRECTION_DECIDED": "Correction décidée",
+      "REPORT_SHEET_REJECTED": "Fiche rejetée",
+      "STAFF_SIGNAL": "Signalement",
+      "SYSTEM": "Système"
+    },
+    "markRead": "Marquer lu",
+    "acknowledge": "Accuser réception",
+    "ackSuccess": "Accusé de réception enregistré",
+    "open": "Ouvrir",
+    "signal": {
+      "formTitle": "Signaler à l’administration",
+      "formHint": "Erreur de données, information manquante ou problème de notes. Message officiel, sans fil de discussion.",
+      "category": "Catégorie",
+      "subject": "Objet",
+      "subjectPlaceholder": "Résumé en une ligne…",
+      "message": "Message",
+      "messagePlaceholder": "Décrivez le problème avec précision (min. 15 caractères)…",
+      "submit": "Envoyer le signalement",
+      "success": "Signalement transmis à l’administration",
+      "error": "Impossible d’envoyer le signalement.",
+      "validation": "Objet (≥ 5) et message (≥ 15 caractères) obligatoires.",
+      "emptyTitle": "Aucun signalement",
+      "emptyHint": "Les signalements enseignants et leur traitement apparaissent ici.",
+      "statusFilter": "Statut des signalements",
+      "status": {
+        "OPEN": "Ouverts",
+        "ACKNOWLEDGED": "Accusés",
+        "CLOSED": "Clôturés",
+        "ALL": "Tous"
+      },
+      "categories": {
+        "DATA_ERROR": "Erreur de données",
+        "GRADE_ISSUE": "Problème de notes",
+        "MISSING_INFO": "Information manquante",
+        "ACCESS_ISSUE": "Accès / droits",
+        "OTHER": "Autre"
+      },
+      "acknowledge": "Accuser réception",
+      "close": "Clôturer",
+      "ackSuccess": "Accusé enregistré",
+      "closeSuccess": "Signalement clôturé",
+      "adminNote": "Note admin",
+      "relatedSequence": "Séq. {number}"
+    }
   },
   "home": {
     "title": "Accueil",

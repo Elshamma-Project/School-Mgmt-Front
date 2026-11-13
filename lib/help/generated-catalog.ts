@@ -843,6 +843,73 @@ export const HELP_CATALOG: HelpArticle[] = [
     ]
   },
   {
+    "id": "notifications",
+    "source": "docs/rag/notifications.md",
+    "priority": 25,
+    "routes": [
+      {
+        "path": "/notifications"
+      },
+      {
+        "path": "/notifications/**"
+      }
+    ],
+    "title": {
+      "fr": "Notifications",
+      "en": "Notifications"
+    },
+    "sections": [
+      {
+        "heading": {
+          "fr": "Canal professionnel",
+          "en": "Professional channel"
+        },
+        "paragraphs": [
+          {
+            "fr": "La page Notifications est le **canal officiel** de l’établissement. Il n’y a **pas de discussion** entre enseignants, ni de messagerie libre.",
+            "en": "The Notifications page is the school’s **official channel**. There is **no teacher-to-teacher chat** and no free messaging."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Clôture de séquence (BR-81)",
+          "en": "Sequence close (BR-81)"
+        },
+        "paragraphs": [
+          {
+            "fr": "Quand l’administration ou le directeur **clôture** une séquence, chaque enseignant titulaire concerné reçoit une notification bilingue. Un **accusé de réception** est demandé (bouton dédié). Tant qu’il n’est pas posé, la notif reste « à accuser ».",
+            "en": "When administration or the director **closes** a sequence, each concerned assigned teacher gets a bilingual notification. An **acknowledgement** is required. Until acknowledged, it stays under “to acknowledge”."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Signalements (BR-82)",
+          "en": "Reports (BR-82)"
+        },
+        "paragraphs": [
+          {
+            "fr": "Un enseignant peut **signaler** une erreur de données, un problème de notes, une information manquante ou un souci d’accès. L’administration / direction **accuse réception** puis **clôture**. Pas de réponses en chaîne : un seul message officiel, suivi par statut.",
+            "en": "A teacher can **report** a data error, grade issue, missing information or access problem. Administration / director **acknowledge** then **close**. No reply threads: one official message, tracked by status."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Cloche",
+          "en": "Bell"
+        },
+        "paragraphs": [
+          {
+            "fr": "Le badge dans l’en-tête indique le nombre de notifications non lues.",
+            "en": "The header badge shows the unread notification count."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "home",
     "source": "docs/rag/home.md",
     "priority": 20,

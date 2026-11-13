@@ -170,8 +170,82 @@
   },
   "notifications": {
     "title": "Notifications",
-    "description": "Alerts and messages for your profile.",
-    "empty": "No notifications yet."
+    "description": "Official school channel: alerts, acknowledgements and reports.",
+    "empty": "No notifications yet.",
+    "emptyHint": "Sequence closures, decisions and acknowledgements will appear here.",
+    "bell": "Notifications",
+    "bellUnread": "{count, plural, one {# unread notification} other {# unread notifications}}",
+    "loadError": "Could not load notifications.",
+    "actionError": "Action failed.",
+    "professionalTitle": "Professional channel only",
+    "professionalHint": "No teacher-to-teacher chat. Reports go to administration or the director, with tracking and acknowledgement.",
+    "tabsAria": "Notification sections",
+    "tabs": {
+      "inbox": "Inbox",
+      "signals": "Reports"
+    },
+    "filterAria": "Filter notifications",
+    "filter": {
+      "all": "All",
+      "unread": "Unread",
+      "ack": "To acknowledge"
+    },
+    "stats": {
+      "unread": "{count} unread",
+      "pendingAck": "{count} acknowledgement(s) required"
+    },
+    "badge": {
+      "unread": "Unread",
+      "pendingAck": "Ack required",
+      "acked": "Acknowledged"
+    },
+    "category": {
+      "SESSION_CLOSED": "Sequence closed",
+      "CORRECTION_REQUESTED": "Correction requested",
+      "CORRECTION_DECIDED": "Correction decided",
+      "REPORT_SHEET_REJECTED": "Sheet rejected",
+      "STAFF_SIGNAL": "Report",
+      "SYSTEM": "System"
+    },
+    "markRead": "Mark as read",
+    "acknowledge": "Acknowledge",
+    "ackSuccess": "Acknowledgement recorded",
+    "open": "Open",
+    "signal": {
+      "formTitle": "Report to administration",
+      "formHint": "Data error, missing information or grade issue. Official message — no discussion thread.",
+      "category": "Category",
+      "subject": "Subject",
+      "subjectPlaceholder": "One-line summary…",
+      "message": "Message",
+      "messagePlaceholder": "Describe the issue precisely (min. 15 characters)…",
+      "submit": "Send report",
+      "success": "Report sent to administration",
+      "error": "Could not send the report.",
+      "validation": "Subject (≥ 5) and message (≥ 15 characters) are required.",
+      "emptyTitle": "No reports",
+      "emptyHint": "Teacher reports and their handling appear here.",
+      "statusFilter": "Report status",
+      "status": {
+        "OPEN": "Open",
+        "ACKNOWLEDGED": "Acknowledged",
+        "CLOSED": "Closed",
+        "ALL": "All"
+      },
+      "categories": {
+        "DATA_ERROR": "Data error",
+        "GRADE_ISSUE": "Grade issue",
+        "MISSING_INFO": "Missing information",
+        "ACCESS_ISSUE": "Access / permissions",
+        "OTHER": "Other"
+      },
+      "acknowledge": "Acknowledge",
+      "close": "Close",
+      "ackSuccess": "Acknowledgement recorded",
+      "closeSuccess": "Report closed",
+      "adminNote": "Admin note",
+      "relatedSequence": "Seq. {number}"
+    }
   },
   "home": {
     "title": "Home",

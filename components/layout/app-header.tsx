@@ -7,6 +7,7 @@ import { HelpMenu } from "@/components/layout/help-menu";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { getNavKeyFromPathname } from "@/lib/navigation/page-meta";
 import { useAuthStore } from "@/stores/auth-store";
@@ -137,6 +138,7 @@ export function AppHeader() {
             )}
           </h1>
           <div className="flex shrink-0 items-center gap-2">
+            <NotificationBell />
             <ThemeToggle />
             <Suspense fallback={null}>
               <HelpMenu />
