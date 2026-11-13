@@ -29,8 +29,26 @@ type DialogProps = {
   /** Icône optionnelle au-dessus du titre (ex. déconnexion). */
   icon?: ReactNode;
   tone?: "default" | "destructive";
+  /**
+   * Couleur du pastille d’icône. Par défaut = `tone`.
+   * Permet un header « danger » tout en gardant Confirmer en bleu (actions côte à côte).
+   */
+  iconTone?: "default" | "destructive";
+  /**
+   * Disposition des actions. `auto` : empilé si >2 actions ou tone destructive ;
+   * `row` : toujours 2 colonnes ; `stack` : toujours empilé.
+   */
+  actionsLayout?: "auto" | "row" | "stack";
+  /** Largeur max : sm 300 (défaut), md 420, lg 520. */
+  size?: "sm" | "md" | "lg";
   /** Accessible name override; defaults to title. */
   "aria-label"?: string;
+};
+
+const SIZE_CLASS: Record<NonNullable<DialogProps["size"]>, string> = {
+  sm: "max-w-[300px]",
+  md: "max-w-[420px]",
+  lg: "max-w-[min(520px,100%)]",
 };
 
 /**
@@ -46,6 +64,9 @@ export function Dialog({
   actions,
   icon,
   tone = "default",
+  iconTone,
+  actionsLayout = "auto",
+  size = "sm",
   "aria-label": ariaLabel,
 }: DialogProps) {
   const titleId = useId();
@@ -57,6 +78,10 @@ export function Dialog({
     setMounted(true);
   }, []);
 
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
+
+  // Focus initial une seule fois à l’ouverture — pas à chaque rendu (sinon perte du curseur).
   useEffect(() => {
     if (!open) return;
 
@@ -65,22 +90,28 @@ export function Dialog({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onOpenChange(false);
+        onOpenChangeRef.current(false);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
-    panelRef.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
+    const focusTimer = window.setTimeout(() => {
+      panelRef.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
+    }, 0);
 
     return () => {
+      window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, onOpenChange]);
+  }, [open]);
 
   if (!open || !mounted) return null;
 
-  const stacked = actions.length > 2 || tone === "destructive";
+  const stacked =
+    actionsLayout === "stack" ||
+    (actionsLayout === "auto" && (actions.length > 2 || tone === "destructive"));
+  const resolvedIconTone = iconTone ?? tone;
   const headerIcon =
     icon ??
     (tone === "destructive" ? (
@@ -88,11 +119,11 @@ export function Dialog({
     ) : null);
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto overscroll-contain p-4 sm:p-6">
       <button
         type="button"
         aria-label="Close"
-        className="absolute inset-0 cursor-pointer bg-black/40 backdrop-blur-[6px] fade-in"
+        className="fixed inset-0 cursor-pointer bg-black/40 backdrop-blur-[6px] fade-in"
         onClick={() => onOpenChange(false)}
       />
 
@@ -103,14 +134,17 @@ export function Dialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
         aria-label={ariaLabel}
-        className="relative z-10 w-full max-w-[300px] overflow-hidden rounded-[var(--radius-xl)] bg-[var(--ios-card)] shadow-[var(--ios-shadow-lg)] ring-1 ring-[var(--ios-separator)] slide-up"
+        className={cn(
+          "relative z-10 my-auto flex w-full max-h-[min(92dvh,880px)] flex-col overflow-hidden rounded-[var(--radius-xl)] bg-[var(--ios-card)] shadow-[var(--ios-shadow-lg)] ring-1 ring-[var(--ios-separator)] slide-up",
+          SIZE_CLASS[size],
+        )}
       >
-        <div className="px-5 pb-4 pt-6 text-center">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-5 pb-4 pt-5 text-center sm:px-6 sm:pt-6">
           {headerIcon ? (
             <div
               className={cn(
-                "mx-auto mb-4 flex size-14 items-center justify-center rounded-full",
-                tone === "destructive"
+                "mx-auto mb-3 flex size-12 items-center justify-center rounded-full sm:mb-4 sm:size-14",
+                resolvedIconTone === "destructive"
                   ? "bg-[var(--ios-danger-soft)] text-[var(--ios-danger)]"
                   : "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]",
               )}
@@ -129,17 +163,19 @@ export function Dialog({
           {description ? (
             <p
               id={descriptionId}
-              className="mt-1.5 text-[12px] leading-relaxed text-[var(--ios-secondary-label)]"
+              className="mx-auto mt-1.5 max-w-[36ch] text-[12px] leading-relaxed text-[var(--ios-secondary-label)] sm:max-w-none"
             >
               {description}
             </p>
           ) : null}
-          {children ? <div className="mt-3 text-left">{children}</div> : null}
+          {children ? (
+            <div className="mt-4 w-full text-left sm:mt-5">{children}</div>
+          ) : null}
         </div>
 
         <div
           className={cn(
-            "border-t border-[var(--ios-separator)]",
+            "shrink-0 border-t border-[var(--ios-separator)] bg-[var(--ios-card)]",
             stacked ? "flex flex-col-reverse" : "grid grid-cols-2",
           )}
         >
@@ -163,7 +199,7 @@ export function Dialog({
                 action.variant === "destructive" &&
                   "font-semibold text-[var(--ios-danger)]",
                 action.variant === "cancel" &&
-                  "font-normal text-[var(--ios-danger)]",
+                  "font-normal text-[var(--ios-blue)]",
                 (!action.variant || action.variant === "default") &&
                   "font-semibold text-[var(--ios-blue)]",
               )}

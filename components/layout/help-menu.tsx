@@ -119,22 +119,24 @@ export function HelpMenu({ className }: HelpMenuProps) {
                   className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,color-mix(in_srgb,var(--ios-blue)_12%,transparent),transparent_55%)]"
                   aria-hidden
                 />
-                <div className="relative flex min-w-0 items-center gap-2">
-                  <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_20%,transparent)]">
+                <div className="relative flex min-w-0 items-start gap-2.5">
+                  <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--ios-info-soft)] text-[var(--ios-blue)] ring-1 ring-[color-mix(in_srgb,var(--ios-blue)_20%,transparent)]">
                     <CircleHelp className="size-3.5 stroke-[1.75]" aria-hidden />
                   </span>
-                  <span className="inline-flex shrink-0 rounded-full bg-[color-mix(in_srgb,var(--ios-blue)_12%,transparent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-blue)]">
-                    {t("badge")}
-                  </span>
-                  <h2 className="min-w-0 flex-1 truncate text-[14px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
-                    {title}
-                  </h2>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <span className="inline-flex rounded-full bg-[color-mix(in_srgb,var(--ios-blue)_12%,transparent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-blue)]">
+                      {t("badge")}
+                    </span>
+                    <h2 className="truncate text-[14px] font-semibold leading-snug tracking-[-0.02em] text-[var(--ios-label)]">
+                      {title}
+                    </h2>
+                  </div>
                   <button
                     type="button"
                     aria-label={t("close")}
                     title={t("close")}
                     onClick={() => setOpen(false)}
-                    className="pressable inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-danger)] transition-colors hover:bg-[var(--ios-danger-soft)] hover:text-[var(--ios-danger)] focus-visible:shadow-[var(--focus-ring)]"
+                    className="pressable -mr-0.5 -mt-0.5 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] text-[var(--ios-danger)] transition-colors hover:bg-[var(--ios-danger-soft)] hover:text-[var(--ios-danger)] focus-visible:shadow-[var(--focus-ring)]"
                   >
                     <X className="size-4 stroke-[1.75]" aria-hidden />
                   </button>
@@ -205,8 +207,10 @@ export function HelpMenu({ className }: HelpMenuProps) {
           title={t("open")}
           onClick={() => setOpen((value) => !value)}
           className={cn(
-            "pressable relative z-[210] inline-flex size-9 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] bg-[var(--ios-fill)] text-[var(--ios-label)] transition-[background-color,box-shadow] duration-150 hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]",
-            open && "bg-[var(--ios-fill-secondary)] shadow-[var(--ios-shadow-sm)]",
+            "pressable relative inline-flex size-9 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] bg-[var(--ios-fill)] text-[var(--ios-label)] transition-[background-color,box-shadow] duration-150 hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]",
+            open
+              ? "z-[210] bg-[var(--ios-fill-secondary)] shadow-[var(--ios-shadow-sm)]"
+              : "z-10",
           )}
         >
           <CircleHelp className="size-4 stroke-[1.75]" aria-hidden />

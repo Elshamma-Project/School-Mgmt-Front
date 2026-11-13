@@ -14,6 +14,10 @@ type ConfirmDialogProps = {
   onConfirm: () => void;
   /** destructive = rouge (déconnexion, suppression…) */
   tone?: "default" | "destructive";
+  /** Pastille d’icône ; défaut = `tone`. */
+  iconTone?: "default" | "destructive";
+  /** Disposition des boutons ; défaut auto (voir Dialog). */
+  actionsLayout?: "auto" | "row" | "stack";
   icon?: ReactNode;
 };
 
@@ -27,6 +31,8 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   tone = "destructive",
+  iconTone,
+  actionsLayout,
   icon,
 }: ConfirmDialogProps) {
   const actions: DialogAction[] = [
@@ -45,7 +51,7 @@ export function ConfirmDialog({
 
   const resolvedIcon =
     icon ??
-    (tone === "destructive" ? (
+    (tone === "destructive" || iconTone === "destructive" ? (
       <LogOut className="size-5 stroke-[1.75]" aria-hidden />
     ) : null);
 
@@ -57,6 +63,8 @@ export function ConfirmDialog({
       description={description}
       actions={actions}
       tone={tone}
+      iconTone={iconTone}
+      actionsLayout={actionsLayout}
       icon={resolvedIcon}
     />
   );

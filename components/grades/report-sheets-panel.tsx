@@ -140,10 +140,22 @@ export function ReportSheetsPanel({
   const can = useCallback(
     (sheet: GradeReportSheetResponse, kind: ActionKind): boolean => {
       if (kind === "visaSupervisor") return canVisaSupervisor && sheet.status === "SUBMITTED";
-      if (kind === "visaPrincipal") return canVisaPrincipal && sheet.status === "VISA_SG";
+      // BR-83 : le Principal peut viser dès le brouillon ; les autres visas manquants sont complétés.
+      if (kind === "visaPrincipal") {
+        return (
+          canVisaPrincipal &&
+          (sheet.status === "DRAFT" ||
+            sheet.status === "REJECTED" ||
+            sheet.status === "SUBMITTED" ||
+            sheet.status === "VISA_SG")
+        );
+      }
       return (
         (canVisaSupervisor || canVisaPrincipal) &&
-        (sheet.status === "SUBMITTED" || sheet.status === "VISA_SG")
+        (sheet.status === "DRAFT" ||
+          sheet.status === "REJECTED" ||
+          sheet.status === "SUBMITTED" ||
+          sheet.status === "VISA_SG")
       );
     },
     [canVisaPrincipal, canVisaSupervisor],
@@ -416,6 +428,10 @@ export function ReportSheetsPanel({
                     </h2>
                     <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[var(--ios-secondary-label)]">
                       <span>{preview.classLabel ?? "—"}</span>
+                      <span aria-hidden>·</span>
+                      <span>
+                        {t("termLabel")} {t("termOption", { number: preview.termNumber })}
+                      </span>
                       <Badge tone={STATUS_TONE[preview.status]}>{statusLabel(preview.status)}</Badge>
                     </p>
                   </div>

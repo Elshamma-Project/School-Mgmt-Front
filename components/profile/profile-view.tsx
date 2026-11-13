@@ -360,162 +360,173 @@ export function ProfileView() {
 
       {/* 4 sections → grille 2×2 sur grand écran ; en-tête reste centré */}
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-        <div className="space-y-3">
-          <GroupedList header={t("accountSection")}>
-            <GroupedListItem>
-              <DetailRow
-                label={t("username")}
-                value={user?.username ?? "—"}
-                icon={<AtSign className="size-4 stroke-[1.75]" />}
-                stacked
-              />
-            </GroupedListItem>
+        <div className="space-y-3 lg:col-span-2">
+          <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
+            <GroupedList header={t("accountSection")} className="h-full">
+              <GroupedListItem>
+                <DetailRow
+                  label={t("username")}
+                  value={user?.username ?? "—"}
+                  icon={<AtSign className="size-4 stroke-[1.75]" />}
+                  stacked
+                />
+              </GroupedListItem>
 
-            <GroupedListItem>
-              <DetailRow
-                label={t("schoolId")}
-                value={user?.schoolId ?? "—"}
-                icon={<Building2 className="size-4 stroke-[1.75]" />}
-              />
-            </GroupedListItem>
+              <GroupedListItem>
+                <DetailRow
+                  label={t("schoolId")}
+                  value={user?.schoolId ?? "—"}
+                  icon={<Building2 className="size-4 stroke-[1.75]" />}
+                />
+              </GroupedListItem>
 
-            <GroupedListItem>
-              <DetailRow
-                label={t("role")}
-                value={
-                  user?.roles?.length
-                    ? user.roles.map((r) => tRoles(`${r}.label`)).join(", ")
-                    : role
-                      ? tRoles(`${role}.label`)
-                      : "—"
-                }
-                icon={<Shield className="size-4 stroke-[1.75]" />}
-              />
-            </GroupedListItem>
-
-            <GroupedListItem>
-              <DetailRow
-                label={t("profileType")}
-                value={
-                  user?.profileId
-                    ? `${user.profileType} · ${user.profileId}`
-                    : (user?.profileType ?? "—")
-                }
-                icon={<IdCard className="size-4 stroke-[1.75]" />}
-                stacked
-              />
-            </GroupedListItem>
-          </GroupedList>
-
-          {!isMock ? (
-            <GroupedList>
-              <GroupedListItem className="p-0">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="lg"
-                  className="h-12 w-full justify-center gap-2.5 rounded-none font-medium text-[var(--ios-blue)] hover:bg-[color-mix(in_srgb,var(--ios-blue)_8%,transparent)] active:bg-[color-mix(in_srgb,var(--ios-blue)_14%,transparent)]"
-                  loading={refreshing || identityLoading}
-                  leadingIcon={
-                    <RefreshCw
-                      className="size-4 stroke-[1.75] text-[var(--ios-blue)]"
-                      aria-hidden
-                    />
+              <GroupedListItem>
+                <DetailRow
+                  label={t("role")}
+                  value={
+                    user?.roles?.length
+                      ? user.roles.map((r) => tRoles(`${r}.label`)).join(", ")
+                      : role
+                        ? tRoles(`${role}.label`)
+                        : "—"
                   }
-                  onClick={() => void refreshAccount()}
-                >
-                  {t("syncAccount")}
-                </Button>
+                  icon={<Shield className="size-4 stroke-[1.75]" />}
+                />
+              </GroupedListItem>
+
+              <GroupedListItem>
+                <DetailRow
+                  label={t("profileType")}
+                  value={
+                    user?.profileId
+                      ? `${user.profileType} · ${user.profileId}`
+                      : (user?.profileType ?? "—")
+                  }
+                  icon={<IdCard className="size-4 stroke-[1.75]" />}
+                  stacked
+                />
               </GroupedListItem>
             </GroupedList>
-          ) : null}
-        </div>
 
-        <div className="space-y-3">
-          {canEditStaffIdentity ? (
-            <form onSubmit={onSaveIdentity} className="space-y-3">
-              <GroupedList header={t("identitySection")}>
-                <GroupedListItem className="block py-3">
-                  <Field
-                    id="profile-last-name"
-                    label={t("lastName")}
-                    error={identityErrors.lastName}
-                  >
-                    <IconInput
+            {canEditStaffIdentity ? (
+              <form
+                id="profile-identity-form"
+                onSubmit={onSaveIdentity}
+                className="contents"
+              >
+                <GroupedList header={t("identitySection")} className="h-full">
+                  <GroupedListItem className="block py-3">
+                    <Field
                       id="profile-last-name"
-                      icon={<UserRound className="size-4 stroke-[1.75]" />}
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      invalid={Boolean(identityErrors.lastName)}
-                      autoComplete="family-name"
-                      maxLength={INPUT_LIMITS.personName}
-                      disabled={savingIdentity || identityLoading}
-                    />
-                  </Field>
-                </GroupedListItem>
+                      label={t("lastName")}
+                      error={identityErrors.lastName}
+                    >
+                      <IconInput
+                        id="profile-last-name"
+                        icon={<UserRound className="size-4 stroke-[1.75]" />}
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        invalid={Boolean(identityErrors.lastName)}
+                        autoComplete="family-name"
+                        maxLength={INPUT_LIMITS.personName}
+                        disabled={savingIdentity || identityLoading}
+                      />
+                    </Field>
+                  </GroupedListItem>
 
-                <GroupedListItem className="block py-3">
-                  <Field
-                    id="profile-first-name"
-                    label={t("firstName")}
-                    error={identityErrors.firstName}
-                  >
-                    <IconInput
+                  <GroupedListItem className="block py-3">
+                    <Field
                       id="profile-first-name"
-                      icon={<UserRound className="size-4 stroke-[1.75]" />}
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      invalid={Boolean(identityErrors.firstName)}
-                      autoComplete="given-name"
-                      maxLength={INPUT_LIMITS.personName}
-                      disabled={savingIdentity || identityLoading}
-                    />
-                  </Field>
-                </GroupedListItem>
+                      label={t("firstName")}
+                      error={identityErrors.firstName}
+                    >
+                      <IconInput
+                        id="profile-first-name"
+                        icon={<UserRound className="size-4 stroke-[1.75]" />}
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        invalid={Boolean(identityErrors.firstName)}
+                        autoComplete="given-name"
+                        maxLength={INPUT_LIMITS.personName}
+                        disabled={savingIdentity || identityLoading}
+                      />
+                    </Field>
+                  </GroupedListItem>
 
-                <GroupedListItem className="block py-3">
-                  <Field
-                    id="profile-phone"
-                    label={t("phone")}
-                    error={identityErrors.phone}
-                  >
-                    <IconInput
+                  <GroupedListItem className="block py-3">
+                    <Field
                       id="profile-phone"
-                      type="tel"
-                      inputMode="tel"
-                      icon={<Phone className="size-4 stroke-[1.75]" />}
-                      leadingAddon={CM_DIAL}
-                      value={phone}
-                      onChange={(e) => setPhone(toNationalPhone(e.target.value))}
-                      placeholder="6XX XXX XXX"
-                      autoComplete="tel-national"
-                      maxLength={15}
-                      invalid={Boolean(identityErrors.phone)}
-                      disabled={savingIdentity || identityLoading}
-                    />
-                  </Field>
+                      label={t("phone")}
+                      error={identityErrors.phone}
+                    >
+                      <IconInput
+                        id="profile-phone"
+                        type="tel"
+                        inputMode="tel"
+                        icon={<Phone className="size-4 stroke-[1.75]" />}
+                        leadingAddon={CM_DIAL}
+                        value={phone}
+                        onChange={(e) => setPhone(toNationalPhone(e.target.value))}
+                        placeholder="6XX XXX XXX"
+                        autoComplete="tel-national"
+                        maxLength={15}
+                        invalid={Boolean(identityErrors.phone)}
+                        disabled={savingIdentity || identityLoading}
+                      />
+                    </Field>
+                  </GroupedListItem>
+                </GroupedList>
+              </form>
+            ) : (
+              <GroupedList header={t("identitySection")} className="h-full">
+                <GroupedListItem className="block py-3">
+                  <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
+                    {t("identityUnavailableBody")}
+                  </p>
                 </GroupedListItem>
               </GroupedList>
+            )}
+          </div>
 
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+            {!isMock ? (
+              <GroupedList>
+                <GroupedListItem className="p-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="lg"
+                    className="h-12 w-full justify-center gap-2.5 rounded-none font-medium text-[var(--ios-blue)] hover:bg-[color-mix(in_srgb,var(--ios-blue)_8%,transparent)] active:bg-[color-mix(in_srgb,var(--ios-blue)_14%,transparent)]"
+                    loading={refreshing || identityLoading}
+                    leadingIcon={
+                      <RefreshCw
+                        className="size-4 stroke-[1.75] text-[var(--ios-blue)]"
+                        aria-hidden
+                      />
+                    }
+                    onClick={() => void refreshAccount()}
+                  >
+                    {t("syncAccount")}
+                  </Button>
+                </GroupedListItem>
+              </GroupedList>
+            ) : (
+              <div className="hidden lg:block" aria-hidden />
+            )}
+
+            {canEditStaffIdentity ? (
               <div className="flex justify-end px-1">
                 <Button
                   type="submit"
+                  form="profile-identity-form"
                   loading={savingIdentity}
                   disabled={(!identityDirty && !savingIdentity) || identityLoading}
                 >
                   {t("saveIdentity")}
                 </Button>
               </div>
-            </form>
-          ) : (
-            <GroupedList header={t("identitySection")}>
-              <GroupedListItem className="block py-3">
-                <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
-                  {t("identityUnavailableBody")}
-                </p>
-              </GroupedListItem>
-            </GroupedList>
-          )}
+            ) : null}
+          </div>
         </div>
 
         <form onSubmit={onChangePassword} className="space-y-3">

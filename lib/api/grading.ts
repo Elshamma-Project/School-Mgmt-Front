@@ -117,6 +117,8 @@ export type GradeAuditEntryResponse = {
   sessionId: string | null;
   studentId: string | null;
   changedBy: string;
+  /** Username lisible ; repli = `changedBy` (id). */
+  changedByLabel: string | null;
   changedByRole: string | null;
   changedAt: string;
   reason: string | null;
@@ -717,6 +719,7 @@ export type GradeCorrectionRequestResponse = {
   subjectLabelFr: string | null;
   subjectLabelEn: string | null;
   teacherId: string | null;
+  teacherLabel: string | null;
   previousStatus: GradeStatus;
   previousValue: string | number | null;
   proposedStatus: GradeStatus;

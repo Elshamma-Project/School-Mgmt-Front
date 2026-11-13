@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Clock3,
   Laptop,
   LogOut,
   MonitorSmartphone,
   ShieldCheck,
   Smartphone,
   Tablet,
+  Wifi,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
@@ -19,9 +21,14 @@ import {
   fetchSessions,
   logoutAll,
   revokeSession,
-  type SessionDto,
   type SessionDeviceKind,
 } from "@/lib/api/auth";
+import {
+  isLocalNetworkIp,
+  isPrivateNetworkIp,
+  looksLikeUserAgent,
+  parseUserAgent,
+} from "@/lib/auth/session-display";
 import { notify } from "@/lib/ui/notify";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
@@ -39,13 +46,6 @@ function formatInstant(value: string | null | undefined, locale: string): string
   } catch {
     return null;
   }
-}
-
-function shortUserAgent(ua: string | null | undefined): string | null {
-  if (!ua?.trim()) return null;
-  const raw = ua.trim();
-  if (raw.length <= 72) return raw;
-  return `${raw.slice(0, 69)}…`;
 }
 
 function deviceIcon(kind: string | undefined) {
@@ -230,26 +230,39 @@ export function ProfileSecurityPanel({
             {sessions.map((session) => {
               const kind = (session.deviceKind ?? "UNKNOWN") as SessionDeviceKind | "UNKNOWN";
               const Icon = deviceIcon(kind);
-              const title =
-                session.deviceLabel?.trim() ||
-                shortUserAgent(session.userAgent) ||
-                t("sessionUnknownDevice");
+              const parsed = parseUserAgent(session.userAgent);
+              const customLabel = session.deviceLabel?.trim();
+              const useCustomLabel = Boolean(customLabel && !looksLikeUserAgent(customLabel));
+              const title = useCustomLabel
+                ? customLabel!
+                : parsed
+                  ? t("sessionClientTitle", {
+                      browser: t(`sessionBrowser.${parsed.browserId}`),
+                      os: t(`sessionOs.${parsed.osId}`),
+                    })
+                  : t("sessionUnknownDevice");
               const created = formatInstant(session.createdAt, locale);
               const lastSeen = formatInstant(session.lastSeenAt, locale);
-              const expires = formatInstant(session.expiresAt, locale);
+              const networkLabel = isLocalNetworkIp(session.ipAddress)
+                ? t("sessionLocalNetwork")
+                : isPrivateNetworkIp(session.ipAddress)
+                  ? t("sessionPrivateNetwork")
+                  : session.ipAddress?.trim()
+                    ? session.ipAddress.trim()
+                    : t("sessionUnknownIp");
 
               return (
                 <li
                   key={session.id}
                   className={cn(
-                    "px-4 py-3.5",
-                    session.current && "bg-[color-mix(in_srgb,var(--ios-blue)_6%,transparent)]",
+                    "px-4 py-4",
+                    session.current && "bg-[color-mix(in_srgb,var(--ios-blue)_5%,transparent)]",
                   )}
                 >
                   <div className="flex items-start gap-3">
                     <span
                       className={cn(
-                        "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)]",
+                        "flex size-10 shrink-0 items-center justify-center rounded-full",
                         session.current
                           ? "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]"
                           : "bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]",
@@ -259,73 +272,78 @@ export function ProfileSecurityPanel({
                       <Icon className="size-4 stroke-[1.75]" />
                     </span>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-[var(--text-subhead)] font-semibold text-[var(--ios-label)]">
-                          {title}
-                        </p>
-                        <Badge tone={session.current ? "blue" : "neutral"}>
-                          {session.current ? t("sessionCurrent") : t("sessionOther")}
-                        </Badge>
-                        <Badge tone="neutral">
-                          {t(`deviceKind.${kind}` as "deviceKind.MOBILE")}
-                        </Badge>
+                    <div className="min-w-0 flex-1 space-y-2.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[14px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
+                            {title}
+                          </p>
+                          <p className="mt-0.5 text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
+                            {t(`deviceKind.${kind}` as "deviceKind.MOBILE")}
+                          </p>
+                        </div>
+
+                        {session.current ? (
+                          <Badge tone="blue" className="shrink-0">
+                            {t("sessionCurrent")}
+                          </Badge>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="shrink-0 text-[var(--ios-danger)] hover:bg-[color-mix(in_srgb,var(--ios-danger)_8%,transparent)]"
+                            disabled={busy}
+                            onClick={() => setConfirmRevokeId(session.id)}
+                          >
+                            {t("revokeSession")}
+                          </Button>
+                        )}
                       </div>
 
-                      <dl className="mt-2 grid grid-cols-1 gap-1.5 text-[var(--text-footnote)] text-[var(--ios-secondary-label)] sm:grid-cols-2">
-                        <div>
-                          <dt className="inline text-[var(--ios-tertiary-label)]">
-                            {t("sessionIp")} ·{" "}
-                          </dt>
-                          <dd className="inline font-medium text-[var(--ios-label)]">
-                            {session.ipAddress?.trim() || t("sessionUnknownIp")}
-                          </dd>
-                        </div>
+                      <ul className="space-y-1.5 text-[12px] leading-snug text-[var(--ios-secondary-label)]">
                         {created ? (
-                          <div>
-                            <dt className="inline text-[var(--ios-tertiary-label)]">
-                              {t("sessionCreated")} ·{" "}
-                            </dt>
-                            <dd className="inline font-medium text-[var(--ios-label)]">{created}</dd>
-                          </div>
+                          <li className="flex items-start gap-2">
+                            <Clock3
+                              className="mt-0.5 size-3.5 shrink-0 stroke-[1.75] text-[var(--ios-tertiary-label)]"
+                              aria-hidden
+                            />
+                            <span>
+                              <span className="text-[var(--ios-tertiary-label)]">
+                                {t("sessionCreated")} ·{" "}
+                              </span>
+                              <span className="font-medium text-[var(--ios-label)]">{created}</span>
+                            </span>
+                          </li>
                         ) : null}
                         {lastSeen ? (
-                          <div>
-                            <dt className="inline text-[var(--ios-tertiary-label)]">
-                              {t("sessionLastSeen")} ·{" "}
-                            </dt>
-                            <dd className="inline font-medium text-[var(--ios-label)]">{lastSeen}</dd>
-                          </div>
+                          <li className="flex items-start gap-2">
+                            <Clock3
+                              className="mt-0.5 size-3.5 shrink-0 stroke-[1.75] text-[var(--ios-tertiary-label)]"
+                              aria-hidden
+                            />
+                            <span>
+                              <span className="text-[var(--ios-tertiary-label)]">
+                                {t("sessionLastSeen")} ·{" "}
+                              </span>
+                              <span className="font-medium text-[var(--ios-label)]">{lastSeen}</span>
+                            </span>
+                          </li>
                         ) : null}
-                        {expires ? (
-                          <div>
-                            <dt className="inline text-[var(--ios-tertiary-label)]">
-                              {t("sessionExpires")} ·{" "}
-                            </dt>
-                            <dd className="inline font-medium text-[var(--ios-label)]">{expires}</dd>
-                          </div>
-                        ) : null}
-                      </dl>
-
-                      {session.userAgent && session.deviceLabel ? (
-                        <p className="mt-1.5 truncate text-[11px] text-[var(--ios-tertiary-label)]">
-                          {t("sessionUa")} · {shortUserAgent(session.userAgent)}
-                        </p>
-                      ) : null}
+                        <li className="flex items-start gap-2">
+                          <Wifi
+                            className="mt-0.5 size-3.5 shrink-0 stroke-[1.75] text-[var(--ios-tertiary-label)]"
+                            aria-hidden
+                          />
+                          <span>
+                            <span className="text-[var(--ios-tertiary-label)]">
+                              {t("sessionIp")} ·{" "}
+                            </span>
+                            <span className="font-medium text-[var(--ios-label)]">{networkLabel}</span>
+                          </span>
+                        </li>
+                      </ul>
                     </div>
-
-                    {!session.current ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="shrink-0 text-[var(--ios-danger)] hover:bg-[color-mix(in_srgb,var(--ios-danger)_8%,transparent)]"
-                        disabled={busy}
-                        onClick={() => setConfirmRevokeId(session.id)}
-                      >
-                        {t("revokeSession")}
-                      </Button>
-                    ) : null}
                   </div>
                 </li>
               );

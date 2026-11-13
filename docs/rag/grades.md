@@ -38,7 +38,11 @@ Bonus et malus se gèrent via **Bonus / malus** (saisie complète ; même enregi
 
 La fiche de report est un instantané trimestriel. Affichez une séquence à la fois par défaut, ou les deux si besoin. Soumission enseignant → visa Surveillant Général → visa Principal.
 
+Le bouton **Actualiser** s’exécute immédiatement (sans confirmation) : il recharge l’effectif (nouveaux élèves ajoutés), recalcule rangs / appréciations **sans effacer** les notes déjà saisies, et **repasse la fiche en brouillon**. **Générer vierge** vide volontairement toutes les cellules de notes.
+
 **Visa enseignant automatique (BR-79)** : lorsqu’un administrateur ou le directeur **clôture** une séquence, toutes les fiches de report du trimestre encore en brouillon (ou rejetées) passent automatiquement en « soumise » — le visa enseignant est posé sans action manuelle. Les fiches déjà visées SG / Principal ne sont pas touchées.
+
+**Visa Principal (BR-83)** : dès que le Principal (directeur) pose son visa, les visas encore manquants (enseignant et Surveillant Général) sont **complétés automatiquement**. Les trois pastilles « verified » apparaissent alors sur la fiche.
 
 **Correction après clôture (BR-80)** : une fois la séquence **clôturée**, une colonne **Corr.** apparaît sur la fiche de report. L’enseignant propose une nouvelle Comp./20 avec un **motif** (≥ 15 caractères) et jusqu’à **3 pièces** (JPEG/PNG/WebP/PDF, 5 Mo). La demande reste en attente. **Seul le directeur** (onglet Corrections) peut **approuver** (écrit la note + audit) ou **rejeter** (motif de revue).
 
@@ -71,7 +75,11 @@ Bonus and malus are managed via **Bonus / malus** (full entry; same auto-save; f
 
 The report sheet is a term snapshot. Show one sequence by default, or both if needed. Teacher submit → Supervisor visa → Principal visa.
 
+The **Refresh** button runs immediately (no confirmation): it updates the roster (new students added), recalculates ranks / appreciations **without clearing** existing marks, and **returns the sheet to draft**. **Generate blank** intentionally clears all mark cells.
+
 **Automatic teacher visa (BR-79)**: when an administrator or the director **closes** a sequence, every still-draft (or rejected) report sheet for that term is auto-submitted — the teacher visa is stamped without a manual action. Sheets already visaed by Supervisor / Principal are left unchanged.
+
+**Principal visa (BR-83)**: as soon as the Principal (director) stamps their visa, any still-missing teacher and Supervisor visas are **completed automatically**. All three verified badges then appear on the sheet.
 
 **Post-close correction (BR-80)**: once a sequence is **closed**, a **Corr.** column appears on the report sheet. The teacher proposes a new Mark/20 with a **reason** (≥ 15 characters) and up to **3 files** (JPEG/PNG/WebP/PDF, 5 MB). The request stays pending. **Only the director** (Corrections tab) can **approve** (persists the mark + audit) or **reject** (review note).
 

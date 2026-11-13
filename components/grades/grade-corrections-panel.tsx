@@ -85,6 +85,7 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
       const hay = [
         row.studentLabel,
         row.classLabel,
+        row.teacherLabel,
         row.subjectLabelFr,
         row.subjectLabelEn,
         row.reason,
@@ -167,31 +168,33 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
   const renderActions = (row: GradeCorrectionRequestResponse, dense: boolean) => {
     const busy = acting !== null;
     return (
-      <div className={cn("flex flex-wrap items-center gap-1.5", dense ? "justify-end" : "justify-start")}>
+      <div className={cn("flex flex-nowrap items-center gap-1.5", dense ? "justify-end" : "justify-start")}>
         <Button
           type="button"
           size="sm"
+          className="aspect-square px-0"
           loading={acting === `approve:${row.id}`}
           disabled={busy}
+          aria-label={t("approve")}
+          title={t("approve")}
           leadingIcon={<Check className="size-3.5" aria-hidden />}
           onClick={() => void onApprove(row)}
-        >
-          {t("approve")}
-        </Button>
+        />
         <Button
           type="button"
           size="sm"
+          className="aspect-square px-0"
           variant="destructive"
           disabled={busy}
+          aria-label={t("reject")}
+          title={t("reject")}
           leadingIcon={<X className="size-3.5" aria-hidden />}
           onClick={() => {
             setRejectTarget(row);
             setReviewNote("");
             setReviewInvalid(false);
           }}
-        >
-          {t("reject")}
-        </Button>
+        />
       </div>
     );
   };
@@ -251,7 +254,10 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
                     {row.studentLabel}
                   </p>
                   <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
-                    {row.classLabel ?? "—"} · {subjectLabel(row)} · {t("sequence", { number: row.sessionNumber })}
+                    {row.classLabel ?? "—"} · {subjectLabel(row)}
+                    {row.teacherLabel?.trim() ? ` · ${row.teacherLabel.trim()}` : ""}
+                    {" · "}
+                    {t("sequence", { number: row.sessionNumber })}
                   </p>
                 </div>
                 <p className="text-[12px] text-[var(--ios-label)]">
@@ -363,7 +369,7 @@ export function GradeCorrectionsPanel({ schoolId, query }: Props) {
                     <td className="whitespace-nowrap px-4 py-3 text-[11px] text-[var(--ios-secondary-label)]">
                       {formatWhen(row.requestedAt)}
                     </td>
-                    <td className="px-4 py-3">{renderActions(row, true)}</td>
+                    <td className="whitespace-nowrap px-4 py-3">{renderActions(row, true)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardList, Download, FilePlus2, FileText, RefreshCw, Send } from "lucide-react";
+import {
+  ClipboardList,
+  Download,
+  Eraser,
+  FilePlus2,
+  FileText,
+  RefreshCw,
+  Send,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
@@ -43,7 +51,7 @@ import { ApiError, isAuthFailure } from "@/types/api";
 
 type Term = 1 | 2 | 3;
 type TeacherTab = "report" | "entry";
-type PendingAction = "regenerate" | "blank" | "submit" | null;
+type PendingAction = "blank" | "submit" | null;
 
 const TERMS: Term[] = [1, 2, 3];
 const TABS: TeacherTab[] = ["report", "entry"];
@@ -279,8 +287,7 @@ export function TeacherGradesView() {
   function confirmPending() {
     const action = pending;
     setPending(null);
-    if (action === "regenerate") void runGenerate(false);
-    else if (action === "blank") void runGenerate(true);
+    if (action === "blank") void runGenerate(true);
     else if (action === "submit") void runSubmit();
   }
 
@@ -387,13 +394,6 @@ export function TeacherGradesView() {
                       : t("termOption", { number: n }),
                 }))}
               />
-              <p className="max-w-xl text-[11px] leading-snug text-[var(--ios-secondary-label)]">
-                {activeOpenTerm
-                  ? term === activeOpenTerm
-                    ? t("activeTermHint", { term: activeOpenTerm })
-                    : t("otherTermReadOnly")
-                  : t("noOpenTermHint")}
-              </p>
             </div>
             {termSessions.length > 0 ? (
               <ul
@@ -454,7 +454,7 @@ export function TeacherGradesView() {
                       <FilePlus2 className="size-3.5" aria-hidden />
                     )
                   }
-                  onClick={() => (sheet ? setPending("regenerate") : void runGenerate(false))}
+                  onClick={() => void runGenerate(false)}
                 >
                   {sheet ? tReport("regenerate") : tReport("generate")}
                 </Button>
@@ -554,19 +554,22 @@ export function TeacherGradesView() {
           if (!open) setPending(null);
         }}
         tone="default"
+        iconTone={pending === "blank" ? "destructive" : "default"}
+        actionsLayout="row"
+        icon={
+          pending === "blank" ? (
+            <Eraser className="size-5 stroke-[1.75]" aria-hidden />
+          ) : (
+            <Send className="size-5 stroke-[1.75]" aria-hidden />
+          )
+        }
         title={
-          pending === "submit"
-            ? tReport("submitConfirmTitle")
-            : pending === "blank"
-              ? tReport("blankConfirmTitle")
-              : tReport("regenerateConfirmTitle")
+          pending === "submit" ? tReport("submitConfirmTitle") : tReport("blankConfirmTitle")
         }
         description={
           pending === "submit"
             ? tReport("submitConfirmDescription")
-            : pending === "blank"
-              ? tReport("blankConfirmDescription")
-              : tReport("regenerateConfirmDescription")
+            : tReport("blankConfirmDescription")
         }
         confirmLabel={tReport("confirm")}
         cancelLabel={tCommon("cancel")}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, ClipboardList, Pencil, Users } from "lucide-react";
+import { BadgeCheck, CalendarDays, ClipboardList, Pencil, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { GradeCorrectionDialog } from "@/components/teacher/grade-correction-dialog";
 import { Alert } from "@/components/ui/alert";
@@ -827,7 +827,7 @@ export function ReportSheetPaper({
                 title={t("sort.alphaHint")}
                 className={cn(
                   th,
-                  "min-w-[220px] cursor-pointer select-none bg-[color-mix(in_srgb,var(--ios-fill)_48%,var(--ios-card))] text-left font-bold",
+                  "w-[min(160px,28vw)] max-w-[180px] cursor-pointer select-none bg-[color-mix(in_srgb,var(--ios-fill)_48%,var(--ios-card))] text-left font-bold",
                   sortMode === "alpha" ? "text-[var(--ios-blue)]" : "text-[var(--ios-label)]",
                 )}
                 onClick={() => setSortMode("alpha")}
@@ -954,10 +954,16 @@ export function ReportSheetPaper({
                   <td className={cn(td, "font-semibold text-[var(--ios-label)]")}>
                     {line.rollNumber ?? index + 1}
                   </td>
-                  <td className={cn(td, "text-left font-semibold text-[var(--ios-label)]")}>
+                  <td
+                    className={cn(
+                      td,
+                      "max-w-[180px] truncate whitespace-nowrap text-left font-semibold text-[var(--ios-label)]",
+                    )}
+                    title={line.studentLabel}
+                  >
                     {line.studentLabel}
                   </td>
-                  <td className={cn(td, "font-semibold text-[var(--ios-label)]")}>
+                  <td className={cn(td, "whitespace-nowrap font-semibold text-[var(--ios-label)]")}>
                     {line.sex ? t(`sexShort.${line.sex}`) : ""}
                   </td>
                   {showSeq1 ? (
@@ -971,9 +977,20 @@ export function ReportSheetPaper({
                       )}
                       {renderAutoCells(line.sequence1, "s1")}
                       {showCorr1 && seq1 ? (
-                        <td className={cn(td, "p-1")}>
+                        <td className={cn(td, "whitespace-nowrap p-1")}>
                           {pendingByStudent[`${seq1.id}:${line.studentId}`] ? (
-                            <Badge tone="warning">{tCorrection("pendingShort")}</Badge>
+                            <span
+                              className="inline-flex cursor-not-allowed"
+                              title={tCorrection("pendingLocked")}
+                              aria-disabled="true"
+                            >
+                              <Badge
+                                tone="warning"
+                                className="pointer-events-none whitespace-nowrap"
+                              >
+                                {tCorrection("pendingShort")}
+                              </Badge>
+                            </span>
                           ) : (
                             <button
                               type="button"
@@ -1012,9 +1029,20 @@ export function ReportSheetPaper({
                       )}
                       {renderAutoCells(line.sequence2, "s2")}
                       {showCorr2 && seq2 ? (
-                        <td className={cn(td, "p-1")}>
+                        <td className={cn(td, "whitespace-nowrap p-1")}>
                           {pendingByStudent[`${seq2.id}:${line.studentId}`] ? (
-                            <Badge tone="warning">{tCorrection("pendingShort")}</Badge>
+                            <span
+                              className="inline-flex cursor-not-allowed"
+                              title={tCorrection("pendingLocked")}
+                              aria-disabled="true"
+                            >
+                              <Badge
+                                tone="warning"
+                                className="pointer-events-none whitespace-nowrap"
+                              >
+                                {tCorrection("pendingShort")}
+                              </Badge>
+                            </span>
                           ) : (
                             <button
                               type="button"
@@ -1082,9 +1110,18 @@ export function ReportSheetPaper({
                   : "border-dashed border-[var(--ios-separator)] bg-[var(--ios-card)]",
               )}
             >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                {box.label}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                  {box.label}
+                </p>
+                {box.done ? (
+                  <BadgeCheck
+                    className="size-3.5 shrink-0 fill-[var(--ios-blue)] stroke-white"
+                    aria-hidden
+                    title={box.value}
+                  />
+                ) : null}
+              </div>
               <div className="mt-3 border-b border-[var(--ios-separator)]/70 pb-1.5">
                 <p
                   className={cn(

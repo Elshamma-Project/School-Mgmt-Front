@@ -82,6 +82,7 @@ type GradesHubViewProps = {
 export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const t = useTranslations("gradesHub");
   const tCommon = useTranslations("common");
+  const tRoles = useTranslations("roles");
   const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -397,12 +398,76 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
     });
   }, [locale, q, schemes]);
 
+  const auditActionLabel = useCallback(
+    (action: string) =>
+      t.has(`auditAction.${action}`)
+        ? t(`auditAction.${action}` as "auditAction.UPDATED")
+        : t("auditAction.UNKNOWN"),
+    [t],
+  );
+
+  const auditTargetLabel = useCallback(
+    (target: string) =>
+      t.has(`auditTarget.${target}`)
+        ? t(`auditTarget.${target}` as "auditTarget.GRADE")
+        : t("auditTarget.UNKNOWN"),
+    [t],
+  );
+
+  const auditActorLabel = useCallback(
+    (item: GradeAuditEntryResponse) => {
+      const name = item.changedByLabel?.trim() || item.changedBy?.trim();
+      if (!name) return t("auditUnknownActor");
+      const roleKey = item.changedByRole?.trim();
+      if (roleKey && tRoles.has(`${roleKey}.label`)) {
+        return `${name} · ${tRoles(`${roleKey}.label`)}`;
+      }
+      return name;
+    },
+    [t, tRoles],
+  );
+
+  const auditValueText = useCallback(
+    (value: string | number | null | undefined) => {
+      if (value === null || value === undefined || value === "") return t("auditNoValue");
+      return String(value);
+    },
+    [t],
+  );
+
+  const auditWhenLabel = useCallback(
+    (value: string) => {
+      try {
+        return new Intl.DateTimeFormat(locale, {
+          dateStyle: "medium",
+          timeStyle: "short",
+          timeZone: "Africa/Douala",
+        }).format(new Date(value));
+      } catch {
+        return value;
+      }
+    },
+    [locale],
+  );
+
   const filteredAudits = useMemo(() => {
     if (!q) return audits;
     return audits.filter((a) =>
-      [a.action, a.target, a.changedBy, a.reason ?? ""].join(" ").toLowerCase().includes(q),
+      [
+        auditActionLabel(a.action),
+        auditTargetLabel(a.target),
+        auditActorLabel(a),
+        a.changedByLabel,
+        a.changedBy,
+        a.reason ?? "",
+        a.action,
+        a.target,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
     );
-  }, [audits, q]);
+  }, [auditActionLabel, auditActorLabel, auditTargetLabel, audits, q]);
 
   const stats = useMemo(
     () => ({
@@ -931,56 +996,127 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
           </HubTableShell>
         </>
       ) : (
-        <HubTableShell countLabel={t("tableCount", { count: filteredAudits.length })}>
-          <table className="w-full min-w-[780px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
-                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                  {t("columns.action")}
-                </th>
-                <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                  {t("columns.target")}
-                </th>
-                <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                  {t("columns.actor")}
-                </th>
-                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                  {t("columns.when")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAudits.map((item, index) => (
-                <tr
+        <>
+          <ul className="space-y-2.5 md:hidden">
+            {filteredAudits.map((item) => {
+              const hasValues =
+                item.previousValue != null ||
+                item.newValue != null ||
+                Boolean(item.reason?.trim());
+              return (
+                <li
                   key={item.id}
-                  className={cn(
-                    "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                    index % 2 === 1 &&
-                      "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                  )}
+                  className="space-y-2 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] p-3.5 shadow-[var(--ios-shadow)]"
                 >
-                  <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
-                    {item.action}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-[var(--ios-label)]">
+                        {t("auditEvent", {
+                          target: auditTargetLabel(item.target),
+                          action: auditActionLabel(item.action),
+                        })}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
+                        {auditWhenLabel(item.changedAt)}
+                      </p>
+                    </div>
                     {item.afterSessionClosed ? (
-                      <span className="ml-2 text-[10px] font-medium text-[var(--ios-warning)]">
-                        {t("afterClosed")}
-                      </span>
+                      <Badge tone="warning">{t("afterClosed")}</Badge>
                     ) : null}
-                  </td>
-                  <td className="px-3 py-3.5 text-[12px] text-[var(--ios-secondary-label)]">
-                    {item.target}
-                  </td>
-                  <td className="px-3 py-3.5 font-mono text-[11px] text-[var(--ios-secondary-label)]">
-                    {item.changedBy}
-                  </td>
-                  <td className="px-5 py-3.5 text-[12px] text-[var(--ios-label)]">
-                    {new Date(item.changedAt).toLocaleString(locale)}
-                  </td>
+                  </div>
+                  {hasValues ? (
+                    <div className="space-y-1 text-[12px] text-[var(--ios-secondary-label)]">
+                      {item.previousValue != null || item.newValue != null ? (
+                        <p className="font-medium text-[var(--ios-label)]">
+                          {t("auditValueChange", {
+                            from: auditValueText(item.previousValue),
+                            to: auditValueText(item.newValue),
+                          })}
+                        </p>
+                      ) : null}
+                      {item.reason?.trim() ? (
+                        <p>{t("auditReason", { reason: item.reason.trim() })}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <p className="text-[11px] text-[var(--ios-secondary-label)]">
+                    {auditActorLabel(item)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+
+          <HubTableShell countLabel={t("tableCount", { count: filteredAudits.length })}>
+            <table className="w-full min-w-[860px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
+                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.action")}
+                  </th>
+                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.detail")}
+                  </th>
+                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.actor")}
+                  </th>
+                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.when")}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </HubTableShell>
+              </thead>
+              <tbody>
+                {filteredAudits.map((item, index) => (
+                  <tr
+                    key={item.id}
+                    className={cn(
+                      "border-b border-[var(--ios-separator)]/55 last:border-b-0",
+                      index % 2 === 1 &&
+                        "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
+                    )}
+                  >
+                    <td className="px-5 py-3.5">
+                      <p className="text-[13px] font-semibold text-[var(--ios-label)]">
+                        {t("auditEvent", {
+                          target: auditTargetLabel(item.target),
+                          action: auditActionLabel(item.action),
+                        })}
+                      </p>
+                      {item.afterSessionClosed ? (
+                        <Badge tone="warning" className="mt-1.5">
+                          {t("afterClosed")}
+                        </Badge>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-3.5 text-[12px] text-[var(--ios-secondary-label)]">
+                      {item.previousValue != null || item.newValue != null ? (
+                        <p className="font-medium text-[var(--ios-label)]">
+                          {t("auditValueChange", {
+                            from: auditValueText(item.previousValue),
+                            to: auditValueText(item.newValue),
+                          })}
+                        </p>
+                      ) : (
+                        <p>{t("auditNoValue")}</p>
+                      )}
+                      {item.reason?.trim() ? (
+                        <p className="mt-1 text-[11px] leading-snug">
+                          {t("auditReason", { reason: item.reason.trim() })}
+                        </p>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
+                      {auditActorLabel(item)}
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-3.5 text-[12px] text-[var(--ios-secondary-label)]">
+                      {auditWhenLabel(item.changedAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </HubTableShell>
+        </>
       )}
 
       <GradingSchemePanel

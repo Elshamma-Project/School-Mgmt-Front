@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { BrandMark } from "@/components/layout/brand-mark";
+import { EngagingLoadingCopy } from "@/components/ui/engaging-loading-copy";
 import { Spinner } from "@/components/ui/spinner";
 
 type LoginLoadingProps = {
@@ -50,7 +51,7 @@ export function LoginLoading({ open, roleLabel }: LoginLoadingProps) {
       aria-busy="true"
       className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[color-mix(in_srgb,var(--ios-bg)_92%,transparent)] px-6 backdrop-blur-xl fade-in"
     >
-      <div className="flex w-full max-w-[280px] flex-col items-center text-center">
+      <div className="flex w-full max-w-[300px] flex-col items-center text-center">
         <div className="relative">
           <BrandMark size="xl" />
           <span className="absolute -inset-4 rounded-full border border-[var(--ios-blue)]/25 animate-[smels-spin_1.4s_linear_infinite]" />
@@ -58,12 +59,14 @@ export function LoginLoading({ open, roleLabel }: LoginLoadingProps) {
 
         <Spinner size="lg" tone="blue" className="mt-8" label={t("submitting")} />
 
-        <p className="mt-5 text-[var(--text-body)] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
-          {t("loginPreparing")}
-        </p>
-        <p className="mt-1.5 text-[var(--text-footnote)] leading-relaxed text-[var(--ios-secondary-label)]">
-          {roleLabel ? t("loginPreparingRole", { role: roleLabel }) : t("loginPreparingHint")}
-        </p>
+        <EngagingLoadingCopy
+          className="mt-5 flex flex-col items-center"
+          active={open}
+          title={t("loginPreparing")}
+          initialHint={
+            roleLabel ? t("loginPreparingRole", { role: roleLabel }) : t("loginPreparingHint")
+          }
+        />
       </div>
     </div>,
     document.body,

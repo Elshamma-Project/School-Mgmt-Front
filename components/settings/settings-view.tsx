@@ -729,7 +729,24 @@ export function SettingsView() {
 
       {form && school ? (
         <>
-          <GroupedList header={t("identitySection")}>
+          <GroupedList
+            header={t("identitySection")}
+            collapsible
+            defaultOpen={false}
+            expandLabel={t("sectionExpand")}
+            collapseLabel={t("sectionCollapse")}
+            collapsedSummary={
+              <span className="flex items-center gap-2">
+                <Building2 className="size-3.5 shrink-0 stroke-[1.75]" aria-hidden />
+                <span>
+                  <span className="font-semibold text-[var(--ios-label)]">
+                    {form.shortName || school.code}
+                  </span>
+                  <span className="mt-0.5 block">{t("identityCollapsedHint")}</span>
+                </span>
+              </span>
+            }
+          >
             <GroupedListItem className="block space-y-3 py-3">
               <div className="mb-1 flex items-center gap-2 text-[var(--ios-secondary-label)]">
                 <Building2 className="size-3.5 stroke-[1.75]" aria-hidden />
@@ -836,7 +853,27 @@ export function SettingsView() {
             </GroupedListItem>
           </GroupedList>
 
-          <GroupedList header={t("documentsSection")}>
+          <GroupedList
+            header={t("documentsSection")}
+            collapsible
+            defaultOpen={false}
+            expandLabel={t("sectionExpand")}
+            collapseLabel={t("sectionCollapse")}
+            collapsedSummary={
+              <span className="flex items-center gap-2">
+                <ScrollText className="size-3.5 shrink-0 stroke-[1.75]" aria-hidden />
+                <span>
+                  <span className="font-semibold text-[var(--ios-label)]">
+                    {t("documentsSubhead")}
+                    {form.headers.length > 0
+                      ? ` · ${form.headers.length}`
+                      : null}
+                  </span>
+                  <span className="mt-0.5 block">{t("documentsCollapsedHint")}</span>
+                </span>
+              </span>
+            }
+          >
             <GroupedListItem className="block space-y-3 py-3">
               <div className="mb-1 flex items-center gap-2 text-[var(--ios-secondary-label)]">
                 <ScrollText className="size-3.5 stroke-[1.75]" aria-hidden />

@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { EngagingLoadingCopy } from "@/components/ui/engaging-loading-copy";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils/cn";
 
@@ -30,6 +34,13 @@ function CardBlock({ rows = 3 }: { rows?: number }) {
 
 /** Squelette de page — variantes home / module / formulaire / réglages. */
 export function PageSkeleton({ variant = "home", className }: PageSkeletonProps) {
+  const [showTips, setShowTips] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowTips(true), 1_200);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <div
       role="status"
@@ -38,6 +49,14 @@ export function PageSkeleton({ variant = "home", className }: PageSkeletonProps)
       className={cn("space-y-6 fade-in", className)}
     >
       <span className="sr-only">Loading</span>
+
+      {showTips ? (
+        <EngagingLoadingCopy
+          active
+          className="mx-auto flex max-w-md flex-col items-center rounded-[var(--radius-md)] bg-[var(--ios-card)] px-4 py-3 shadow-[var(--ios-shadow)]"
+          hintClassName="mx-auto"
+        />
+      ) : null}
 
       {variant === "home" ? (
         <>
