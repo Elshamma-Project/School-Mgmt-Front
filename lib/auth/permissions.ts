@@ -19,6 +19,7 @@ export type UiCapability =
   | "manageReportCards"
   | "manageAbsences"
   | "reopenClosedSequence"
+  | "approveGradeCorrections"
   | "reviewReportSheets"
   | "visaPrincipalReportSheet"
   | "manageAdminAccounts"
@@ -53,6 +54,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
   DIRECTOR: [
     "reviewReportSheets",
     "visaPrincipalReportSheet",
+    "approveGradeCorrections",
     "manageSchoolStructure",
     "manageStaff",
     "manageStudents",
@@ -70,6 +72,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
   SUPER_ADMIN: [
     "reviewReportSheets",
     "visaPrincipalReportSheet",
+    "approveGradeCorrections",
     "manageSchoolStructure",
     "manageStaff",
     "manageStudents",

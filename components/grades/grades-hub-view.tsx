@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { GradeCorrectionsPanel } from "@/components/grades/grade-corrections-panel";
 import { GradingSchemePanel } from "@/components/grades/grading-scheme-panel";
 import { ReportSheetsPanel } from "@/components/grades/report-sheets-panel";
 import { Badge } from "@/components/ui/badge";
@@ -95,6 +96,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
 
   const canReviewReportSheets = userHasCapability(roles, "reviewReportSheets");
   const canVisaPrincipal = userHasCapability(roles, "visaPrincipalReportSheet");
+  const canApproveCorrections = userHasCapability(roles, "approveGradeCorrections");
 
   const requestedTab = parseGradesTab(searchParams.get("tab"));
   // SG : atterrir sur les fiches de report (visas), pas sur les séances.
@@ -105,11 +107,14 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const tab: GradesTab =
     resolvedTab === "reportSheets" && !canReviewReportSheets
       ? "sessions"
-      : resolvedTab === "schemes" && !canManageSchemes
+      : resolvedTab === "corrections" && !canApproveCorrections
         ? preferredDefault
-        : resolvedTab;
+        : resolvedTab === "schemes" && !canManageSchemes
+          ? preferredDefault
+          : resolvedTab;
   const visibleTabs = GRADES_TABS.filter((key) => {
     if (key === "reportSheets") return canReviewReportSheets;
+    if (key === "corrections") return canApproveCorrections;
     if (key === "schemes") return canManageSchemes;
     if (role === "SURVEILLANT_GENERAL") return key === "reportSheets";
     return true;
@@ -609,6 +614,8 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
           canVisaSupervisor={canReviewReportSheets}
           canVisaPrincipal={canVisaPrincipal}
         />
+      ) : tab === "corrections" ? (
+        <GradeCorrectionsPanel schoolId={schoolId} query={query} />
       ) : loading ? (
         <HubLoadingRows />
       ) : rows.length === 0 ? (

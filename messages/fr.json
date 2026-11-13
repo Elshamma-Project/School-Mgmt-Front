@@ -135,6 +135,7 @@
     "manageReportCards": "Bulletins et reporting",
     "manageAbsences": "Absences, retards, sanctions",
     "reopenClosedSequence": "Rouvrir une séquence clôturée",
+    "approveGradeCorrections": "Approuver les corrections post-clôture",
     "reviewReportSheets": "Viser / rejeter les fiches de report",
     "visaPrincipalReportSheet": "Visa Principal sur les fiches de report",
     "manageAdminAccounts": "Comptes d’administration",
@@ -1153,6 +1154,17 @@
       },
       "sequenceViewLabel": "Affichage",
       "sequenceViewBoth": "Les deux",
+      "sortLabel": "Tri",
+      "sort": {
+        "roll": "N°",
+        "alpha": "A→Z",
+        "sex": "Sexe",
+        "merit": "Mérite",
+        "rollHint": "Trier par numéro d’appel",
+        "alphaHint": "Trier par ordre alphabétique",
+        "sexHint": "Trier par sexe",
+        "meritHint": "Trier par rang (mérite)"
+      },
       "sessionStatusList": "Statut des séquences",
       "sessionStatusBadge": "Séq. {number} · {status}",
       "sessionStatus": {
@@ -1163,8 +1175,7 @@
       },
       "sessionClosedTitle": "Séquence {number} clôturée",
       "sessionsClosedTitle": "Séquences clôturées",
-      "sessionClosedDescription": "La saisie enseignant est bloquée sur cette séquence. Seule l’administration peut encore corriger avec un motif.",
-      "compEditHint": "Modifiez Comp. /20 ci-dessous : l’enregistrement est automatique et la fiche se régénère.",
+      "sessionClosedDescription": "La saisie directe est bloquée. Utilisez l’icône de correction pour proposer une nouvelle note (motif + pièces) ; seul le directeur peut l’appliquer.",
       "compSave": "Enregistrer Comp. /20",
       "compSaving": "Enregistrement…",
       "compSavePending": "Enregistrement automatique…",
@@ -1200,7 +1211,7 @@
       "notOpenTitle": "Séquence non ouverte",
       "notOpenDescription": "La saisie est possible dès que l’administration ouvre la séquence.",
       "closedTitle": "Séquence clôturée",
-      "closedDescription": "Les notes sont verrouillées. Seule l’administration peut les corriger, avec un motif.",
+      "closedDescription": "Les notes sont verrouillées. Proposez une correction depuis la fiche de report (motif + pièces) ; seul le directeur peut l’approuver.",
       "noSheetTitle": "Aucune fiche de notes",
       "noSheetDescription": "Aucune fiche de notes n’existe pour cette matière et cette séquence. Contactez l’administration.",
       "createColumnTitle": "Pas encore de colonne de notes",
@@ -1249,6 +1260,33 @@
       "bonusTitle": "Bonus",
       "malusTitle": "Malus",
       "bonusMalusHint": "Bonus et malus : points seulement (vide = aucun). Ils s’ajoutent ou se retranchent de la moyenne des colonnes."
+    },
+    "correction": {
+      "column": "Corr.",
+      "columnHint": "Proposer une correction après clôture (BR-80)",
+      "pendingShort": "En attente",
+      "openFor": "Proposer une correction pour {name}",
+      "title": "Correction après clôture",
+      "description": "Élève : {name}. Note actuelle : {current}. La modification ne sera persistante qu’après approbation du directeur.",
+      "newMark": "Nouvelle note /20",
+      "reason": "Motif de justification",
+      "reasonPlaceholder": "Expliquez l’erreur ou le justificatif (min. 15 caractères)…",
+      "reasonHint": "Motif obligatoire, au moins 15 caractères. Conservé dans l’audit.",
+      "evidence": "Pièces jointes (optionnel)",
+      "evidenceHint": "Jusqu’à 3 fichiers : JPEG, PNG, WebP ou PDF, 5 Mo max chacun. Photo de la copie ou capture possible.",
+      "addFile": "Importer",
+      "capture": "Photographier",
+      "removeEvidence": "Retirer la pièce",
+      "evidenceType": "Type de fichier non autorisé (JPEG, PNG, WebP, PDF).",
+      "evidenceSize": "Fichier trop volumineux (max. 5 Mo).",
+      "evidenceError": "Impossible d’ajouter cette pièce.",
+      "directorOnly": "Seul le directeur peut accepter et enregistrer définitivement cette note.",
+      "cancel": "Annuler",
+      "submit": "Envoyer la demande",
+      "submitting": "Envoi…",
+      "success": "Demande de correction envoyée au directeur",
+      "error": "Impossible d’envoyer la demande de correction.",
+      "validationError": "Vérifiez la note (0–20) et le motif (15 caractères min.)."
     }
   },
   "gradesHub": {
@@ -1279,13 +1317,15 @@
       "sessions": "Sessions",
       "schemes": "Barèmes",
       "audits": "Audits",
-      "reportSheets": "Fiches de report"
+      "reportSheets": "Fiches de report",
+      "corrections": "Corrections"
     },
     "search": {
       "sessions": "Libellé, statut…",
       "schemes": "Code ou libellé…",
       "audits": "Action, cible, acteur…",
-      "reportSheets": "Classe, matière, enseignant…"
+      "reportSheets": "Classe, matière, enseignant…",
+      "corrections": "Élève, classe, matière…"
     },
     "columns": {
       "session": "Session",
@@ -1300,6 +1340,40 @@
       "target": "Cible",
       "actor": "Acteur",
       "when": "Quand"
+    },
+    "corrections": {
+      "cardTitle": "Corrections après clôture",
+      "cardHint": "Demandes des enseignants (BR-80). Seul le directeur peut approuver et enregistrer la note.",
+      "loadError": "Impossible de charger les demandes de correction.",
+      "refresh": "Actualiser",
+      "columns": {
+        "student": "Élève",
+        "class": "Classe",
+        "subject": "Matière",
+        "sequence": "Séquence",
+        "previous": "Note actuelle",
+        "proposed": "Proposée",
+        "reason": "Motif",
+        "evidence": "Pièces",
+        "when": "Demandée",
+        "actions": "Actions"
+      },
+      "sequence": "Séq. {number}",
+      "noEvidence": "Aucune",
+      "viewEvidence": "Voir {name}",
+      "evidenceError": "Impossible d’ouvrir la pièce jointe.",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "approveSuccess": "Correction appliquée",
+      "rejectSuccess": "Demande rejetée",
+      "actionError": "Action impossible sur cette demande.",
+      "rejectTitle": "Rejeter la demande",
+      "rejectDescription": "Indiquez pourquoi la correction n’est pas acceptée. L’enseignant pourra en soumettre une autre.",
+      "reviewNoteLabel": "Motif de revue",
+      "reviewNotePlaceholder": "Ex. pièce illisible, motif insuffisant…",
+      "reviewNoteRequired": "Le motif de revue est obligatoire (min. 5 caractères).",
+      "rejectConfirm": "Rejeter",
+      "pendingCount": "{count, plural, one {# demande en attente} other {# demandes en attente}}"
     },
     "reportSheets": {
       "cardTitle": "Fiches de report de notes",
@@ -1490,6 +1564,10 @@
       "reportSheets": {
         "title": "Aucune fiche de report",
         "description": "Aucune fiche n’a été générée pour ce trimestre. Les enseignants les génèrent depuis leur espace."
+      },
+      "corrections": {
+        "title": "Aucune demande en attente",
+        "description": "Les propositions de correction après clôture des enseignants apparaîtront ici."
       }
     }
   },

@@ -689,3 +689,137 @@ export async function downloadGradeReportSheetPdf(
   }
   return response.blob();
 }
+
+/** BR-80 — demande de correction post-clôture. */
+export type GradeCorrectionStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+
+export type GradeCorrectionEvidenceDto = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  sha256: string;
+  capturedAt: string;
+};
+
+export type GradeCorrectionRequestResponse = {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  sessionId: string;
+  sessionNumber: number;
+  classId: string;
+  classSubjectId: string;
+  assessmentId: string;
+  studentId: string;
+  studentLabel: string;
+  classLabel: string | null;
+  subjectLabelFr: string | null;
+  subjectLabelEn: string | null;
+  teacherId: string | null;
+  previousStatus: GradeStatus;
+  previousValue: string | number | null;
+  proposedStatus: GradeStatus;
+  proposedValue: string | number | null;
+  reason: string;
+  evidence: GradeCorrectionEvidenceDto[];
+  status: GradeCorrectionStatus;
+  requestedBy: string;
+  requestedAt: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+};
+
+export type CreateGradeCorrectionPayload = {
+  sessionId: string;
+  classSubjectId: string;
+  studentId: string;
+  reason: string;
+  proposedValue?: string | null;
+  proposedStatus?: GradeStatus | null;
+  evidence?: Array<{ fileName: string; contentType: string; base64Data: string }>;
+  schoolId?: string | null;
+};
+
+export async function createGradeCorrectionRequest(
+  payload: CreateGradeCorrectionPayload,
+): Promise<GradeCorrectionRequestResponse> {
+  return apiRequest<GradeCorrectionRequestResponse>("/api/v1/grade-correction-requests", {
+    method: "POST",
+    body: {
+      sessionId: payload.sessionId,
+      classSubjectId: payload.classSubjectId,
+      studentId: payload.studentId,
+      reason: payload.reason,
+      proposedValue: payload.proposedValue ?? null,
+      proposedStatus: payload.proposedStatus ?? "SCORED",
+      evidence: payload.evidence ?? [],
+      schoolId: payload.schoolId?.trim() || null,
+    },
+  });
+}
+
+export async function listPendingGradeCorrections(
+  schoolId?: string | null,
+): Promise<GradeCorrectionRequestResponse[]> {
+  const qs = toSearch({ ...schoolParams(schoolId) });
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<GradeCorrectionRequestResponse[]>(
+    `/api/v1/grade-correction-requests/pending${suffix}`,
+  );
+}
+
+export async function listSheetGradeCorrections(
+  sessionId: string,
+  classSubjectId: string,
+  schoolId?: string | null,
+): Promise<GradeCorrectionRequestResponse[]> {
+  const qs = toSearch({
+    sessionId,
+    classSubjectId,
+    ...schoolParams(schoolId),
+  });
+  return apiRequest<GradeCorrectionRequestResponse[]>(
+    `/api/v1/grade-correction-requests?${qs}`,
+  );
+}
+
+export async function approveGradeCorrection(
+  id: string,
+  schoolId?: string | null,
+): Promise<GradeCorrectionRequestResponse> {
+  const qs = toSearch({ ...schoolParams(schoolId) });
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<GradeCorrectionRequestResponse>(
+    `/api/v1/grade-correction-requests/${encodeURIComponent(id)}/approve${suffix}`,
+    { method: "POST" },
+  );
+}
+
+export async function rejectGradeCorrection(
+  id: string,
+  reviewNote: string,
+  schoolId?: string | null,
+): Promise<GradeCorrectionRequestResponse> {
+  return apiRequest<GradeCorrectionRequestResponse>(
+    `/api/v1/grade-correction-requests/${encodeURIComponent(id)}/reject`,
+    {
+      method: "POST",
+      body: { reviewNote, schoolId: schoolId?.trim() || null },
+    },
+  );
+}
+
+export async function fetchGradeCorrectionEvidence(
+  requestId: string,
+  evidenceId: string,
+  schoolId?: string | null,
+): Promise<Blob> {
+  const qs = toSearch({ ...schoolParams(schoolId) });
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<Blob>(
+    `/api/v1/grade-correction-requests/${encodeURIComponent(requestId)}/evidence/${encodeURIComponent(evidenceId)}${suffix}`,
+    { responseType: "blob" },
+  );
+}

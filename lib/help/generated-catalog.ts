@@ -449,8 +449,8 @@ export const HELP_CATALOG: HelpArticle[] = [
             "en": "Teachers enter grades for their ClassSubjects while the sequence is open."
           },
           {
-            "fr": "Sur la fiche de report, saisissez **Comp. /20** dans les **cases bleues** (séquence ouverte uniquement). **Coef.**, **Note × coef.**, **Rang** et **App.** se recalculent automatiquement. L’enregistrement est **automatique** (après une courte pause ou en quittant la case) — pas besoin de bouton Enregistrer. Une note non saisie reste PENDING, jamais 0.",
-            "en": "On the report sheet, enter **Mark /20** in the **blue cells** (open sequence only). **Coef.**, **weighted mark**, **rank** and **appreciation** recalculate automatically. Saving is **automatic** (after a short pause or when leaving the cell) — no Save button. An unentered grade stays PENDING, never 0."
+            "fr": "Sur la fiche de report, saisissez **Comp. /20** dans les **cases bleues** (séquence ouverte uniquement). L’enregistrement est **automatique** et la fiche se **régénère** ensuite : **Coef.**, **Note × coef.**, **Rang** et **App.** se recalculent tout seuls (après une courte pause ou en quittant la case — pas de bouton Enregistrer). Une note non saisie reste PENDING, jamais 0.",
+            "en": "On the report sheet, enter **Mark /20** in the **blue cells** (open sequence only). Saving is **automatic** and the sheet then **regenerates**: **Coef.**, **weighted mark**, **rank** and **appreciation** recalculate on their own (after a short pause or when leaving the cell — no Save button). An unentered grade stays PENDING, never 0."
           },
           {
             "fr": "Bonus et malus se gèrent via **Bonus / malus** (saisie complète ; même enregistrement automatique ; formule : moyenne + bonus − malus, plafond 20).",

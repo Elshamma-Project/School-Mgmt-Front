@@ -200,7 +200,7 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
           `${home}/grades`,
           "sequences",
           ClipboardList,
-          gradesNavChildren(home, "grades"),
+          gradesNavChildren(home, "grades").filter((child) => child.tab !== "corrections"),
         ),
         item(`${home}/reporting`, "reporting", FileSpreadsheet, reportingNavChildren(home)),
         item(`${home}/timetable`, "timetable", CalendarDays, timetableNavChildren(home)),

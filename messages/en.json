@@ -135,6 +135,7 @@
     "manageReportCards": "Report cards & reporting",
     "manageAbsences": "Absences, lateness, sanctions",
     "reopenClosedSequence": "Reopen a closed sequence",
+    "approveGradeCorrections": "Approve post-close grade corrections",
     "reviewReportSheets": "Review / reject grade report sheets",
     "visaPrincipalReportSheet": "Principal visa on grade report sheets",
     "manageAdminAccounts": "Administration accounts",
@@ -1153,6 +1154,17 @@
       },
       "sequenceViewLabel": "Display",
       "sequenceViewBoth": "Both",
+      "sortLabel": "Sort",
+      "sort": {
+        "roll": "No.",
+        "alpha": "A→Z",
+        "sex": "Sex",
+        "merit": "Merit",
+        "rollHint": "Sort by roll number",
+        "alphaHint": "Sort alphabetically",
+        "sexHint": "Sort by sex",
+        "meritHint": "Sort by rank (merit)"
+      },
       "sessionStatusList": "Sequence status",
       "sessionStatusBadge": "Seq. {number} · {status}",
       "sessionStatus": {
@@ -1163,8 +1175,7 @@
       },
       "sessionClosedTitle": "Sequence {number} closed",
       "sessionsClosedTitle": "Sequences closed",
-      "sessionClosedDescription": "Teacher entry is locked for this sequence. Only the administration can still correct grades with a reason.",
-      "compEditHint": "Edit Mark /20 below: saving is automatic and the sheet regenerates.",
+      "sessionClosedDescription": "Direct entry is locked. Use the correction icon to propose a new mark (reason + evidence); only the director can apply it.",
       "compSave": "Save Mark /20",
       "compSaving": "Saving…",
       "compSavePending": "Auto-saving…",
@@ -1200,7 +1211,7 @@
       "notOpenTitle": "Sequence not open",
       "notOpenDescription": "Entry is available as soon as the administration opens the sequence.",
       "closedTitle": "Sequence closed",
-      "closedDescription": "Marks are locked. Only the administration can correct them, with a reason.",
+      "closedDescription": "Marks are locked. Propose a correction from the report sheet (reason + evidence); only the director can approve it.",
       "noSheetTitle": "No grade sheet",
       "noSheetDescription": "There is no grade sheet for this subject and sequence. Please contact the administration.",
       "createColumnTitle": "No mark column yet",
@@ -1249,6 +1260,33 @@
       "bonusTitle": "Bonus",
       "malusTitle": "Malus",
       "bonusMalusHint": "Bonus and malus are points only (empty = none). They are added to or subtracted from the column average."
+    },
+    "correction": {
+      "column": "Corr.",
+      "columnHint": "Propose a correction after close (BR-80)",
+      "pendingShort": "Pending",
+      "openFor": "Propose a correction for {name}",
+      "title": "Post-close correction",
+      "description": "Student: {name}. Current mark: {current}. The change is only persisted after the director approves it.",
+      "newMark": "New mark /20",
+      "reason": "Justification",
+      "reasonPlaceholder": "Explain the error or justification (min. 15 characters)…",
+      "reasonHint": "Required reason, at least 15 characters. Kept in the audit trail.",
+      "evidence": "Attachments (optional)",
+      "evidenceHint": "Up to 3 files: JPEG, PNG, WebP or PDF, 5 MB each. Photo of the script or capture allowed.",
+      "addFile": "Upload",
+      "capture": "Take photo",
+      "removeEvidence": "Remove attachment",
+      "evidenceType": "File type not allowed (JPEG, PNG, WebP, PDF).",
+      "evidenceSize": "File too large (max. 5 MB).",
+      "evidenceError": "Could not add this attachment.",
+      "directorOnly": "Only the director can accept and permanently save this mark.",
+      "cancel": "Cancel",
+      "submit": "Submit request",
+      "submitting": "Sending…",
+      "success": "Correction request sent to the director",
+      "error": "Could not send the correction request.",
+      "validationError": "Check the mark (0–20) and the reason (min. 15 characters)."
     }
   },
   "gradesHub": {
@@ -1279,13 +1317,15 @@
       "sessions": "Sessions",
       "schemes": "Schemes",
       "audits": "Audits",
-      "reportSheets": "Report sheets"
+      "reportSheets": "Report sheets",
+      "corrections": "Corrections"
     },
     "search": {
       "sessions": "Label, status…",
       "schemes": "Code or label…",
       "audits": "Action, target, actor…",
-      "reportSheets": "Class, subject, teacher…"
+      "reportSheets": "Class, subject, teacher…",
+      "corrections": "Student, class, subject…"
     },
     "columns": {
       "session": "Session",
@@ -1300,6 +1340,40 @@
       "target": "Target",
       "actor": "Actor",
       "when": "When"
+    },
+    "corrections": {
+      "cardTitle": "Post-close corrections",
+      "cardHint": "Teacher requests (BR-80). Only the director can approve and persist the mark.",
+      "loadError": "Could not load correction requests.",
+      "refresh": "Refresh",
+      "columns": {
+        "student": "Student",
+        "class": "Class",
+        "subject": "Subject",
+        "sequence": "Sequence",
+        "previous": "Current mark",
+        "proposed": "Proposed",
+        "reason": "Reason",
+        "evidence": "Evidence",
+        "when": "Requested",
+        "actions": "Actions"
+      },
+      "sequence": "Seq. {number}",
+      "noEvidence": "None",
+      "viewEvidence": "View {name}",
+      "evidenceError": "Could not open the attachment.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approveSuccess": "Correction applied",
+      "rejectSuccess": "Request rejected",
+      "actionError": "Could not process this request.",
+      "rejectTitle": "Reject the request",
+      "rejectDescription": "Explain why the correction is not accepted. The teacher may submit another one.",
+      "reviewNoteLabel": "Review note",
+      "reviewNotePlaceholder": "e.g. unreadable evidence, insufficient reason…",
+      "reviewNoteRequired": "A review note is required (min. 5 characters).",
+      "rejectConfirm": "Reject",
+      "pendingCount": "{count, plural, one {# pending request} other {# pending requests}}"
     },
     "reportSheets": {
       "cardTitle": "Grade report sheets",
@@ -1489,6 +1563,10 @@
       "reportSheets": {
         "title": "No report sheets",
         "description": "No sheet has been generated for this term yet. Teachers generate them from their workspace."
+      },
+      "corrections": {
+        "title": "No pending requests",
+        "description": "Teacher post-close correction proposals will appear here."
       }
     }
   },
