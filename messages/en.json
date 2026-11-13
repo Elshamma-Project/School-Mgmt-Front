@@ -277,7 +277,6 @@
     "switchRoleSection": "Switch role (demo)",
     "switchRoleFooter": "Jumps to the URL workspace for the selected role.",
     "activeRole": "Active",
-    "readOnlyHint": "School settings are viewable here. Only the director and administration can edit them.",
     "yearSection": "Academic year",
     "yearHint": "Only one year is current. Switching the current year loads that year’s classes, enrollments and grades. From the end date onward the year is locked automatically for everyone — read-only.",
     "yearCurrentLabel": "Current year",
