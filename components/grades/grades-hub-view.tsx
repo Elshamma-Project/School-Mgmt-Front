@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   Lock,
   LockOpen,
@@ -28,6 +30,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { IconInput } from "@/components/ui/icon-input";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { StatCard } from "@/components/ui/stat-card";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -67,12 +70,25 @@ import { ApiError, isAuthFailure } from "@/types/api";
 import { primaryRole, type AppRole } from "@/types/auth";
 
 type SessionActionKind = "open" | "close" | "reopen" | "examDate";
+type AuditClosedFilter = "all" | "yes" | "no";
 
 const SESSION_MANAGERS: readonly AppRole[] = [
   "ADMINISTRATION",
   "DIRECTOR",
   "SUPER_ADMIN",
 ];
+
+const AUDIT_PAGE_SIZES = [20, 50, 100] as const;
+const AUDIT_ACTIONS = [
+  "CREATED",
+  "UPDATED",
+  "DELETED",
+  "SUBMITTED",
+  "VISAED",
+  "REJECTED",
+  "REGENERATED",
+] as const;
+const AUDIT_TARGETS = ["GRADE", "SEQUENCE_MARK", "SHEET", "REPORT_SHEET"] as const;
 
 type GradesHubViewProps = {
   /** Chemin module URL : grades (admin) ou sequences (directeur). */
@@ -130,6 +146,15 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const [sessions, setSessions] = useState<EvaluationSessionResponse[]>([]);
   const [schemes, setSchemes] = useState<GradingSchemeResponse[]>([]);
   const [audits, setAudits] = useState<GradeAuditEntryResponse[]>([]);
+  const [auditsLoading, setAuditsLoading] = useState(false);
+  const [auditPage, setAuditPage] = useState(0);
+  const [auditPageSize, setAuditPageSize] =
+    useState<(typeof AUDIT_PAGE_SIZES)[number]>(20);
+  const [auditTotalElements, setAuditTotalElements] = useState(0);
+  const [auditTotalPages, setAuditTotalPages] = useState(0);
+  const [auditActionFilter, setAuditActionFilter] = useState("");
+  const [auditTargetFilter, setAuditTargetFilter] = useState("");
+  const [auditClosedFilter, setAuditClosedFilter] = useState<AuditClosedFilter>("all");
   const [detailSession, setDetailSession] = useState<EvaluationSessionResponse | null>(
     null,
   );
@@ -159,13 +184,51 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
     router.replace(moduleListPath(workspaceHome, modulePath, next, "sessions"));
   };
 
+  const loadAudits = useCallback(async () => {
+    setAuditsLoading(true);
+    try {
+      const page = await listGradeAudits({
+        page: auditPage,
+        size: auditPageSize,
+        schoolId,
+        action: auditActionFilter || null,
+        target: auditTargetFilter || null,
+        afterSessionClosed:
+          auditClosedFilter === "all" ? null : auditClosedFilter === "yes",
+      });
+      setAudits(page.content);
+      setAuditTotalElements(page.totalElements);
+      setAuditTotalPages(page.totalPages);
+      if (page.totalPages > 0 && auditPage >= page.totalPages) {
+        setAuditPage(Math.max(0, page.totalPages - 1));
+      }
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("loadError"));
+      setAudits([]);
+      setAuditTotalElements(0);
+      setAuditTotalPages(0);
+    } finally {
+      setAuditsLoading(false);
+    }
+  }, [
+    auditActionFilter,
+    auditClosedFilter,
+    auditPage,
+    auditPageSize,
+    auditTargetFilter,
+    schoolId,
+    t,
+  ]);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [years, schemeRows, auditRows] = await Promise.all([
+      const [years, schemeRows, auditPage] = await Promise.all([
         listAcademicYears({ page: 0, size: 20, schoolId }),
         listGradingSchemes(schoolId),
-        listGradeAudits({ page: 0, size: 50, schoolId }),
+        listGradeAudits({ page: 0, size: 20, schoolId }),
       ]);
       const year =
         years.content.find((y) => y.current) ??
@@ -177,7 +240,9 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
       setYearStatus(year?.status ?? null);
       setYearLocked(Boolean(year?.locked));
       setSchemes(schemeRows);
-      setAudits(auditRows);
+      setAudits(auditPage.content);
+      setAuditTotalElements(auditPage.totalElements);
+      setAuditTotalPages(auditPage.totalPages);
 
       if (year) {
         const sessionRows = await listEvaluationSessions({
@@ -196,6 +261,8 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
       setSessions([]);
       setSchemes([]);
       setAudits([]);
+      setAuditTotalElements(0);
+      setAuditTotalPages(0);
     } finally {
       setLoading(false);
     }
@@ -223,6 +290,11 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (tab !== "audits") return;
+    void loadAudits();
+  }, [loadAudits, tab]);
 
   const clearPending = useCallback(() => {
     setPending(null);
@@ -474,10 +546,13 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
       sessions: sessions.length,
       open: sessions.filter((s) => s.status === "OPEN").length,
       schemes: schemes.filter((s) => s.active).length,
-      audits: audits.length,
+      audits: auditTotalElements,
     }),
-    [audits.length, schemes, sessions],
+    [auditTotalElements, schemes, sessions],
   );
+
+  const auditFrom = auditTotalElements === 0 ? 0 : auditPage * auditPageSize + 1;
+  const auditTo = Math.min(auditTotalElements, (auditPage + 1) * auditPageSize);
 
   /** BR-25 : trimestre des séquences OPEN (un seul à la fois). */
   const activeOpenTerm = useMemo((): 1 | 2 | 3 | null => {
@@ -560,8 +635,8 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
 
       {tab === "audits" ? (
         <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
-          <div className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:p-4">
-            <div className="flex min-w-0 flex-1 items-start gap-3">
+          <div className="space-y-3.5 p-3.5 sm:p-4">
+            <div className="flex min-w-0 items-start gap-3">
               <span
                 className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--ios-fill)] text-[var(--ios-secondary-label)]"
                 aria-hidden
@@ -580,17 +655,81 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
                 </p>
               </div>
             </div>
-            <div className="w-full min-w-0 sm:max-w-[260px]">
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
-                {t("auditSearchLabel")}
-              </p>
-              <IconInput
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("search.audits")}
-                icon={<Search className="size-4 stroke-[1.75]" />}
-                aria-label={tCommon("search")}
-              />
+
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="min-w-0 space-y-1.5">
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                  {t("auditFilterAction")}
+                </span>
+                <Select
+                  value={auditActionFilter}
+                  onChange={(e) => {
+                    setAuditPage(0);
+                    setAuditActionFilter(e.target.value);
+                  }}
+                  aria-label={t("auditFilterAction")}
+                  className="h-9 text-[12px]"
+                >
+                  <option value="">{t("auditFilterAll")}</option>
+                  {AUDIT_ACTIONS.map((action) => (
+                    <option key={action} value={action}>
+                      {auditActionLabel(action)}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <label className="min-w-0 space-y-1.5">
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                  {t("auditFilterTarget")}
+                </span>
+                <Select
+                  value={auditTargetFilter}
+                  onChange={(e) => {
+                    setAuditPage(0);
+                    setAuditTargetFilter(e.target.value);
+                  }}
+                  aria-label={t("auditFilterTarget")}
+                  className="h-9 text-[12px]"
+                >
+                  <option value="">{t("auditFilterAll")}</option>
+                  {AUDIT_TARGETS.map((target) => (
+                    <option key={target} value={target}>
+                      {auditTargetLabel(target)}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <label className="min-w-0 space-y-1.5">
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                  {t("auditFilterClosed")}
+                </span>
+                <Select
+                  value={auditClosedFilter}
+                  onChange={(e) => {
+                    setAuditPage(0);
+                    setAuditClosedFilter(e.target.value as AuditClosedFilter);
+                  }}
+                  aria-label={t("auditFilterClosed")}
+                  className="h-9 text-[12px]"
+                >
+                  <option value="all">{t("auditFilterAll")}</option>
+                  <option value="yes">{t("auditFilterAfterClosed")}</option>
+                  <option value="no">{t("auditFilterBeforeClosed")}</option>
+                </Select>
+              </label>
+              <label className="min-w-0 space-y-1.5">
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                  {t("auditSearchLabel")}
+                </span>
+                <IconInput
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("search.audits")}
+                  icon={<Search className="size-4 stroke-[1.75]" />}
+                  aria-label={tCommon("search")}
+                  className="h-9 text-[12px]"
+                />
+              </label>
             </div>
           </div>
         </div>
@@ -688,7 +827,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
         />
       ) : tab === "corrections" ? (
         <GradeCorrectionsPanel schoolId={schoolId} query={query} />
-      ) : loading ? (
+      ) : loading || (tab === "audits" && auditsLoading && audits.length === 0) ? (
         <HubLoadingRows />
       ) : rows.length === 0 ? (
         <EmptyState
@@ -1047,8 +1186,17 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
             })}
           </ul>
 
-          <HubTableShell countLabel={t("tableCount", { count: filteredAudits.length })}>
-            <table className="w-full min-w-[860px] border-collapse text-left">
+          <HubTableShell
+            countLabel={t("tableCount", {
+              count: query.trim() ? filteredAudits.length : auditTotalElements,
+            })}
+          >
+            <table
+              className={cn(
+                "w-full min-w-[860px] border-collapse text-left",
+                auditsLoading && "opacity-60",
+              )}
+            >
               <thead>
                 <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
                   <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
@@ -1116,6 +1264,69 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
               </tbody>
             </table>
           </HubTableShell>
+
+          <div className="flex flex-col gap-3 rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] px-3.5 py-3 shadow-[var(--ios-shadow)] sm:flex-row sm:items-center sm:justify-between sm:px-4">
+            <p className="text-[12px] text-[var(--ios-secondary-label)]">
+              {auditsLoading
+                ? t("auditLoading")
+                : t("auditRange", {
+                    from: auditFrom,
+                    to: auditTo,
+                    total: auditTotalElements,
+                  })}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-2 text-[12px] text-[var(--ios-secondary-label)]">
+                <span className="whitespace-nowrap">{t("auditPageSize")}</span>
+                <Select
+                  value={String(auditPageSize)}
+                  onChange={(e) => {
+                    const next = Number(e.target.value) as (typeof AUDIT_PAGE_SIZES)[number];
+                    setAuditPage(0);
+                    setAuditPageSize(AUDIT_PAGE_SIZES.includes(next) ? next : 20);
+                  }}
+                  aria-label={t("auditPageSize")}
+                  className="h-8 w-[4.75rem] text-[12px]"
+                >
+                  {AUDIT_PAGE_SIZES.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <p className="text-[12px] tabular-nums text-[var(--ios-secondary-label)]">
+                {t("auditPageOf", {
+                  page: auditTotalPages === 0 ? 0 : auditPage + 1,
+                  total: auditTotalPages,
+                })}
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={auditsLoading || auditPage <= 0}
+                aria-label={t("auditPrevious")}
+                leadingIcon={<ChevronLeft className="size-3.5" aria-hidden />}
+                onClick={() => setAuditPage((p) => Math.max(0, p - 1))}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={
+                  auditsLoading || auditTotalPages === 0 || auditPage >= auditTotalPages - 1
+                }
+                aria-label={t("auditNext")}
+                leadingIcon={<ChevronRight className="size-3.5" aria-hidden />}
+                onClick={() =>
+                  setAuditPage((p) =>
+                    auditTotalPages === 0 ? 0 : Math.min(auditTotalPages - 1, p + 1),
+                  )
+                }
+              />
+            </div>
+          </div>
         </>
       )}
 

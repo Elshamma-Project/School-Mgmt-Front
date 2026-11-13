@@ -272,17 +272,34 @@ export async function updateGradingScheme(
   });
 }
 
+export type GradeAuditPageResponse = {
+  content: GradeAuditEntryResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+};
+
 export async function listGradeAudits(options: {
   page?: number;
   size?: number;
   schoolId?: string | null;
-} = {}): Promise<GradeAuditEntryResponse[]> {
+  action?: string | null;
+  target?: string | null;
+  afterSessionClosed?: boolean | null;
+} = {}): Promise<GradeAuditPageResponse> {
   const qs = toSearch({
     page: options.page ?? 0,
-    size: options.size ?? 50,
+    size: options.size ?? 20,
+    action: options.action?.trim() || undefined,
+    target: options.target?.trim() || undefined,
+    afterSessionClosed:
+      options.afterSessionClosed === null || options.afterSessionClosed === undefined
+        ? undefined
+        : options.afterSessionClosed,
     ...schoolParams(options.schoolId),
   });
-  return apiRequest<GradeAuditEntryResponse[]>(`/api/v1/grade-audits?${qs}`);
+  return apiRequest<GradeAuditPageResponse>(`/api/v1/grade-audits?${qs}`);
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
