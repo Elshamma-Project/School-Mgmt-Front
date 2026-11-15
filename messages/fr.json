@@ -13,6 +13,16 @@
       "6": "Vérification douce : tout est en ordre pour la journée…",
       "7": "Encore un souffle — votre tableau de bord arrive…"
     },
+    "logoutTips": {
+      "0": "On ferme votre session en douceur…",
+      "1": "Vos données restent à l’abri — rien n’est perdu…",
+      "2": "On quitte le bureau numérique proprement…",
+      "3": "Jetons et accès sont retirés de cet appareil…",
+      "4": "Un instant — redirection vers la page de connexion…",
+      "5": "À bientôt sur El Shammah…",
+      "6": "Dernière vérification de sécurité…",
+      "7": "Presque fini — porte fermée derrière vous…"
+    },
     "save": "Enregistrer",
     "cancel": "Annuler",
     "edit": "Modifier",
@@ -71,9 +81,12 @@
     "loginSuccess": "Connexion réussie",
     "loginSuccessDemo": "Session démo ouverte",
     "logout": "Déconnexion",
+    "logoutSubmitting": "Déconnexion…",
+    "logoutPreparing": "Fermeture de la session",
+    "logoutPreparingHint": "Sécurisation de votre espace…",
     "openProfile": "Ouvrir mon profil",
     "logoutConfirmTitle": "Se déconnecter ?",
-    "logoutConfirmDescription": "Votre session SMELS sera fermée. Vous pourrez vous reconnecter quand vous voulez.",
+    "logoutConfirmDescription": "Votre session SMELS sera fermée sur cet appareil. Vous pourrez vous reconnecter quand vous voulez.",
     "changePasswordTitle": "Changer le mot de passe",
     "changePasswordSubtitle": "Vous devez définir un nouveau mot de passe avant de continuer.",
     "currentPassword": "Mot de passe actuel",
@@ -84,6 +97,9 @@
     "invalidCredentials": "E-mail ou mot de passe incorrect.",
     "accountLocked": "Compte temporairement verrouillé après trop d’échecs.",
     "networkError": "Impossible de joindre le serveur. Vérifiez qu’il est démarré, puis réessayez.",
+    "timeoutError": "Le serveur met trop de temps à répondre. Réessayez dans un instant.",
+    "serverError": "Le serveur a rencontré un problème. Réessayez plus tard.",
+    "rateLimited": "Trop de tentatives. Patientez un moment puis réessayez.",
     "demoMode": "Mode démo (sans API)",
     "demoModeHint": "Connexion fictive pour explorer l’UI. Désactivé dès que NEXT_PUBLIC_ENABLE_DEMO_LOGIN=false.",
     "demoDisabled": "Le mode démo est désactivé sur ce déploiement.",
@@ -122,7 +138,7 @@
     "SURVEILLANT_GENERAL": {
       "label": "Surveillant général",
       "hint": "Visa fiches de report",
-      "homeBlurb": "Espace surveillance — visa des fiches de report et suivi disciplinaire."
+      "homeBlurb": "Espace dédié — visa SG des fiches de report de notes (pas d’accès admin complet)."
     },
     "SUPER_ADMIN": {
       "label": "Super admin",
@@ -165,6 +181,7 @@
     "staff": "Personnel",
     "academic": "Académique",
     "sequences": "Séquences",
+    "reportSheets": "Fiches de report",
     "reporting": "Reporting",
     "audit": "Audit",
     "schools": "Établissements",
@@ -270,6 +287,10 @@
     "title": "Accueil",
     "description": "Tableau de bord SMELS.",
     "greeting": "Bonjour, {name}",
+    "greetingMorning": "Bonjour",
+    "greetingAfternoon": "Bon après-midi",
+    "greetingEvening": "Bonsoir",
+    "openProfile": "Ouvrir mon profil",
     "profileSection": "Session",
     "roleLabel": "Rôle",
     "accountLabel": "Compte",

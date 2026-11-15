@@ -19,7 +19,10 @@ function toLoginResponse(raw: AuthTokensResponse): LoginResponse {
   };
 }
 
-export async function login(payload: LoginRequest): Promise<LoginResponse> {
+export async function login(
+  payload: LoginRequest,
+  options?: { signal?: AbortSignal; timeoutMs?: number },
+): Promise<LoginResponse> {
   const body: Record<string, string> = {
     email: payload.email.trim().toLowerCase(),
     password: payload.password,
@@ -33,6 +36,8 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
     body,
     auth: false,
     skipRefresh: true,
+    signal: options?.signal,
+    timeoutMs: options?.timeoutMs ?? 12_000,
   });
   return toLoginResponse(raw);
 }
@@ -47,11 +52,14 @@ export async function refresh(refreshToken: string): Promise<LoginResponse> {
   return toLoginResponse(raw);
 }
 
-export async function logout(): Promise<void> {
+export async function logout(options?: { signal?: AbortSignal }): Promise<void> {
   await apiRequest<void>("/api/v1/auth/logout", {
     method: "POST",
     skipRefresh: true,
     responseType: "void",
+    clearSessionOnFailure: false,
+    timeoutMs: 0,
+    signal: options?.signal,
   });
 }
 

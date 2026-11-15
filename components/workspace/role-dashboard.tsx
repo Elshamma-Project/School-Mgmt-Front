@@ -5,6 +5,7 @@ import {
   Bell,
   BookOpen,
   CalendarClock,
+  CalendarDays,
   CheckCircle2,
   ChevronRight,
   ClipboardList,
@@ -17,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +33,26 @@ import {
 } from "@/lib/workspace/use-dashboard-data";
 import { useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
+
+function greetingKey(): "greetingMorning" | "greetingAfternoon" | "greetingEvening" {
+  const hour = new Date().getHours();
+  if (hour < 12) return "greetingMorning";
+  if (hour < 18) return "greetingAfternoon";
+  return "greetingEvening";
+}
+
+/** Nom d’affichage lisible : prénom / displayName, sinon partie locale de l’e-mail. */
+function displayGreetingName(
+  displayName: string | undefined,
+  username: string | undefined,
+): string {
+  const named = displayName?.trim();
+  if (named) return named;
+  const raw = username?.trim() ?? "";
+  if (!raw) return "";
+  const at = raw.indexOf("@");
+  return at > 0 ? raw.slice(0, at) : raw;
+}
 
 function localized(
   text: { fr: string | null; en: string | null },
@@ -91,7 +113,11 @@ export function RoleDashboard() {
 
   if (!role) return null;
 
-  const greetingName = user?.displayName ?? user?.username ?? "";
+  const greetingName = displayGreetingName(user?.displayName, user?.username);
+  const showUsernameUnder =
+    Boolean(user?.username) &&
+    Boolean(user?.displayName?.trim()) &&
+    user!.username !== user!.displayName!.trim();
   const navItems = getNavItemsForRole(role);
   const modules = navItems.filter(
     (item) => item.key !== "home" && item.key !== "settings" && item.key !== "notifications",
@@ -115,42 +141,67 @@ export function RoleDashboard() {
     <div className="space-y-6 slide-up">
       <section className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/50 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
         <div
-          className="pointer-events-none absolute inset-0 opacity-90"
+          className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full opacity-40"
           aria-hidden
           style={{
             background:
-              "radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--ios-blue) 18%, transparent), transparent 55%), radial-gradient(90% 70% at 100% 10%, color-mix(in srgb, var(--ios-success) 12%, transparent), transparent 50%), linear-gradient(180deg, color-mix(in srgb, var(--ios-fill) 35%, transparent), transparent 70%)",
+              "radial-gradient(circle, color-mix(in srgb, var(--ios-blue) 22%, transparent), transparent 70%)",
           }}
         />
-        <div className="relative flex flex-col gap-4 px-5 py-5 sm:px-6 sm:py-6 md:flex-row md:items-end md:justify-between">
-          <div className="min-w-0 space-y-2">
-            <p className="text-[var(--text-title2)] font-semibold tracking-[-0.02em] text-[var(--ios-label)]">
-              {t("greeting", { name: greetingName })}
+        <div className="relative flex items-start gap-4 px-5 py-5 sm:gap-5 sm:px-6 sm:py-6">
+          <Link
+            href="/profile"
+            aria-label={t("openProfile")}
+            className="pressable shrink-0 rounded-full focus-visible:shadow-[var(--focus-ring)]"
+          >
+            <UserAvatar
+              size="md"
+              className="size-14 bg-[var(--ios-fill)] text-[var(--ios-secondary-label)] ring-2 ring-[var(--ios-card)] ring-offset-2 ring-offset-[var(--ios-card)] sm:size-16"
+              iconClassName="size-6 sm:size-7"
+            />
+          </Link>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ios-tertiary-label)]">
+              {t(greetingKey())}
             </p>
-            <p className="max-w-xl text-[var(--text-subhead)] leading-relaxed text-[var(--ios-secondary-label)]">
+            <h1 className="mt-0.5 truncate text-[var(--text-title1)] font-semibold tracking-[-0.03em] text-[var(--ios-label)]">
+              {greetingName || "—"}
+            </h1>
+            {showUsernameUnder ? (
+              <p className="mt-0.5 truncate text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
+                {user?.username}
+              </p>
+            ) : null}
+            <p className="mt-2 max-w-2xl text-[var(--text-subhead)] leading-relaxed text-[var(--ios-secondary-label)]">
               {tRoles(`${role}.homeBlurb`)}
             </p>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <Badge tone="blue">{tRoles(`${role}.label`)}</Badge>
-              {isMock ? <Badge tone="neutral">{tCommon("demoBadge")}</Badge> : null}
+
+            <div className="mt-3.5 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-[var(--ios-info-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ios-blue)]">
+                {tRoles(`${role}.label`)}
+              </span>
               {data.yearLabel ? (
-                <Badge tone={data.yearLocked ? "warning" : "success"}>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                    data.yearLocked
+                      ? "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]"
+                      : "bg-[var(--ios-success-soft)] text-[var(--ios-success)]",
+                  )}
+                >
+                  <CalendarDays className="size-3.5 stroke-[1.75]" aria-hidden />
                   {data.yearLabel}
                   {data.yearLocked ? ` · ${t("yearLockedShort")}` : ""}
-                </Badge>
+                </span>
+              ) : null}
+              {isMock ? (
+                <span className="inline-flex items-center rounded-full bg-[var(--ios-fill)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ios-secondary-label)]">
+                  {tCommon("demoBadge")}
+                </span>
               ) : null}
             </div>
           </div>
-          {user?.username ? (
-            <div className="shrink-0 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/45 bg-[color-mix(in_srgb,var(--ios-card)_82%,transparent)] px-4 py-3 backdrop-blur-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-tertiary-label)]">
-                {t("accountLabel")}
-              </p>
-              <p className="mt-0.5 truncate text-[var(--text-body)] font-medium text-[var(--ios-label)]">
-                {user.username}
-              </p>
-            </div>
-          ) : null}
         </div>
       </section>
 

@@ -45,6 +45,7 @@ export type NavItemKey =
   | "staff"
   | "academic"
   | "sequences"
+  | "reportSheets"
   | "reporting"
   | "audit"
   | "schools"
@@ -179,13 +180,13 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
         ...sharedTail,
       ];
     case "SURVEILLANT_GENERAL":
-      // Espace admin partagé (Q-38) : focus visas des fiches de report.
+      // Espace dédié `/surveillant-general` — visa SG des fiches de report (Q-38 v1).
       return [
         item(home, "home", LayoutDashboard),
         item(
-          `${home}/grades`,
-          "sequences",
-          ClipboardList,
+          moduleListPath(home, "grades", "reportSheets", "sessions"),
+          "reportSheets",
+          FileSpreadsheet,
           gradesNavChildren(home, "grades").filter((child) => child.tab === "reportSheets"),
         ),
         ...sharedTail,

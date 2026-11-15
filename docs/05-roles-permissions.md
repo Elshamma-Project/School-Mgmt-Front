@@ -11,8 +11,9 @@
 | `STUDENT` | Élève (connexion par matricule, activée plus tard) | Ses propres données |
 | `PARENT` | Parent / tuteur | **Tous ses enfants, et uniquement eux** (réponse Q-20), via `Student.guardians` |
 | `TEACHER` | Enseignant | Ses `ClassSubject` : ses fiches de notes, son emploi du temps |
-| `ADMINISTRATION` | Secrétariat, censeur, surveillants | Tout l'établissement, sauf comptes d'administration et réouverture |
-| `DIRECTOR` | Directeur / chef d'établissement | Tout l'établissement |
+| `SURVEILLANT_GENERAL` | Surveillant Général | Visa SG fiches de report ; UI `/surveillant-general` (Q-38 v1) |
+| `ADMINISTRATION` | Secrétariat, censeur | Tout l'établissement, sauf comptes d'administration et réouverture |
+| `DIRECTOR` | Directeur / chef d'établissement (= Principal v1) | Tout l'établissement ; visa final fiches |
 | `SUPER_ADMIN` | Développeur | Plateforme, tous établissements |
 
 Un compte peut cumuler plusieurs rôles (enseignant + administration). Le droit effectif est l'union. **Fonction ≠ rôle** : `Staff.functions` décrit le poste ; `UserAccount.roles` décrit les droits.

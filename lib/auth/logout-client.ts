@@ -1,22 +1,20 @@
 import { logout as apiLogout } from "@/lib/api/auth";
 import {
-  AUTH_STORAGE_KEY,
   LOGOUT_FLAG_KEY,
   LOGOUT_QUERY,
 } from "@/lib/auth/constants";
-import { clearAvatarCache } from "@/lib/profile/avatar-cache";
-import { syncAuthCookie, useAuthStore } from "@/stores/auth-store";
-import { useSchoolBrandStore } from "@/stores/school-brand-store";
+import {
+  clearLocalAuthState,
+  withTimeoutSignal,
+} from "@/lib/auth/session-cache";
+import { useAuthStore } from "@/stores/auth-store";
 
 export { LOGOUT_FLAG_KEY, LOGOUT_QUERY };
 
-const LOGOUT_API_TIMEOUT_MS = 2500;
-
-function purgeAuthStorage() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(AUTH_STORAGE_KEY);
-  window.sessionStorage.removeItem(AUTH_STORAGE_KEY);
-}
+/** Timeout appel API logout — on purge localement même si le serveur est lent. */
+const LOGOUT_API_TIMEOUT_MS = 3_000;
+/** Durée minimale de l’overlay (évite un flash illisible). */
+export const LOGOUT_MIN_MS = 480;
 
 /** Marque une déconnexion volontaire (SessionRestorer / anti bfcache). */
 export function markLoggedOut() {
@@ -32,33 +30,45 @@ export function consumeLoggedOutFlag(): boolean {
   return true;
 }
 
+async function waitMin(started: number, minMs: number) {
+  const elapsed = Date.now() - started;
+  if (elapsed >= minMs) return;
+  await new Promise((resolve) => window.setTimeout(resolve, minMs - elapsed));
+}
+
 /**
- * Déconnexion locale + navigation dure vers /login.
- * Évite l’overlay « Ouverture de la session » (page login restaurée depuis le bfcache
- * avec `submitting === true`) et le rebond proxy cookie → /.
+ * Déconnexion : API best-effort → purge caches / jetons → navigation dure vers /login.
+ * Ne laisse jamais l’UI bloquée : en cas d’échec réseau, la session locale part quand même.
  */
 export async function performClientLogout(locale: string): Promise<void> {
-  const { isMock, user, accessToken, clearSession } = useAuthStore.getState();
+  const started = Date.now();
+  const { isMock, accessToken } = useAuthStore.getState();
 
   if (!isMock && accessToken) {
+    const { signal, cancel } = withTimeoutSignal(LOGOUT_API_TIMEOUT_MS);
     try {
-      await Promise.race([
-        apiLogout(),
-        new Promise<never>((_, reject) => {
-          window.setTimeout(() => reject(new Error("logout-timeout")), LOGOUT_API_TIMEOUT_MS);
-        }),
-      ]);
+      await apiLogout({ signal });
     } catch {
-      /* purge locale même si le serveur est injoignable / lent */
+      /* Purge locale même si timeout / 5xx / offline */
+    } finally {
+      cancel();
     }
   }
 
-  clearAvatarCache(user?.id);
-  useSchoolBrandStore.getState().clear();
-  clearSession();
-  purgeAuthStorage();
-  syncAuthCookie(false);
-  markLoggedOut();
+  try {
+    clearLocalAuthState();
+    markLoggedOut();
+  } catch {
+    /* dernier recours : au moins cookie + store */
+    try {
+      useAuthStore.getState().clearSession();
+    } catch {
+      /* ignore */
+    }
+    markLoggedOut();
+  }
+
+  await waitMin(started, LOGOUT_MIN_MS);
 
   const safeLocale = locale === "en" ? "en" : "fr";
   window.location.replace(`/${safeLocale}/login?${LOGOUT_QUERY}=1`);

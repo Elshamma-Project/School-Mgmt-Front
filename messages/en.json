@@ -13,6 +13,16 @@
       "6": "Gentle check: everything ready for the day…",
       "7": "One more breath — your dashboard is on its way…"
     },
+    "logoutTips": {
+      "0": "Closing your session gently…",
+      "1": "Your data stays safe — nothing is lost…",
+      "2": "Leaving the digital desk cleanly…",
+      "3": "Tokens and access are cleared on this device…",
+      "4": "One moment — redirecting to sign-in…",
+      "5": "See you soon at El Shammah…",
+      "6": "Final security check…",
+      "7": "Almost done — door closed behind you…"
+    },
     "save": "Save",
     "cancel": "Cancel",
     "edit": "Edit",
@@ -71,9 +81,12 @@
     "loginSuccess": "Signed in",
     "loginSuccessDemo": "Demo session started",
     "logout": "Sign out",
+    "logoutSubmitting": "Signing out…",
+    "logoutPreparing": "Closing your session",
+    "logoutPreparingHint": "Securing your workspace…",
     "openProfile": "Open my profile",
     "logoutConfirmTitle": "Sign out?",
-    "logoutConfirmDescription": "Your SMELS session will end. You can sign back in whenever you like.",
+    "logoutConfirmDescription": "Your SMELS session will end on this device. You can sign back in whenever you like.",
     "changePasswordTitle": "Change password",
     "changePasswordSubtitle": "You must set a new password before continuing.",
     "currentPassword": "Current password",
@@ -84,6 +97,9 @@
     "invalidCredentials": "Invalid email or password.",
     "accountLocked": "Account temporarily locked after too many failed attempts.",
     "networkError": "Cannot reach the server. Make sure it is running, then try again.",
+    "timeoutError": "The server is taking too long to respond. Please try again shortly.",
+    "serverError": "The server ran into a problem. Please try again later.",
+    "rateLimited": "Too many attempts. Wait a moment, then try again.",
     "demoMode": "Demo mode (no API)",
     "demoModeHint": "Fictional sign-in for UI exploration. Off when NEXT_PUBLIC_ENABLE_DEMO_LOGIN=false.",
     "demoDisabled": "Demo mode is disabled for this deployment.",
@@ -122,7 +138,7 @@
     "SURVEILLANT_GENERAL": {
       "label": "Chief supervisor",
       "hint": "Report sheet visa",
-      "homeBlurb": "Supervision workspace — report sheet visas and discipline follow-up."
+      "homeBlurb": "Dedicated workspace — SG visa on grade report sheets (no full admin access)."
     },
     "SUPER_ADMIN": {
       "label": "Super admin",
@@ -165,6 +181,7 @@
     "staff": "Staff",
     "academic": "Academic",
     "sequences": "Sequences",
+    "reportSheets": "Report sheets",
     "reporting": "Reporting",
     "audit": "Audit",
     "schools": "Schools",
@@ -270,6 +287,10 @@
     "title": "Home",
     "description": "SMELS dashboard.",
     "greeting": "Hello, {name}",
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "openProfile": "Open my profile",
     "profileSection": "Session",
     "roleLabel": "Role",
     "accountLabel": "Account",

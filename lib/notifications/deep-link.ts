@@ -53,15 +53,15 @@ export function resolveNotificationDeepLink(
   }
 
   // Chemins métier « grades / sequences » : mapper vers l’espace du rôle.
-  const gradesMatch = parsed.pathname.match(/^\/(?:teacher|administration|director)\/(grades|sequences)\/?$/);
+  const gradesMatch = parsed.pathname.match(
+    /^\/(?:teacher|administration|director|surveillant-general)\/(grades|sequences)\/?$/,
+  );
   if (gradesMatch) {
     const home = getRoleHomePath(role);
-    const segment =
-      role === "DIRECTOR" ? "sequences" : role === "TEACHER" ? "grades" : "grades";
     if (role === "SUPER_ADMIN" || role === "STUDENT" || role === "PARENT") {
-      // Pas d’équivalent : rester sur la boîte de réception.
       return parseNotificationDeepLink("/notifications");
     }
+    const segment = role === "DIRECTOR" ? "sequences" : "grades";
     const pathname = `${home}/${segment}`;
     const qs = new URLSearchParams(parsed.query).toString();
     return {

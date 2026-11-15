@@ -18,6 +18,11 @@ import {
   writeRememberedEmail,
   writeRememberMe,
 } from "@/lib/auth/remember";
+import {
+  isAbortError,
+  prepareForNewSession,
+  withTimeoutSignal,
+} from "@/lib/auth/session-cache";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { getTenantConfig } from "@/lib/tenant/config";
 import { queuePostLoginFlash } from "@/lib/ui/post-login-flash";
@@ -33,10 +38,10 @@ import { ApiError } from "@/types/api";
 import type { AppRole } from "@/types/auth";
 import { primaryRole } from "@/types/auth";
 
-/** Délai minimal loader — assez court pour ne pas ralentir inutilement. */
+/** Délai minimal loader — évite un flash illisible. */
 const LOGIN_MIN_MS = 320;
-/** Filet de sécurité : si le serveur ne répond jamais, coupe l’overlay. */
-const LOGIN_MAX_MS = 15_000;
+/** Timeout réseau login (AbortSignal). */
+const LOGIN_API_TIMEOUT_MS = 12_000;
 
 type LoginFormProps = {
   /** schoolId lu côté serveur depuis .env (prioritaire). */
@@ -68,6 +73,8 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const cancelTimeoutRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     setRememberMe(readRememberMe());
@@ -81,7 +88,10 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
 
   // bfcache : une page login figée avec submitting=true réapparaissait à la déconnexion.
   useEffect(() => {
-    const resetLoader = () => setSubmitting(false);
+    const resetLoader = () => {
+      abortInFlight();
+      setSubmitting(false);
+    };
     const onPageShow = (event: PageTransitionEvent) => {
       if (event.persisted) resetLoader();
     };
@@ -90,19 +100,16 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
     return () => {
       window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("popstate", resetLoader);
+      abortInFlight();
     };
   }, []);
 
-  // Serveur injoignable : après LOGIN_MAX_MS, stopper l’overlay même si fetch ne se termine pas.
-  useEffect(() => {
-    if (!submitting) return;
-    const timer = window.setTimeout(() => {
-      if (!submittingRef.current) return;
-      setSubmitting(false);
-      setFormError(t("networkError"));
-    }, LOGIN_MAX_MS);
-    return () => window.clearTimeout(timer);
-  }, [submitting, t]);
+  function abortInFlight() {
+    cancelTimeoutRef.current?.();
+    cancelTimeoutRef.current = null;
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }
 
   function applyRememberPreference(emailValue: string) {
     writeRememberMe(rememberMe);
@@ -115,7 +122,7 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting) return;
+    if (submittingRef.current) return;
 
     setFormError(null);
 
@@ -124,32 +131,39 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
         setFormError(t("demoDisabled"));
         return;
       }
+      submittingRef.current = true;
       setSubmitting(true);
       const started = Date.now();
-      writeRememberMe(rememberMe);
-      const response = createMockLogin(role);
-      setSession({
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        sessionId: response.sessionId,
-        user: response.user,
-        mustChangePassword: response.mustChangePassword,
-        isMock: true,
-      });
-      await waitMin(started);
-      queuePostLoginFlash({
-        kind: "loginSuccessDemo",
-        roleLabel: tRoles(`${role}.label`),
-      });
-      router.replace(getRoleHomePath(role));
-      // Garder le loader jusqu’à la navigation (démontage) — pas de toast ici.
-      return;
+      try {
+        writeRememberMe(rememberMe);
+        prepareForNewSession();
+        const response = createMockLogin(role);
+        setSession({
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          sessionId: response.sessionId,
+          user: response.user,
+          mustChangePassword: response.mustChangePassword,
+          isMock: true,
+        });
+        await waitMin(started);
+        queuePostLoginFlash({
+          kind: "loginSuccessDemo",
+          roleLabel: tRoles(`${role}.label`),
+        });
+        router.replace(getRoleHomePath(role));
+        return;
+      } catch {
+        setFormError(t("invalidCredentials"));
+        submittingRef.current = false;
+        setSubmitting(false);
+        return;
+      }
     }
 
     const nextErrors: typeof fieldErrors = {};
     const emailResult = validateEmail(email, { required: true });
     if (!emailResult.ok) nextErrors.email = validationMessage(tCommon, emailResult);
-    // Mot de passe : requis + plafond (pas de règles de force au login — le serveur décide).
     if (!password) nextErrors.password = t("requiredField");
     else if (password.length > INPUT_LIMITS.passwordMax) {
       nextErrors.password = tCommon("validation.tooLong", {
@@ -165,18 +179,33 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
     }
 
     const emailValue = emailResult.value;
+    abortInFlight();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const { signal, cancel } = withTimeoutSignal(LOGIN_API_TIMEOUT_MS, controller.signal);
+    cancelTimeoutRef.current = cancel;
+
+    submittingRef.current = true;
     setSubmitting(true);
     const started = Date.now();
+
     try {
-      // Préférence avant setSession pour écrire tokens au bon storage.
       applyRememberPreference(emailValue);
-      // schoolId automatique (env / domaine). SUPER_ADMIN résolu côté API en secours.
-      const response = await apiLogin({
-        email: emailValue,
-        password,
-        schoolId: tenant.schoolId,
-        deviceLabel: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 120) : undefined,
-      });
+      prepareForNewSession();
+
+      const response = await apiLogin(
+        {
+          email: emailValue,
+          password,
+          schoolId: tenant.schoolId,
+          deviceLabel:
+            typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 120) : undefined,
+        },
+        { signal, timeoutMs: 0 },
+      );
+
+      if (controller.signal.aborted) return;
+
       setSession({
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
@@ -193,12 +222,22 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
         queuePostLoginFlash({ kind: "loginSuccess" });
         router.replace(getRoleHomePath(homeRole));
       }
-      // Succès : loader jusqu’à la navigation. Échec : finally ci-dessous.
       return;
     } catch (error) {
+      if (controller.signal.aborted || isAbortError(error)) {
+        if (!submittingRef.current) return;
+      }
       await waitMin(started);
+      if (controller.signal.aborted && !submittingRef.current) return;
       setFormError(mapLoginError(error, t));
+      submittingRef.current = false;
       setSubmitting(false);
+    } finally {
+      cancel();
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        cancelTimeoutRef.current = null;
+      }
     }
   }
 
@@ -365,17 +404,34 @@ function waitMin(started: number) {
 
 function mapLoginError(
   error: unknown,
-  t: (key: "networkError" | "accountLocked" | "invalidCredentials") => string,
+  t: (
+    key:
+      | "networkError"
+      | "accountLocked"
+      | "invalidCredentials"
+      | "timeoutError"
+      | "serverError"
+      | "rateLimited",
+  ) => string,
 ): string {
   if (error instanceof ApiError) {
-    if (error.status === 0) return t("networkError");
+    const msg = (error.message || "").toLowerCase();
+    if (error.status === 0) {
+      if (msg === "timeout" || msg === "aborted") return t("timeoutError");
+      return t("networkError");
+    }
+    if (error.status === 429) return t("rateLimited");
+    if (error.status >= 500) return t("serverError");
     if (error.status === 401 || error.status === 403) {
-      if (error.message.toLowerCase().includes("locked")) {
+      const detail = `${error.message} ${error.code ?? ""}`.toLowerCase();
+      if (detail.includes("locked") || detail.includes("lock")) {
         return t("accountLocked");
       }
       return t("invalidCredentials");
     }
+    if (error.status === 400) return t("invalidCredentials");
     return error.message || t("invalidCredentials");
   }
-  return t("invalidCredentials");
+  if (isAbortError(error)) return t("timeoutError");
+  return t("networkError");
 }

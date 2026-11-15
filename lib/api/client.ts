@@ -22,6 +22,12 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   timeoutMs?: number;
 };
 
+function isFetchAbortError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const name = "name" in error ? String((error as { name?: string }).name) : "";
+  return name === "AbortError" || name === "TimeoutError";
+}
+
 function createTimeoutSignal(ms: number): AbortSignal {
   if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
     return AbortSignal.timeout(ms);
@@ -180,7 +186,16 @@ export async function apiRequest<T>(
             ? (body as FormData)
             : JSON.stringify(body),
     });
-  } catch {
+  } catch (error) {
+    if (isFetchAbortError(error) || signal?.aborted || userSignal?.aborted) {
+      const timedOut =
+        (error instanceof DOMException && error.name === "TimeoutError") ||
+        (typeof error === "object" &&
+          error !== null &&
+          "name" in error &&
+          String((error as { name?: string }).name) === "TimeoutError");
+      throw new ApiError(0, timedOut ? "timeout" : "aborted");
+    }
     throw new ApiError(0, "network");
   }
 

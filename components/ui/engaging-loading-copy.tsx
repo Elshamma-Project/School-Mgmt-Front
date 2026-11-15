@@ -16,6 +16,12 @@ type EngagingLoadingCopyProps = {
   initialHint?: string;
   /** Démarre la rotation uniquement quand true. */
   active?: boolean;
+  /**
+   * Clé sous `common` pour les tips rotatifs (`loadingTips` | `logoutTips`).
+   * Doit contenir 0..tipCount-1.
+   */
+  tipsKey?: "loadingTips" | "logoutTips";
+  tipCount?: number;
   className?: string;
   titleClassName?: string;
   hintClassName?: string;
@@ -23,12 +29,14 @@ type EngagingLoadingCopyProps = {
 
 /**
  * Titre + hints qui tournent quand le chargement dure (sans erreur).
- * Textes scolaires, ton accueillant — FR/EN via `common.loadingTips`.
+ * Textes scolaires — FR/EN via `common.loadingTips` / `common.logoutTips`.
  */
 export function EngagingLoadingCopy({
   title,
   initialHint,
   active = true,
+  tipsKey = "loadingTips",
+  tipCount = TIP_COUNT,
   className,
   titleClassName,
   hintClassName,
@@ -51,7 +59,7 @@ export function EngagingLoadingCopy({
       const rotateTimer = window.setInterval(() => {
         setFade(false);
         const swap = window.setTimeout(() => {
-          setTipIndex((prev) => ((prev ?? 0) + 1) % TIP_COUNT);
+          setTipIndex((prev) => ((prev ?? 0) + 1) % tipCount);
           setFade(true);
         }, FADE_MS);
         timers.push(swap);
@@ -72,12 +80,12 @@ export function EngagingLoadingCopy({
         window.clearInterval(id);
       }
     };
-  }, [active, initialHint]);
+  }, [active, initialHint, tipCount]);
 
   const hint =
     tipIndex === null
       ? initialHint
-      : t(`loadingTips.${tipIndex}` as "loadingTips.0");
+      : t(`${tipsKey}.${tipIndex}` as `${typeof tipsKey}.0`);
 
   return (
     <div className={cn("text-center", className)}>

@@ -5,8 +5,8 @@ export const ROLE_WORKSPACE: Record<AppRole, `/${string}`> = {
   STUDENT: "/student",
   PARENT: "/parent",
   TEACHER: "/teacher",
-  /** Espace admin partagé tant qu’un workspace SG dédié n’existe pas (Q-38). */
-  SURVEILLANT_GENERAL: "/administration",
+  /** Espace dédié SG — focus visa fiches de report (Q-38 v1). */
+  SURVEILLANT_GENERAL: "/surveillant-general",
   ADMINISTRATION: "/administration",
   DIRECTOR: "/director",
   SUPER_ADMIN: "/super-admin",

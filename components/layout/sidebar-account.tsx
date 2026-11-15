@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { LogOut } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { LogoutLoading } from "@/components/auth/logout-loading";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { LOGOUT_QUERY } from "@/lib/auth/constants";
 import { performClientLogout } from "@/lib/auth/logout-client";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/cn";
@@ -34,7 +36,8 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
     try {
       await performClientLogout(locale);
     } catch {
-      setLoggingOut(false);
+      const safe = locale === "en" ? "en" : "fr";
+      window.location.replace(`/${safe}/login?${LOGOUT_QUERY}=1`);
     }
   }
 
@@ -63,6 +66,8 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
     />
   );
 
+  const logoutOverlay = <LogoutLoading open={loggingOut} />;
+
   if (collapsed) {
     return (
       <>
@@ -72,7 +77,8 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
             title={name}
             aria-label={t("openProfile")}
             onClick={() => router.push("/profile")}
-            className="pressable flex size-9 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[var(--ios-fill)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)]"
+            disabled={loggingOut}
+            className="pressable flex size-9 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[var(--ios-fill)] text-[var(--ios-secondary-label)] hover:bg-[var(--ios-fill-secondary)] focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <UserAvatar
               size="md"
@@ -91,6 +97,7 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
           </button>
         </div>
         {logoutDialog}
+        {logoutOverlay}
       </>
     );
   }
@@ -102,7 +109,8 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
           type="button"
           onClick={() => router.push("/profile")}
           aria-label={t("openProfile")}
-          className="pressable flex w-full cursor-pointer items-start gap-2 rounded-[var(--radius-md)] bg-[var(--ios-fill)]/70 px-2 py-2 text-left transition-colors hover:bg-[var(--ios-fill)] focus-visible:shadow-[var(--focus-ring)]"
+          disabled={loggingOut}
+          className="pressable flex w-full cursor-pointer items-start gap-2 rounded-[var(--radius-md)] bg-[var(--ios-fill)]/70 px-2 py-2 text-left transition-colors hover:bg-[var(--ios-fill)] focus-visible:shadow-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <UserAvatar
             size="sm"
@@ -138,10 +146,11 @@ export function SidebarAccount({ collapsed = false }: SidebarAccountProps) {
           )}
         >
           <LogOut className="size-3.5 stroke-[1.75]" aria-hidden />
-          {t("logout")}
+          {loggingOut ? t("logoutSubmitting") : t("logout")}
         </button>
       </div>
       {logoutDialog}
+      {logoutOverlay}
     </>
   );
 }
