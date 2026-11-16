@@ -33,7 +33,9 @@ function accentFor(
   if (
     category === "CORRECTION_REQUESTED" ||
     category === "STAFF_SIGNAL" ||
-    category === "TIMETABLE_CHANGE_REQUESTED"
+    category === "TIMETABLE_CHANGE_REQUESTED" ||
+    category === "TIMETABLE_UPDATE_NEEDED" ||
+    category === "SESSION_SCHEDULE_CHANGED"
   ) {
     return {
       chip: "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]",

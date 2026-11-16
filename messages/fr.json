@@ -253,6 +253,8 @@
       "TIMETABLE_PUBLISHED": "Emploi du temps",
       "TIMETABLE_CHANGE_REQUESTED": "Demande de créneau",
       "TIMETABLE_CHANGE_DECIDED": "Décision créneau",
+      "TIMETABLE_UPDATE_NEEDED": "EDT à mettre à jour",
+      "SESSION_SCHEDULE_CHANGED": "Calendrier d’examen",
       "SYSTEM": "Système"
     },
     "markRead": "Marquer lu",
@@ -2020,6 +2022,7 @@
       "overview": "Vue d’ensemble",
       "editor": "Éditeur",
       "grid": "Grille",
+      "exams": "Examens",
       "conflicts": "Conflits",
       "changes": "Demandes",
       "rooms": "Salles"
@@ -2028,6 +2031,7 @@
       "overview": "Vue d’ensemble",
       "editor": "Éditeur",
       "grid": "Grille",
+      "exams": "Examens",
       "conflicts": "Conflits",
       "changes": "Demandes",
       "rooms": "Salles"
@@ -2036,6 +2040,7 @@
       "overview": "Recherche…",
       "editor": "Recherche…",
       "grid": "Nom…",
+      "exams": "Séquence…",
       "conflicts": "Recherche…",
       "changes": "Enseignant, classe…",
       "rooms": "Nom ou type…"
@@ -2185,6 +2190,49 @@
       "add": "+",
       "offGrid": "Hors grille",
       "lessons": "cours"
+    },
+    "gridEditor": {
+      "select": "Grille à modifier",
+      "hint": "Définissez les périodes, pauses et horaires. Les cases EDT référencent le numéro de période ; les heures affichées suivent cette grille.",
+      "name": "Nom de la grille",
+      "nameRequired": "Indiquez un nom de grille.",
+      "days": "Jours de la semaine type",
+      "daysRequired": "Sélectionnez au moins un jour.",
+      "periodsRequired": "Ajoutez au moins une ligne de créneau.",
+      "kind": "Type",
+      "start": "Début",
+      "end": "Fin",
+      "labelFr": "Libellé FR",
+      "labelEn": "Libellé EN",
+      "addPeriod": "Ajouter une ligne",
+      "addAfter": "Insérer après",
+      "remove": "Supprimer la ligne",
+      "saved": "Grille enregistrée",
+      "kinds": {
+        "LESSON": "Cours",
+        "BREAK": "Pause",
+        "CLEANUP": "Nettoyage",
+        "CLOSING": "Rentrée / fin",
+        "ASSEMBLY": "Assemblée"
+      }
+    },
+    "exams": {
+      "hint": "Les dates de composition viennent des séquences (module Notes). Toute modification ici ou dans Séquences reste synchronisée — une seule source de vérité.",
+      "loading": "Chargement du calendrier…",
+      "emptyTitle": "Aucune séquence",
+      "emptyDescription": "Créez ou ouvrez les séquences DEV1–DEV6 depuis le module Notes / Séquences.",
+      "openSequences": "Ouvrir les séquences",
+      "sequence": "Séquence",
+      "term": "Trimestre",
+      "status": "Statut",
+      "examDate": "Date de composition",
+      "examDateRequired": "Indiquez une date de composition.",
+      "saved": "Date de composition enregistrée — tous les acteurs seront notifiés.",
+      "sessionStatus": {
+        "PLANNED": "Planifiée",
+        "OPEN": "Ouverte",
+        "CLOSED": "Clôturée"
+      }
     },
     "entry": {
       "createTitle": "Nouvelle case",

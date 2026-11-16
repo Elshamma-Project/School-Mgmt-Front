@@ -21,6 +21,8 @@ import {
   type EntryDialogSeed,
 } from "@/components/timetable/timetable-entry-dialog";
 import { TimetableChangesPanel } from "@/components/timetable/timetable-changes-panel";
+import { TimetableExamsPanel } from "@/components/timetable/timetable-exams-panel";
+import { TimetableGridEditor } from "@/components/timetable/timetable-grid-editor";
 import { TimetableWeekGrid } from "@/components/timetable/timetable-week-grid";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -107,6 +109,7 @@ export function TimetableHubView() {
   const [grids, setGrids] = useState<TimeSlotGridResponse[]>([]);
   const [timetables, setTimetables] = useState<TimetableResponse[]>([]);
   const [selectedTimetableId, setSelectedTimetableId] = useState<string>("");
+  const [selectedGridId, setSelectedGridId] = useState<string>("");
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [entries, setEntries] = useState<TimetableEntryResponse[]>([]);
   const [classSubjects, setClassSubjects] = useState<ClassSubjectResponse[]>([]);
@@ -148,9 +151,12 @@ export function TimetableHubView() {
     [timetables, selectedTimetableId],
   );
   const selectedGrid = useMemo(() => {
+    if (selectedGridId) {
+      return grids.find((g) => g.id === selectedGridId) ?? grids[0] ?? null;
+    }
     if (!selectedTimetable) return grids[0] ?? null;
-    return grids.find((g) => g.id === selectedTimetable.gridId) ?? null;
-  }, [grids, selectedTimetable]);
+    return grids.find((g) => g.id === selectedTimetable.gridId) ?? grids[0] ?? null;
+  }, [grids, selectedGridId, selectedTimetable]);
   const draft = useMemo(
     () => timetables.find((x) => x.status === "DRAFT") ?? null,
     [timetables],
@@ -206,8 +212,18 @@ export function TimetableHubView() {
       ]);
       setClasses(classesPage.content);
       setGrids(gridList);
+      setSelectedGridId((prev) =>
+        prev && gridList.some((g) => g.id === prev) ? prev : gridList[0]?.id || "",
+      );
       setTimetables(ttList);
-      setSelectedClassId((prev) => prev || classesPage.content[0]?.id || "");
+      const deepClassId = searchParams.get("classId")?.trim() || "";
+      const deepClassExists = Boolean(
+        deepClassId && classesPage.content.some((c) => c.id === deepClassId),
+      );
+      setSelectedClassId((prev) => {
+        if (deepClassExists) return deepClassId;
+        return prev || classesPage.content[0]?.id || "";
+      });
       const preferred =
         ttList.find((x) => x.status === "DRAFT") ??
         ttList.find((x) => x.status === "PUBLISHED") ??
@@ -222,7 +238,7 @@ export function TimetableHubView() {
     } finally {
       setLoading(false);
     }
-  }, [schoolId, t]);
+  }, [schoolId, searchParams, t]);
 
   const loadEntries = useCallback(async () => {
     if (!selectedTimetableId || !selectedClassId) {
@@ -583,12 +599,13 @@ export function TimetableHubView() {
         emptyLabel={t("yearEmpty")}
       />
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6 sm:gap-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-7 sm:gap-3">
         {(
           [
             ["overview", CalendarDays, "blue", timetables.length],
             ["editor", Grid3x3, "slate", entries.length],
             ["grid", RefreshCw, "slate", grids.length],
+            ["exams", CalendarDays, "amber", 0],
             ["conflicts", AlertTriangle, "amber", conflicts?.blocking.length ?? 0],
             ["changes", FilePenLine, "amber", 0],
             ["rooms", DoorOpen, "green", rooms.filter((r) => r.active).length],
@@ -892,50 +909,57 @@ export function TimetableHubView() {
             }
           />
         ) : (
-          <HubTableShell countLabel={t("gridCount", { count: grids.length })}>
-            <table className="w-full min-w-[640px] border-collapse text-left">
-              <thead>
-                <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
-                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                    {t("columns.name")}
-                  </th>
-                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                    {t("columns.periods")}
-                  </th>
-                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
-                    {t("columns.status")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {grids.map((grid, index) => (
-                  <tr
-                    key={grid.id}
-                    className={cn(
-                      "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                      index % 2 === 1 &&
-                        "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                    )}
-                  >
-                    <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
-                      {grid.name}
-                    </td>
-                    <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
-                      {grid.periods.filter((p) => p.kind === "LESSON").length}{" "}
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="grid min-w-[220px] flex-1 gap-1 text-[12px] text-[var(--ios-secondary-label)]">
+                {t("gridEditor.select")}
+                <Select
+                  value={selectedGrid?.id ?? ""}
+                  onChange={(e) => setSelectedGridId(e.target.value)}
+                >
+                  {grids.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name} · {g.periods.filter((p) => p.kind === "LESSON").length}{" "}
                       {t("grid.lessons")}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <HubStatusPill
-                        active={grid.active}
-                        activeLabel={t("statusActive")}
-                        inactiveLabel={t("inactive")}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </HubTableShell>
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              {canManage && !yearLocked ? (
+                <Button type="button" variant="secondary" onClick={handleCreateGrid}>
+                  {t("actions.createGrid")}
+                </Button>
+              ) : null}
+            </div>
+            {selectedGrid ? (
+              <TimetableGridEditor
+                grid={selectedGrid}
+                canEdit={canManage && !yearLocked}
+                schoolId={schoolId}
+                onSaved={(saved) => {
+                  setGrids((prev) => prev.map((g) => (g.id === saved.id ? saved : g)));
+                  setSelectedGridId(saved.id);
+                }}
+              />
+            ) : null}
+          </div>
+        )
+      ) : tab === "exams" ? (
+        year ? (
+          <TimetableExamsPanel
+            academicYearId={year.id}
+            schoolId={schoolId}
+            canEdit={canManage && !yearLocked}
+            sequencesHref={
+              `${workspaceHome}/${role === "DIRECTOR" ? "sequences" : "grades"}?tab=sessions` as `/${string}`
+            }
+          />
+        ) : (
+          <EmptyState
+            title={t("yearEmpty")}
+            description={t("yearHint")}
+            icon={<CalendarDays className="size-9 stroke-[1.5]" aria-hidden />}
+          />
         )
       ) : tab === "conflicts" ? (
         !conflicts ? (

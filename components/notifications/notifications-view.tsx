@@ -89,7 +89,9 @@ function categoryStyle(category: NotificationCategory): CategoryStyle {
   if (
     category === "CORRECTION_REQUESTED" ||
     category === "STAFF_SIGNAL" ||
-    category === "TIMETABLE_CHANGE_REQUESTED"
+    category === "TIMETABLE_CHANGE_REQUESTED" ||
+    category === "TIMETABLE_UPDATE_NEEDED" ||
+    category === "SESSION_SCHEDULE_CHANGED"
   ) {
     return {
       chip: "bg-[color-mix(in_srgb,var(--ios-warning)_14%,var(--ios-card))] text-[color-mix(in_srgb,var(--ios-warning)_85%,#000)]",

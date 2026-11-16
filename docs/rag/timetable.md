@@ -26,6 +26,14 @@ L’EDT s’appuie sur les classes, salles et matières de classe (`ClassSubject
 
 Quand l’administration **publie** (ou republicie) l’emploi du temps, **tous** les comptes scolaires reçoivent une notification. Le bouton « Ouvrir » mène à la page EDT de votre espace.
 
+### Nouvelle classe après publication
+
+Si une **nouvelle classe** est ajoutée alors que l’EDT est déjà publié et qu’elle n’a encore **aucun cours**, l’administration (et le directeur) reçoivent une alerte « EDT à mettre à jour ». Ils créent une révision, saisissent les créneaux, puis republient — et tout le monde est alors notifié.
+
+### Grille et examens
+
+L’onglet **Grille** permet de modifier périodes, pauses et horaires. L’onglet **Examens** affiche les dates de composition des séquences (même données que Notes / Séquences) ; toute modification notifie tous les utilisateurs.
+
 ### Mise en page PDF
 
 Une page **A4 paysage** par classe — jamais de deuxième page.
@@ -62,6 +70,14 @@ The timetable uses classes, rooms and class subjects of the current year. It is 
 ### Publication
 
 When administration **publishes** (or re-publishes) the timetable, **every** school account gets a notification. “Open” goes to the timetable page of your workspace.
+
+### New class after publication
+
+If a **new class** is added while the timetable is already published and it still has **no lessons**, administration (and the director) get a “Timetable update needed” alert. They revise, add slots, then publish again — and everyone is notified.
+
+### Grid and exams
+
+The **Grid** tab edits periods, breaks and times. The **Exams** tab shows sequence exam dates (same data as Grades / Sequences); any change notifies all users.
 
 ### PDF layout
 

@@ -253,6 +253,8 @@
       "TIMETABLE_PUBLISHED": "Timetable",
       "TIMETABLE_CHANGE_REQUESTED": "Slot change request",
       "TIMETABLE_CHANGE_DECIDED": "Slot change decision",
+      "TIMETABLE_UPDATE_NEEDED": "Timetable update needed",
+      "SESSION_SCHEDULE_CHANGED": "Exam schedule",
       "SYSTEM": "System"
     },
     "markRead": "Mark as read",
@@ -2020,6 +2022,7 @@
       "overview": "Overview",
       "editor": "Editor",
       "grid": "Grid",
+      "exams": "Exams",
       "conflicts": "Conflicts",
       "changes": "Requests",
       "rooms": "Rooms"
@@ -2028,6 +2031,7 @@
       "overview": "Overview",
       "editor": "Editor",
       "grid": "Grid",
+      "exams": "Exams",
       "conflicts": "Conflicts",
       "changes": "Requests",
       "rooms": "Rooms"
@@ -2036,6 +2040,7 @@
       "overview": "Search…",
       "editor": "Search…",
       "grid": "Name…",
+      "exams": "Sequence…",
       "conflicts": "Search…",
       "changes": "Teacher, class…",
       "rooms": "Name or type…"
@@ -2185,6 +2190,49 @@
       "add": "+",
       "offGrid": "Off-grid",
       "lessons": "lessons"
+    },
+    "gridEditor": {
+      "select": "Grid to edit",
+      "hint": "Define periods, breaks and times. Timetable cells reference period numbers; displayed times follow this grid.",
+      "name": "Grid name",
+      "nameRequired": "Enter a grid name.",
+      "days": "Typical weekdays",
+      "daysRequired": "Select at least one day.",
+      "periodsRequired": "Add at least one period row.",
+      "kind": "Kind",
+      "start": "Start",
+      "end": "End",
+      "labelFr": "FR label",
+      "labelEn": "EN label",
+      "addPeriod": "Add a row",
+      "addAfter": "Insert after",
+      "remove": "Remove row",
+      "saved": "Grid saved",
+      "kinds": {
+        "LESSON": "Lesson",
+        "BREAK": "Break",
+        "CLEANUP": "Cleanup",
+        "CLOSING": "Closing",
+        "ASSEMBLY": "Assembly"
+      }
+    },
+    "exams": {
+      "hint": "Exam dates come from sequences (Grades module). Edits here or under Sequences stay in sync — one source of truth.",
+      "loading": "Loading calendar…",
+      "emptyTitle": "No sequences",
+      "emptyDescription": "Create or open DEV1–DEV6 sequences from Grades / Sequences.",
+      "openSequences": "Open sequences",
+      "sequence": "Sequence",
+      "term": "Term",
+      "status": "Status",
+      "examDate": "Exam date",
+      "examDateRequired": "Provide an exam date.",
+      "saved": "Exam date saved — all school users will be notified.",
+      "sessionStatus": {
+        "PLANNED": "Planned",
+        "OPEN": "Open",
+        "CLOSED": "Closed"
+      }
     },
     "entry": {
       "createTitle": "New entry",

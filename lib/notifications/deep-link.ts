@@ -76,6 +76,7 @@ export function resolveNotificationDeepLink(
   }
 
   // EDT : `/timetable` (logique broadcast) ou `/{autreEspace}/timetable` → espace du rôle.
+  // Onglet `exams` : réservé aux espaces admin/dir (hub) ; les autres → consultation EDT.
   const timetableLogical = parsed.pathname === "/timetable";
   const timetableMatch = parsed.pathname.match(
     /^\/(?:student|parent|teacher|administration|director|surveillant-general)\/timetable\/?$/,
@@ -84,7 +85,12 @@ export function resolveNotificationDeepLink(
     if (!TIMETABLE_ROLES.has(role)) {
       return parseNotificationDeepLink("/notifications");
     }
-    return withPreservedQuery(`${getRoleHomePath(role)}/timetable`, parsed.query);
+    const home = getRoleHomePath(role);
+    const query = { ...parsed.query };
+    if (query.tab === "exams" && role !== "ADMINISTRATION" && role !== "DIRECTOR") {
+      delete query.tab;
+    }
+    return withPreservedQuery(`${home}/timetable`, query);
   }
 
   // Chemins métier « grades / sequences » : mapper vers l’espace du rôle.

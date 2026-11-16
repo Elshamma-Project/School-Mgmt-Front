@@ -23,6 +23,8 @@ export type NotificationCategory =
   | "TIMETABLE_PUBLISHED"
   | "TIMETABLE_CHANGE_REQUESTED"
   | "TIMETABLE_CHANGE_DECIDED"
+  | "TIMETABLE_UPDATE_NEEDED"
+  | "SESSION_SCHEDULE_CHANGED"
   | "SYSTEM";
 
 export type NotificationSeverity = "INFO" | "SUCCESS" | "WARNING" | "URGENT";

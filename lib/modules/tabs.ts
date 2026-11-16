@@ -19,6 +19,7 @@ export const TIMETABLE_TABS = [
   "overview",
   "editor",
   "grid",
+  "exams",
   "conflicts",
   "changes",
   "rooms",
