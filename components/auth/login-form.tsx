@@ -26,7 +26,7 @@ import {
 } from "@/lib/auth/session-cache";
 import { getTenantConfig } from "@/lib/tenant/config";
 import { queuePostLoginFlash } from "@/lib/ui/post-login-flash";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/cn";
 import {
   INPUT_LIMITS,
@@ -363,6 +363,16 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
                 }
               />
             </Field>
+
+            <div className="flex justify-end -mt-1">
+              <Link
+                href="/forgot-password"
+                className="pressable text-[var(--text-footnote)] font-medium text-[var(--ios-blue)] hover:underline"
+                tabIndex={submitting ? -1 : 0}
+              >
+                {t("forgotPasswordLink")}
+              </Link>
+            </div>
 
             <div className="rounded-[var(--radius-md)] bg-[var(--ios-fill)] px-3.5 py-3">
               <Checkbox

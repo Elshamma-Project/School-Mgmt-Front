@@ -111,6 +111,23 @@ export async function changePassword(payload: ChangePasswordRequest): Promise<Lo
   return toLoginResponse(raw);
 }
 
+/** Demande publique — réponse toujours `accepted` (anti-énumération). */
+export async function requestPasswordReset(payload: {
+  email: string;
+  schoolId: string;
+}): Promise<{ accepted: boolean }> {
+  return apiRequest<{ accepted: boolean }>("/api/v1/auth/forgot-password", {
+    method: "POST",
+    body: {
+      email: payload.email.trim().toLowerCase(),
+      schoolId: payload.schoolId.trim(),
+    },
+    auth: false,
+    skipRefresh: true,
+    timeoutMs: 12_000,
+  });
+}
+
 export async function uploadAvatar(file: File): Promise<UserAccountDto> {
   const form = new FormData();
   form.append("file", file);
