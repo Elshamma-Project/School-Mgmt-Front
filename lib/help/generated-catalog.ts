@@ -723,6 +723,10 @@ export const HELP_CATALOG: HelpArticle[] = [
           {
             "fr": "À la création, une option « Créer un compte de connexion » (activée par défaut) provisionne un UserAccount lié à la fiche. L’e-mail devient l’identifiant. Un mot de passe temporaire commun est attribué ; le changement est obligatoire à la première connexion. L’envoi du mot de passe par e-mail arrivera plus tard — notez-le à la création.",
             "en": "On create, “Create a login account” (on by default) provisions a UserAccount linked to the staff record. Email becomes the username. A shared temporary password is assigned; change is required on first login. Email delivery comes later — note the password at creation time."
+          },
+          {
+            "fr": "Les fiches issues de l’EDT (sans compte) : sur la fiche, bouton **Créer l’accès** → saisir l’e-mail réel → compte activé (Q-60). L’e-mail de login ne se change plus ensuite.",
+            "en": ""
           }
         ]
       },
@@ -845,6 +849,30 @@ export const HELP_CATALOG: HelpArticle[] = [
           {
             "fr": "L’emploi du temps tient sur une page A4 paysage.",
             "en": "The timetable fits on one A4 landscape page."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Demande de modification (enseignant)",
+          "en": "Request a change (teacher)"
+        },
+        "paragraphs": [
+          {
+            "fr": "Sur une de vos cases : ouvrez le détail puis **Demander une modification**. La demande part en validation auprès de l’administration ou du directeur (BR-67).",
+            "en": "On one of your slots: open the detail, then **Request a change**. The request goes to administration or the director for approval (BR-67)."
+          }
+        ]
+      },
+      {
+        "heading": {
+          "fr": "Conflits (administration)",
+          "en": "Conflicts (administration)"
+        },
+        "paragraphs": [
+          {
+            "fr": "Dans l’onglet **Conflits**, cliquez une ligne pour ouvrir la case dans l’éditeur. Pour un **TEACHER_OVERLAP** (séance multi-classes), utilisez **Lier en séance commune** ou **Lier automatiquement** en haut de liste. Les avertissements **HOURS_MISMATCH** mènent à la classe / matière concernée (volume EDT ≠ heures hebdomadaires).",
+            "en": "In the **Conflicts** tab, click a row to open the slot in the editor. For a **TEACHER_OVERLAP** (multi-class session), use **Link as joint session** or **Link automatically** at the top. **HOURS_MISMATCH** warnings open the related class / subject (scheduled periods ≠ weekly hours)."
           }
         ]
       }

@@ -10,12 +10,18 @@ import { NotificationPreviewList } from "@/components/notifications/notification
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import {
   listNotifications,
+  markNotificationRead,
   type InAppNotificationResponse,
 } from "@/lib/api/notifications";
-import { useUnreadNotificationCount } from "@/lib/notifications/use-unread-count";
+import { resolveNotificationDeepLink } from "@/lib/notifications/deep-link";
+import {
+  bumpUnreadNotificationCount,
+  useUnreadNotificationCount,
+} from "@/lib/notifications/use-unread-count";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { isAuthFailure } from "@/types/api";
+import { primaryRole } from "@/types/auth";
 
 type PanelPos = { top: number; right: number };
 
@@ -26,6 +32,7 @@ export function NotificationBell() {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const schoolId = useAuthStore((s) => s.user?.schoolId);
+  const role = useAuthStore((s) => primaryRole(s.user));
   const count = useUnreadNotificationCount();
 
   const [open, setOpen] = useState(false);
@@ -90,7 +97,21 @@ export function NotificationBell() {
 
   const onSelect = (row: InAppNotificationResponse) => {
     setOpen(false);
-    router.push(`/notifications?open=${encodeURIComponent(row.id)}`);
+    const target = resolveNotificationDeepLink(row.deepLink, role);
+    const goTo =
+      target && target.pathname !== "/notifications"
+        ? (target.href as `/${string}`)
+        : (`/notifications?open=${encodeURIComponent(row.id)}` as `/${string}`);
+
+    if ((row.unread || row.pendingAck) && target && target.pathname !== "/notifications") {
+      void markNotificationRead(row.id, schoolId)
+        .then(() => bumpUnreadNotificationCount())
+        .catch((error) => {
+          if (isAuthFailure(error)) return;
+        });
+    }
+
+    router.push(goTo);
   };
 
   const layer =

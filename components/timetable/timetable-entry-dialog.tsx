@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { CalendarDays, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Dialog } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
@@ -22,6 +23,7 @@ import type {
   UpsertTimetableEntryRequest,
 } from "@/lib/api/timetable";
 import { resolveLocalized } from "@/lib/timetable/format";
+import { cn } from "@/lib/utils/cn";
 
 const ACTIVITY_TYPES: ActivityType[] = [
   "CLUB",
@@ -56,6 +58,68 @@ type Props = {
   /** Enseignant : ouvrir une demande de modification (BR-67). */
   onRequestChange?: (entry: TimetableEntryResponse) => void;
 };
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="space-y-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--ios-tertiary-label)]">
+        {title}
+      </p>
+      <div className="space-y-2.5 rounded-[var(--radius-lg)] border border-[var(--ios-separator)]/55 bg-[color-mix(in_srgb,var(--ios-fill)_22%,var(--ios-card))] p-3">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function Segmented<T extends string>({
+  value,
+  disabled,
+  options,
+  onChange,
+}: {
+  value: T;
+  disabled?: boolean;
+  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div
+      className="grid gap-1 rounded-[var(--radius-md)] bg-[var(--ios-fill)] p-1"
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+      role="tablist"
+    >
+      {options.map((opt) => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            disabled={disabled}
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              "pressable min-h-9 rounded-[calc(var(--radius-md)-2px)] px-2 text-[12px] font-semibold transition-colors",
+              active
+                ? "bg-[var(--ios-card)] text-[var(--ios-label)] shadow-[var(--ios-shadow)]"
+                : "text-[var(--ios-secondary-label)] hover:text-[var(--ios-label)]",
+              disabled && "cursor-not-allowed opacity-60",
+            )}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export function TimetableEntryDialog({
   open,
@@ -121,6 +185,9 @@ export function TimetableEntryDialog({
     [classSubjects, classId],
   );
 
+  const className = classes.find((c) => c.id === classId)?.name;
+  const dayLabel = t(`days.${day}`);
+
   const subjectOptionLabel = (cs: ClassSubjectResponse) => {
     const subject = subjectById.get(cs.subjectId);
     return (
@@ -177,20 +244,11 @@ export function TimetableEntryDialog({
       onOpenChange={onOpenChange}
       title={entry ? t("entry.editTitle") : t("entry.createTitle")}
       description={canEdit ? t("entry.description") : t("entry.readOnly")}
+      icon={<CalendarDays className="size-6 stroke-[1.75]" aria-hidden />}
       size="lg"
+      align="start"
       actionsLayout="row"
       actions={[
-        ...(canEdit && entry && onDelete
-          ? [
-              {
-                label: t("entry.delete"),
-                variant: "destructive" as const,
-                onClick: () => {
-                  void onDelete(entry.id);
-                },
-              },
-            ]
-          : []),
         { label: t("actions.cancel"), variant: "cancel", onClick: () => onOpenChange(false) },
         ...(!canEdit && entry && onRequestChange
           ? [
@@ -214,207 +272,249 @@ export function TimetableEntryDialog({
           : []),
       ]}
     >
-      <div className="grid max-h-[min(60vh,480px)] gap-3 overflow-y-auto pr-1">
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t("entry.class")}>
-            <Select value={classId} disabled={!canEdit} onChange={(e) => setClassId(e.target.value)}>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {className ? (
+            <span className="inline-flex items-center rounded-full bg-[var(--ios-info-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ios-blue)]">
+              {className}
+            </span>
+          ) : null}
+          <span className="inline-flex items-center rounded-full bg-[var(--ios-fill)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ios-secondary-label)]">
+            {dayLabel}
+            {!useCustom ? ` · P${startPeriod}` : customStart && customEnd ? ` · ${customStart}–${customEnd}` : ""}
+          </span>
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+              kind === "ACTIVITY"
+                ? "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]"
+                : "bg-[var(--ios-success-soft)] text-[var(--ios-success)]",
+            )}
+          >
+            {kind === "ACTIVITY" ? t("entry.kindActivity") : t("entry.kindLesson")}
+          </span>
+        </div>
+
+        <Section title={t("entry.sectionSlot")}>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <Field label={t("entry.class")}>
+              <Select value={classId} disabled={!canEdit} onChange={(e) => setClassId(e.target.value)}>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label={t("entry.day")}>
+              <Select
+                value={day}
+                disabled={!canEdit}
+                onChange={(e) => setDay(e.target.value as DayOfWeek)}
+              >
+                {(
+                  ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"] as DayOfWeek[]
+                ).map((d) => (
+                  <option key={d} value={d}>
+                    {t(`days.${d}`)}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
           <Field label={t("entry.kind")}>
-            <Select
+            <Segmented
               value={kind}
               disabled={!canEdit}
-              onChange={(e) => setKind(e.target.value as EntryKind)}
-            >
-              <option value="LESSON">{t("entry.kindLesson")}</option>
-              <option value="ACTIVITY">{t("entry.kindActivity")}</option>
-            </Select>
+              onChange={setKind}
+              options={[
+                { value: "LESSON", label: t("entry.kindLesson") },
+                { value: "ACTIVITY", label: t("entry.kindActivity") },
+              ]}
+            />
           </Field>
-        </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t("entry.day")}>
-            <Select
-              value={day}
-              disabled={!canEdit}
-              onChange={(e) => setDay(e.target.value as DayOfWeek)}
-            >
-              {(
-                ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"] as DayOfWeek[]
-              ).map((d) => (
-                <option key={d} value={d}>
-                  {t(`days.${d}`)}
-                </option>
-              ))}
-            </Select>
-          </Field>
           <Field label={t("entry.slotMode")}>
-            <Select
+            <Segmented
               value={useCustom ? "custom" : "period"}
               disabled={!canEdit}
-              onChange={(e) => setUseCustom(e.target.value === "custom")}
-            >
-              <option value="period">{t("entry.slotPeriod")}</option>
-              <option value="custom">{t("entry.slotCustom")}</option>
-            </Select>
+              onChange={(v) => setUseCustom(v === "custom")}
+              options={[
+                { value: "period", label: t("entry.slotPeriod") },
+                { value: "custom", label: t("entry.slotCustom") },
+              ]}
+            />
           </Field>
-        </div>
 
-        {useCustom ? (
-          <div className="grid grid-cols-2 gap-2">
-            <Field label={t("entry.customStart")}>
-              <Input
-                type="time"
-                value={customStart}
+          {useCustom ? (
+            <div className="grid grid-cols-2 gap-2.5">
+              <Field label={t("entry.customStart")}>
+                <Input
+                  type="time"
+                  value={customStart}
+                  disabled={!canEdit}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                />
+              </Field>
+              <Field label={t("entry.customEnd")}>
+                <Input
+                  type="time"
+                  value={customEnd}
+                  disabled={!canEdit}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                />
+              </Field>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5">
+              <Field label={t("entry.startPeriod")}>
+                <Input
+                  type="number"
+                  min={1}
+                  max={8}
+                  value={startPeriod}
+                  disabled={!canEdit}
+                  onChange={(e) => setStartPeriod(e.target.value)}
+                />
+              </Field>
+              <Field label={t("entry.periodCount")}>
+                <Input
+                  type="number"
+                  min={1}
+                  max={8}
+                  value={periodCount}
+                  disabled={!canEdit}
+                  onChange={(e) => setPeriodCount(e.target.value)}
+                />
+              </Field>
+            </div>
+          )}
+        </Section>
+
+        <Section title={t("entry.sectionContent")}>
+          {kind === "LESSON" ? (
+            <Field label={t("entry.classSubject")}>
+              <Select
+                value={classSubjectId}
                 disabled={!canEdit}
-                onChange={(e) => setCustomStart(e.target.value)}
+                onChange={(e) => onClassSubjectChange(e.target.value)}
+              >
+                <option value="">{t("entry.none")}</option>
+                {subjectsForClass.map((cs) => (
+                  <option key={cs.id} value={cs.id}>
+                    {subjectOptionLabel(cs)}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          ) : (
+            <Field label={t("entry.activityType")}>
+              <Select
+                value={activityType}
+                disabled={!canEdit}
+                onChange={(e) => setActivityType(e.target.value as ActivityType)}
+              >
+                {ACTIVITY_TYPES.map((a) => (
+                  <option key={a} value={a}>
+                    {t(`activity.${a}`)}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
+
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <Field label={t("entry.teacher")}>
+              <Select
+                value={teacherId}
+                disabled={!canEdit}
+                onChange={(e) => {
+                  setTeacherId(e.target.value);
+                  const teacher = teachers.find((x) => x.id === e.target.value);
+                  if (teacher) setTeacherLabel(teacher.fullName);
+                }}
+              >
+                <option value="">{t("entry.none")}</option>
+                {teachers.map((teacher) => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {teacher.fullName}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label={t("entry.room")}>
+              <Select value={roomId} disabled={!canEdit} onChange={(e) => setRoomId(e.target.value)}>
+                <option value="">{t("entry.none")}</option>
+                {rooms.map((room) => (
+                  <option key={room.id} value={room.id}>
+                    {room.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <Field label={t("entry.subjectLabel")}>
+              <Input
+                value={subjectLabel}
+                disabled={!canEdit}
+                onChange={(e) => setSubjectLabel(e.target.value)}
               />
             </Field>
-            <Field label={t("entry.customEnd")}>
+            <Field label={t("entry.teacherLabel")}>
               <Input
-                type="time"
-                value={customEnd}
+                value={teacherLabel}
                 disabled={!canEdit}
-                onChange={(e) => setCustomEnd(e.target.value)}
+                onChange={(e) => setTeacherLabel(e.target.value)}
               />
             </Field>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            <Field label={t("entry.startPeriod")}>
+        </Section>
+
+        <Section title={t("entry.sectionOptions")}>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <Field label={t("entry.optionGroup")}>
               <Input
-                type="number"
-                min={1}
-                max={8}
-                value={startPeriod}
+                placeholder="LV2"
+                value={optionGroupCode}
                 disabled={!canEdit}
-                onChange={(e) => setStartPeriod(e.target.value)}
+                onChange={(e) => setOptionGroupCode(e.target.value)}
               />
             </Field>
-            <Field label={t("entry.periodCount")}>
+            <Field label={t("entry.optionCode")}>
               <Input
-                type="number"
-                min={1}
-                max={8}
-                value={periodCount}
+                placeholder="ALL / ESP"
+                value={optionCode}
                 disabled={!canEdit}
-                onChange={(e) => setPeriodCount(e.target.value)}
+                onChange={(e) => setOptionCode(e.target.value)}
               />
             </Field>
           </div>
-        )}
-
-        {kind === "LESSON" ? (
-          <Field label={t("entry.classSubject")}>
-            <Select
-              value={classSubjectId}
+          <Field label={t("entry.note")}>
+            <Textarea
+              rows={2}
+              value={note}
               disabled={!canEdit}
-              onChange={(e) => onClassSubjectChange(e.target.value)}
-            >
-              <option value="">{t("entry.none")}</option>
-              {subjectsForClass.map((cs) => (
-                <option key={cs.id} value={cs.id}>
-                  {subjectOptionLabel(cs)}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        ) : (
-          <Field label={t("entry.activityType")}>
-            <Select
-              value={activityType}
-              disabled={!canEdit}
-              onChange={(e) => setActivityType(e.target.value as ActivityType)}
-            >
-              {ACTIVITY_TYPES.map((a) => (
-                <option key={a} value={a}>
-                  {t(`activity.${a}`)}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        )}
-
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t("entry.teacher")}>
-            <Select
-              value={teacherId}
-              disabled={!canEdit}
-              onChange={(e) => {
-                setTeacherId(e.target.value);
-                const teacher = teachers.find((x) => x.id === e.target.value);
-                if (teacher) setTeacherLabel(teacher.fullName);
-              }}
-            >
-              <option value="">{t("entry.none")}</option>
-              {teachers.map((teacher) => (
-                <option key={teacher.id} value={teacher.id}>
-                  {teacher.fullName}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label={t("entry.room")}>
-            <Select value={roomId} disabled={!canEdit} onChange={(e) => setRoomId(e.target.value)}>
-              <option value="">{t("entry.none")}</option>
-              {rooms.map((room) => (
-                <option key={room.id} value={room.id}>
-                  {room.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t("entry.subjectLabel")}>
-            <Input
-              value={subjectLabel}
-              disabled={!canEdit}
-              onChange={(e) => setSubjectLabel(e.target.value)}
+              onChange={(e) => setNote(e.target.value)}
             />
           </Field>
-          <Field label={t("entry.teacherLabel")}>
-            <Input
-              value={teacherLabel}
-              disabled={!canEdit}
-              onChange={(e) => setTeacherLabel(e.target.value)}
-            />
-          </Field>
-        </div>
+        </Section>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t("entry.optionGroup")}>
-            <Input
-              placeholder="LV2"
-              value={optionGroupCode}
-              disabled={!canEdit}
-              onChange={(e) => setOptionGroupCode(e.target.value)}
-            />
-          </Field>
-          <Field label={t("entry.optionCode")}>
-            <Input
-              placeholder="ALL / ESP"
-              value={optionCode}
-              disabled={!canEdit}
-              onChange={(e) => setOptionCode(e.target.value)}
-            />
-          </Field>
-        </div>
-
-        <Field label={t("entry.note")}>
-          <Textarea
-            rows={2}
-            value={note}
-            disabled={!canEdit}
-            onChange={(e) => setNote(e.target.value)}
-          />
-        </Field>
+        {canEdit && entry && onDelete ? (
+          <button
+            type="button"
+            className="pressable inline-flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[color-mix(in_srgb,var(--ios-danger)_22%,var(--ios-separator))] bg-[color-mix(in_srgb,var(--ios-danger)_6%,var(--ios-card))] px-3 py-2.5 text-[12px] font-semibold text-[var(--ios-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--ios-danger)_12%,var(--ios-card))]"
+            onClick={() => {
+              void onDelete(entry.id);
+              onOpenChange(false);
+            }}
+          >
+            <Trash2 className="size-3.5 stroke-[1.75]" aria-hidden />
+            {t("entry.delete")}
+          </button>
+        ) : null}
       </div>
     </Dialog>
   );

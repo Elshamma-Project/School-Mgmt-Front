@@ -19,6 +19,8 @@ Identité, contact, numéro RH et dernière connexion.
 
 À la création, une option « Créer un compte de connexion » (activée par défaut) provisionne un UserAccount lié à la fiche. L’e-mail devient l’identifiant. Un mot de passe temporaire commun est attribué ; le changement est obligatoire à la première connexion. L’envoi du mot de passe par e-mail arrivera plus tard — notez-le à la création.
 
+Les fiches issues de l’EDT (sans compte) : sur la fiche, bouton **Créer l’accès** → saisir l’e-mail réel → compte activé (Q-60). L’e-mail de login ne se change plus ensuite.
+
 ### Fonctions
 
 Les rôles RH (Enseignant, Secrétaire, Direction…) sont cumulables sur une même fiche. Ce n’est pas la même chose que les rôles de connexion (UserAccount.roles).
@@ -40,6 +42,8 @@ Identity, contact, HR number and last login.
 ### Creation and login account
 
 On create, “Create a login account” (on by default) provisions a UserAccount linked to the staff record. Email becomes the username. A shared temporary password is assigned; change is required on first login. Email delivery comes later — note the password at creation time.
+
+Staff from the timetable seed (no account yet): on the profile, **Create login access** → enter the real email → account activated (Q-60). The login email cannot be changed afterwards.
 
 ### Functions
 

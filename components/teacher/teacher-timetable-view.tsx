@@ -294,14 +294,13 @@ export function TeacherTimetableView() {
         hideSearch
       />
 
-      <p className="text-[12px] text-[var(--ios-secondary-label)]">{t("changeHint")}</p>
-
       {loading ? (
         <HubLoadingRows />
       ) : !showGrid ? (
         <EmptyState
           title={t("empty.title")}
           description={t("empty.description")}
+          descriptionClassName="text-[var(--ios-danger)]"
           icon={<CalendarDays className="size-9 stroke-[1.5]" aria-hidden />}
         />
       ) : (

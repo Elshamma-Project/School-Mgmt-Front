@@ -36,9 +36,32 @@ export function parseNotificationDeepLink(raw: string | null | undefined): Parse
   };
 }
 
+function withPreservedQuery(
+  pathname: string,
+  query: Record<string, string>,
+): ParsedDeepLink {
+  const qs = new URLSearchParams(query).toString();
+  return {
+    pathname,
+    query,
+    href: qs ? `${pathname}?${qs}` : pathname,
+  };
+}
+
+/** Rôles qui ont une page EDT dans leur espace. */
+const TIMETABLE_ROLES: ReadonlySet<AppRole> = new Set([
+  "STUDENT",
+  "PARENT",
+  "TEACHER",
+  "SURVEILLANT_GENERAL",
+  "ADMINISTRATION",
+  "DIRECTOR",
+]);
+
 /**
  * Réécrit un deepLink pour l’espace du rôle courant.
  * Ex. `/teacher/grades` reste ; un admin n’est pas renvoyé vers l’espace enseignant.
+ * Chemins logiques (`/timetable`) et chemins d’un autre espace sont mappés.
  */
 export function resolveNotificationDeepLink(
   raw: string | null | undefined,
@@ -52,6 +75,18 @@ export function resolveNotificationDeepLink(
     return parsed;
   }
 
+  // EDT : `/timetable` (logique broadcast) ou `/{autreEspace}/timetable` → espace du rôle.
+  const timetableLogical = parsed.pathname === "/timetable";
+  const timetableMatch = parsed.pathname.match(
+    /^\/(?:student|parent|teacher|administration|director|surveillant-general)\/timetable\/?$/,
+  );
+  if (timetableLogical || timetableMatch) {
+    if (!TIMETABLE_ROLES.has(role)) {
+      return parseNotificationDeepLink("/notifications");
+    }
+    return withPreservedQuery(`${getRoleHomePath(role)}/timetable`, parsed.query);
+  }
+
   // Chemins métier « grades / sequences » : mapper vers l’espace du rôle.
   const gradesMatch = parsed.pathname.match(
     /^\/(?:teacher|administration|director|surveillant-general)\/(grades|sequences)\/?$/,
@@ -62,13 +97,7 @@ export function resolveNotificationDeepLink(
       return parseNotificationDeepLink("/notifications");
     }
     const segment = role === "DIRECTOR" ? "sequences" : "grades";
-    const pathname = `${home}/${segment}`;
-    const qs = new URLSearchParams(parsed.query).toString();
-    return {
-      pathname,
-      query: parsed.query,
-      href: qs ? `${pathname}?${qs}` : pathname,
-    };
+    return withPreservedQuery(`${home}/${segment}`, parsed.query);
   }
 
   if (isSharedAppPath(parsed.pathname)) return parsed;

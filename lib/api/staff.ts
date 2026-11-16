@@ -190,6 +190,23 @@ export async function updateStaff(
   });
 }
 
+/** Q-60 : saisit l’e-mail réel et crée le compte de connexion (PENDING / mustChangePassword). */
+export async function createStaffLoginAccess(
+  id: string,
+  email: string,
+  schoolId?: string | null,
+): Promise<StaffResponse> {
+  const qs = schoolQuery(schoolId);
+  const query = qs ? `?${qs}` : "";
+  return apiRequest<StaffResponse>(
+    `/api/v1/staff/${encodeURIComponent(id)}/login-access${query}`,
+    {
+      method: "POST",
+      body: { email: email.trim().toLowerCase() },
+    },
+  );
+}
+
 export async function deactivateStaff(id: string, schoolId?: string | null): Promise<StaffResponse> {
   const qs = schoolQuery(schoolId);
   const query = qs ? `?${qs}` : "";

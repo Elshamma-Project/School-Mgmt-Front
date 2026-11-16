@@ -41,6 +41,8 @@ type DialogProps = {
   actionsLayout?: "auto" | "row" | "stack";
   /** Largeur max : sm 300 (défaut), md 420, lg 520. */
   size?: "sm" | "md" | "lg";
+  /** Alignement du header / contenu. `start` pour les formulaires. */
+  align?: "center" | "start";
   /** Accessible name override; defaults to title. */
   "aria-label"?: string;
 };
@@ -67,6 +69,7 @@ export function Dialog({
   iconTone,
   actionsLayout = "auto",
   size = "sm",
+  align = "center",
   "aria-label": ariaLabel,
 }: DialogProps) {
   const titleId = useId();
@@ -139,11 +142,17 @@ export function Dialog({
           SIZE_CLASS[size],
         )}
       >
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-5 pb-4 pt-5 text-center sm:px-6 sm:pt-6">
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-5 pb-4 pt-5 sm:px-6 sm:pt-6",
+            align === "center" ? "text-center" : "text-left",
+          )}
+        >
           {headerIcon ? (
             <div
               className={cn(
-                "mx-auto mb-3 flex size-12 items-center justify-center rounded-full sm:mb-4 sm:size-14",
+                "mb-3 flex size-12 items-center justify-center rounded-full sm:mb-4 sm:size-14",
+                align === "center" ? "mx-auto" : "",
                 resolvedIconTone === "destructive"
                   ? "bg-[var(--ios-danger-soft)] text-[var(--ios-danger)]"
                   : "bg-[var(--ios-info-soft)] text-[var(--ios-blue)]",
@@ -156,14 +165,17 @@ export function Dialog({
 
           <h2
             id={titleId}
-            className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]"
+            className="text-[17px] font-semibold tracking-[-0.02em] text-[var(--ios-label)]"
           >
             {title}
           </h2>
           {description ? (
             <p
               id={descriptionId}
-              className="mx-auto mt-1.5 max-w-[36ch] text-[12px] leading-relaxed text-[var(--ios-secondary-label)] sm:max-w-none"
+              className={cn(
+                "mt-1.5 text-[12px] leading-relaxed text-[var(--ios-secondary-label)]",
+                align === "center" && "mx-auto max-w-[36ch] sm:max-w-none",
+              )}
             >
               {description}
             </p>
@@ -176,7 +188,11 @@ export function Dialog({
         <div
           className={cn(
             "shrink-0 border-t border-[var(--ios-separator)] bg-[var(--ios-card)]",
-            stacked ? "flex flex-col-reverse" : "grid grid-cols-2",
+            stacked
+              ? "flex flex-col-reverse"
+              : actions.length === 3
+                ? "grid grid-cols-3"
+                : "grid grid-cols-2",
           )}
         >
           {actions.map((action, index) => (
@@ -189,7 +205,7 @@ export function Dialog({
                 onOpenChange(false);
               }}
               className={cn(
-                "pressable min-h-11 cursor-pointer px-3 py-3 text-[13px] transition-colors hover:bg-[var(--ios-fill)]/70 focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
+                "pressable min-h-12 cursor-pointer px-3 py-3.5 text-[13px] transition-colors hover:bg-[var(--ios-fill)]/70 focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
                 !stacked &&
                   index > 0 &&
                   "border-l border-[var(--ios-separator)]",

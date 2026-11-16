@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarDays,
+  ChevronRight,
   DoorOpen,
   FileDown,
   FilePenLine,
@@ -11,6 +12,7 @@ import {
   Link2,
   Plus,
   RefreshCw,
+  Wand2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -64,6 +66,7 @@ import {
   type TimeSlotGridResponse,
   type TimetableConflictsResponse,
   type TimetableEntryResponse,
+  type TimetableIssueDto,
   type TimetableResponse,
   type UpsertTimetableEntryRequest,
 } from "@/lib/api/timetable";
@@ -108,11 +111,37 @@ export function TimetableHubView() {
   const [entries, setEntries] = useState<TimetableEntryResponse[]>([]);
   const [classSubjects, setClassSubjects] = useState<ClassSubjectResponse[]>([]);
   const [conflicts, setConflicts] = useState<TimetableConflictsResponse | null>(null);
+  const [allEntries, setAllEntries] = useState<TimetableEntryResponse[]>([]);
   const [busy, setBusy] = useState(false);
   const [entryDialogOpen, setEntryDialogOpen] = useState(false);
   const [entrySeed, setEntrySeed] = useState<EntryDialogSeed | null>(null);
   const [linkMode, setLinkMode] = useState(false);
   const [linkSelection, setLinkSelection] = useState<string[]>([]);
+
+  const entriesById = useMemo(
+    () => new Map(allEntries.map((e) => [e.id, e])),
+    [allEntries],
+  );
+  const classNameById = useMemo(
+    () => new Map(classes.map((c) => [c.id, c.name])),
+    [classes],
+  );
+  const teacherNameById = useMemo(
+    () => new Map(teachers.map((s) => [s.id, s.fullName || s.lastName || s.id])),
+    [teachers],
+  );
+
+  const teacherOverlapCount = useMemo(
+    () =>
+      conflicts?.blocking.filter(
+        (i) =>
+          i.code === "TEACHER_OVERLAP" &&
+          i.entryId &&
+          i.otherEntryId &&
+          i.entryId !== i.otherEntryId,
+      ).length ?? 0,
+    [conflicts],
+  );
 
   const selectedTimetable = useMemo(
     () => timetables.find((x) => x.id === selectedTimetableId) ?? null,
@@ -227,10 +256,16 @@ export function TimetableHubView() {
   const loadConflicts = useCallback(async () => {
     if (!selectedTimetableId) {
       setConflicts(null);
+      setAllEntries([]);
       return;
     }
     try {
-      setConflicts(await getTimetableConflicts(selectedTimetableId, schoolId));
+      const [conflictData, entryList] = await Promise.all([
+        getTimetableConflicts(selectedTimetableId, schoolId),
+        listTimetableEntries({ timetableId: selectedTimetableId, schoolId }),
+      ]);
+      setConflicts(conflictData);
+      setAllEntries(entryList);
     } catch (error) {
       if (isAuthFailure(error)) return;
       if (error instanceof ApiError) notify.error(error.message);
@@ -408,6 +443,128 @@ export function TimetableHubView() {
     }, "toast.unlinked");
   };
 
+  const openIssueInEditor = (issue: TimetableIssueDto) => {
+    const primary =
+      (issue.entryId ? entriesById.get(issue.entryId) : undefined) ??
+      (issue.otherEntryId ? entriesById.get(issue.otherEntryId) : undefined) ??
+      (issue.classSubjectId
+        ? allEntries.find((e) => e.classSubjectIds.includes(issue.classSubjectId!))
+        : undefined);
+    const classId = primary?.classId ?? issue.classId ?? null;
+    if (!classId) {
+      notify.error(t("conflicts.navigateMissing"));
+      return;
+    }
+    setSelectedClassId(classId);
+    selectTab("editor");
+    if (primary) {
+      setEntrySeed({
+        day: primary.day,
+        startPeriod: primary.startPeriod,
+        classId: primary.classId,
+        entry: primary,
+      });
+      setEntryDialogOpen(true);
+    }
+  };
+
+  const linkTeacherOverlapPair = (issue: TimetableIssueDto) => {
+    if (!selectedTimetableId || !canEdit) return;
+    const a = issue.entryId;
+    const b = issue.otherEntryId;
+    if (!a || !b || a === b) {
+      notify.error(t("conflicts.linkMissing"));
+      return;
+    }
+    void run(async () => {
+      await linkSessionGroup(selectedTimetableId, {
+        entryIds: [a, b],
+        schoolId,
+      });
+      await loadConflicts();
+      if (tab === "editor") await loadEntries();
+    }, "toast.linked");
+  };
+
+  const autoLinkAllTeacherOverlaps = () => {
+    if (!selectedTimetableId || !canEdit || !conflicts) return;
+    const pairs = conflicts.blocking.filter(
+      (i) =>
+        i.code === "TEACHER_OVERLAP" &&
+        i.entryId &&
+        i.otherEntryId &&
+        i.entryId !== i.otherEntryId,
+    );
+    if (pairs.length === 0) {
+      notify.error(t("conflicts.autoLinkEmpty"));
+      return;
+    }
+
+    const parent = new Map<string, string>();
+    const find = (id: string): string => {
+      const p = parent.get(id) ?? id;
+      if (p !== id) {
+        const root = find(p);
+        parent.set(id, root);
+        return root;
+      }
+      return id;
+    };
+    const union = (a: string, b: string) => {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra !== rb) parent.set(ra, rb);
+    };
+    for (const issue of pairs) {
+      parent.set(issue.entryId!, issue.entryId!);
+      parent.set(issue.otherEntryId!, issue.otherEntryId!);
+      union(issue.entryId!, issue.otherEntryId!);
+    }
+    const groups = new Map<string, string[]>();
+    for (const id of parent.keys()) {
+      const root = find(id);
+      const list = groups.get(root) ?? [];
+      list.push(id);
+      groups.set(root, list);
+    }
+    const components = [...groups.values()].filter((g) => g.length >= 2);
+    if (components.length === 0) {
+      notify.error(t("conflicts.autoLinkEmpty"));
+      return;
+    }
+
+    void run(async () => {
+      for (const entryIds of components) {
+        await linkSessionGroup(selectedTimetableId, { entryIds, schoolId });
+      }
+      await loadConflicts();
+      if (tab === "editor") await loadEntries();
+    }, "conflicts.autoLinkDone");
+  };
+
+  const issueContextLabel = (issue: TimetableIssueDto): string => {
+    const parts: string[] = [];
+    if (issue.teacherId) {
+      parts.push(teacherNameById.get(issue.teacherId) ?? issue.teacherId);
+    }
+    const a = issue.entryId ? entriesById.get(issue.entryId) : undefined;
+    const b = issue.otherEntryId ? entriesById.get(issue.otherEntryId) : undefined;
+    if (a) {
+      parts.push(
+        `${classNameById.get(a.classId) ?? a.classId} · ${t(`days.${a.day}`)}${
+          a.startPeriod != null ? ` P${a.startPeriod}` : ""
+        }`,
+      );
+    }
+    if (b) {
+      parts.push(classNameById.get(b.classId) ?? b.classId);
+    }
+    if (!a && issue.classId) {
+      parts.push(classNameById.get(issue.classId) ?? issue.classId);
+    }
+    return parts.filter(Boolean).join(" → ");
+  };
+
   return (
     <div className="space-y-5 slide-up">
       <HubYearBanner
@@ -532,46 +689,62 @@ export function TimetableHubView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {timetables.map((item, index) => (
-                    <tr
-                      key={item.id}
-                      className={cn(
-                        "border-b border-[var(--ios-separator)]/55 last:border-b-0",
-                        index % 2 === 1 &&
-                          "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
-                        selectedTimetableId === item.id &&
-                          "bg-[color-mix(in_srgb,var(--ios-blue)_8%,transparent)]",
-                      )}
-                    >
-                      <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
-                        r{item.revision}
-                      </td>
-                      <td className="px-3 py-3.5">
-                        <HubStatusPill
-                          active={item.status === "PUBLISHED"}
-                          activeLabel={t(`status.${item.status}`)}
-                          inactiveLabel={t(`status.${item.status}`)}
-                        />
-                      </td>
-                      <td className="px-3 py-3.5 text-[12px] text-[var(--ios-secondary-label)]">
-                        {item.publishedAt
-                          ? new Date(item.publishedAt).toLocaleString(locale)
-                          : "—"}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => {
-                            setSelectedTimetableId(item.id);
-                            selectTab("editor");
-                          }}
-                        >
-                          {t("actions.openEditor")}
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {timetables.map((item, index) => {
+                    const openRevision = () => {
+                      setSelectedTimetableId(item.id);
+                      selectTab("editor");
+                    };
+                    return (
+                      <tr
+                        key={item.id}
+                        role="link"
+                        tabIndex={0}
+                        aria-label={t("actions.openEditor")}
+                        onClick={openRevision}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openRevision();
+                          }
+                        }}
+                        className={cn(
+                          "pressable cursor-pointer border-b border-[var(--ios-separator)]/55 last:border-b-0 transition-colors hover:bg-[color-mix(in_srgb,var(--ios-blue)_6%,transparent)] focus-visible:bg-[color-mix(in_srgb,var(--ios-blue)_8%,transparent)] focus-visible:outline-none",
+                          index % 2 === 1 &&
+                            "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
+                          selectedTimetableId === item.id &&
+                            "bg-[color-mix(in_srgb,var(--ios-blue)_8%,transparent)]",
+                        )}
+                      >
+                        <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
+                          r{item.revision}
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <HubStatusPill
+                            active={item.status === "PUBLISHED"}
+                            activeLabel={t(`status.${item.status}`)}
+                            inactiveLabel={t(`status.${item.status}`)}
+                          />
+                        </td>
+                        <td className="px-3 py-3.5 text-[12px] text-[var(--ios-secondary-label)]">
+                          {item.publishedAt
+                            ? new Date(item.publishedAt).toLocaleString(locale)
+                            : "—"}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openRevision();
+                            }}
+                          >
+                            {t("actions.openEditor")}
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </HubTableShell>
@@ -779,22 +952,103 @@ export function TimetableHubView() {
           />
         ) : (
           <div className="space-y-3">
-            {[...conflicts.blocking, ...conflicts.warnings].map((issue, i) => (
-              <div
-                key={`${issue.code}-${issue.entryId}-${i}`}
-                className={cn(
-                  "rounded-2xl border px-4 py-3",
-                  issue.severity === "BLOCKING"
-                    ? "border-[color-mix(in_srgb,var(--ios-danger)_30%,var(--ios-separator))] bg-[color-mix(in_srgb,var(--ios-danger)_6%,var(--ios-card))]"
-                    : "border-[var(--ios-separator)] bg-[var(--ios-card)]",
-                )}
-              >
-                <div className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
-                  {issue.severity} · {issue.code}
-                </div>
-                <div className="mt-1 text-[13px] text-[var(--ios-label)]">{issue.message}</div>
+            {canEdit && teacherOverlapCount > 0 ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--ios-blue)_28%,var(--ios-separator))] bg-[color-mix(in_srgb,var(--ios-blue)_6%,var(--ios-card))] px-4 py-3">
+                <p className="min-w-0 text-[13px] text-[var(--ios-label)]">
+                  {t("conflicts.autoLinkHint", { count: teacherOverlapCount })}
+                </p>
+                <Button
+                  size="sm"
+                  disabled={busy}
+                  onClick={autoLinkAllTeacherOverlaps}
+                >
+                  <Wand2 className="size-4" />
+                  {t("conflicts.autoLinkAction")}
+                </Button>
               </div>
-            ))}
+            ) : null}
+            {[...conflicts.blocking, ...conflicts.warnings].map((issue, i) => {
+              const context = issueContextLabel(issue);
+              const canLinkPair =
+                canEdit &&
+                issue.code === "TEACHER_OVERLAP" &&
+                Boolean(issue.entryId && issue.otherEntryId);
+              const canOpen =
+                Boolean(issue.entryId || issue.otherEntryId || issue.classId) ||
+                Boolean(issue.classSubjectId);
+              return (
+                <div
+                  key={`${issue.code}-${issue.entryId ?? "x"}-${issue.otherEntryId ?? "y"}-${i}`}
+                  className={cn(
+                    "rounded-2xl border px-4 py-3",
+                    issue.severity === "BLOCKING"
+                      ? "border-[color-mix(in_srgb,var(--ios-danger)_30%,var(--ios-separator))] bg-[color-mix(in_srgb,var(--ios-danger)_6%,var(--ios-card))]"
+                      : "border-[var(--ios-separator)] bg-[var(--ios-card)]",
+                  )}
+                >
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex w-full items-start gap-3 text-left",
+                      canOpen
+                        ? "pressable cursor-pointer"
+                        : "cursor-default",
+                    )}
+                    onClick={() => {
+                      if (canOpen) openIssueInEditor(issue);
+                    }}
+                    disabled={!canOpen}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                        {issue.severity} · {issue.code}
+                      </div>
+                      <div className="mt-1 text-[13px] text-[var(--ios-label)]">
+                        {issue.code === "TEACHER_OVERLAP" ||
+                        issue.code === "CLASS_OVERLAP" ||
+                        issue.code === "ROOM_OVERLAP" ||
+                        issue.code === "HOURS_MISMATCH" ||
+                        issue.code === "TEACHER_MISMATCH"
+                          ? t(`conflicts.codes.${issue.code}`)
+                          : issue.message}
+                      </div>
+                      {context ? (
+                        <div className="mt-1 text-[12px] text-[var(--ios-secondary-label)]">
+                          {context}
+                        </div>
+                      ) : null}
+                      {canOpen ? (
+                        <div className="mt-1.5 text-[11px] font-medium text-[var(--ios-blue)]">
+                          {t("conflicts.openEditor")}
+                        </div>
+                      ) : null}
+                    </div>
+                    {canOpen ? (
+                      <ChevronRight
+                        className="mt-0.5 size-4 shrink-0 text-[var(--ios-tertiary-label)]"
+                        aria-hidden
+                      />
+                    ) : null}
+                  </button>
+                  {canLinkPair ? (
+                    <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--ios-separator)]/50 pt-3">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={busy}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          linkTeacherOverlapPair(issue);
+                        }}
+                      >
+                        <Link2 className="size-4" />
+                        {t("conflicts.linkPair")}
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         )
       ) : tab === "changes" ? (

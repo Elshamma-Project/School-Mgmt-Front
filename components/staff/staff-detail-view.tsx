@@ -7,6 +7,7 @@ import {
   Clock3,
   Hash,
   IdCard,
+  KeyRound,
   Mail,
   Pencil,
   Phone,
@@ -23,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DetailRow } from "@/components/ui/detail-row";
+import { Dialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { GroupedList, GroupedListItem } from "@/components/ui/grouped-list";
@@ -34,6 +36,7 @@ import {
   type TeacherAssignmentResponse,
 } from "@/lib/api/academic";
 import {
+  createStaffLoginAccess,
   deactivateStaff,
   getStaff,
   reactivateStaff,
@@ -106,6 +109,11 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
   const [editError, setEditError] = useState<string | null>(null);
   const [editFieldErrors, setEditFieldErrors] = useState<EditFieldErrors>({});
   const [saving, setSaving] = useState(false);
+
+  const [loginAccessOpen, setLoginAccessOpen] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginEmailError, setLoginEmailError] = useState<string | null>(null);
+  const [loginAccessBusy, setLoginAccessBusy] = useState(false);
 
   const listHref = staffListPath(workspaceHome);
   const typeListHref = staffListPath(workspaceHome, type);
@@ -204,6 +212,54 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
       else notify.error(t("actionError"));
     } finally {
       setActionBusy(false);
+    }
+  }
+
+  const openLoginAccess = useCallback((data: StaffResponse) => {
+    setLoginEmail(data.contact.email?.trim() || data.loginUsername?.trim() || "");
+    setLoginEmailError(null);
+    setLoginAccessOpen(true);
+  }, []);
+
+  async function submitLoginAccess() {
+    if (!member || loginAccessBusy) return;
+    const mail = validateEmail(loginEmail, { required: true });
+    if (!mail.ok) {
+      setLoginEmailError(
+        mail.issue === "required"
+          ? t("emailRequiredForLogin")
+          : validationMessage(tCommon, mail),
+      );
+      return;
+    }
+    setLoginEmailError(null);
+    setLoginAccessBusy(true);
+    try {
+      const updated = await createStaffLoginAccess(member.id, mail.value, schoolId);
+      setMember(updated);
+      applyCrumbs(updated.fullName);
+      setLoginAccessOpen(false);
+      if (updated.temporaryPassword && updated.loginUsername) {
+        notify.success(t("loginAccessCreated"), {
+          description: t("temporaryPasswordHint", {
+            email: updated.loginUsername,
+            password: updated.temporaryPassword,
+          }),
+          duration: 12_000,
+        });
+      } else {
+        notify.success(t("loginAccessCreated"));
+      }
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) {
+        setLoginEmailError(error.message);
+        notify.error(error.message);
+      } else {
+        notify.error(t("loginAccessError"));
+      }
+    } finally {
+      setLoginAccessBusy(false);
     }
   }
 
@@ -364,6 +420,16 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
 
         {canManage && !editing ? (
           <div className="mt-3 flex w-full flex-wrap justify-center gap-2">
+            {!member.hasLoginAccount ? (
+              <Button
+                type="button"
+                size="sm"
+                leadingIcon={<KeyRound className="size-3.5 stroke-[1.75]" aria-hidden />}
+                onClick={() => openLoginAccess(member)}
+              >
+                {t("actionCreateLoginAccess")}
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="secondary"
@@ -555,84 +621,86 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
             </GroupedListItem>
           </GroupedList>
 
-          <GroupedList header={t("columns.functions")}>
-            {member.functions.map((fn) => (
-              <GroupedListItem key={fn}>
-                <DetailRow
-                  label={t.has(`functions.${fn}`) ? t(`functions.${fn}`) : fn}
-                  value={fn}
-                  icon={<IdCard className="size-4 stroke-[1.75]" />}
-                />
-              </GroupedListItem>
-            ))}
-          </GroupedList>
-
-          <GroupedList header={t("detailSubjectsSection")}>
-            {assignmentsLoading ? (
-              <GroupedListItem className="block py-3">
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-2/3" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </GroupedListItem>
-            ) : subjectsTaught.length === 0 ? (
-              <GroupedListItem className="block py-3">
-                <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
-                  {t("detailSubjectsEmpty")}
-                </p>
-              </GroupedListItem>
-            ) : (
-              subjectsTaught.map((subject) => (
-                <GroupedListItem key={subject.code}>
+          <div className="flex w-full flex-col gap-6">
+            <GroupedList header={t("columns.functions")}>
+              {member.functions.map((fn) => (
+                <GroupedListItem key={fn}>
                   <DetailRow
-                    label={subject.name}
-                    value={subject.code}
-                    icon={<BookOpen className="size-4 stroke-[1.75]" />}
+                    label={t.has(`functions.${fn}`) ? t(`functions.${fn}`) : fn}
+                    value={fn}
+                    icon={<IdCard className="size-4 stroke-[1.75]" />}
                   />
                 </GroupedListItem>
-              ))
-            )}
-          </GroupedList>
+              ))}
+            </GroupedList>
 
-          <GroupedList header={t("detailClassesSection")}>
-            {assignmentsLoading ? (
-              <GroupedListItem className="block py-3">
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-2/3" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </GroupedListItem>
-            ) : classesTaught.length === 0 ? (
-              <GroupedListItem className="block py-3">
-                <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
-                  {t("detailClassesEmpty")}
-                </p>
-              </GroupedListItem>
-            ) : (
-              classesTaught.map((clazz) => {
-                const classSubjects = assignments.filter((a) => a.classId === clazz.classId);
-                return (
-                  <GroupedListItem key={clazz.classId} className="block py-3">
-                    <div className="flex w-full gap-3">
-                      <span className="mt-0.5 inline-flex shrink-0 text-[var(--ios-secondary-label)]">
-                        <School className="size-4 stroke-[1.75]" aria-hidden />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[var(--text-body)] font-medium text-[var(--ios-label)]">
-                          {clazz.className}
-                        </p>
-                        <p className="mt-0.5 text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
-                          {classSubjects
-                            .map((a) => localizedLabel(a.subjectName, locale))
-                            .join(" · ")}
-                        </p>
-                      </div>
-                    </div>
+            <GroupedList header={t("detailSubjectsSection")}>
+              {assignmentsLoading ? (
+                <GroupedListItem className="block py-3">
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-2/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </GroupedListItem>
+              ) : subjectsTaught.length === 0 ? (
+                <GroupedListItem className="block py-3">
+                  <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
+                    {t("detailSubjectsEmpty")}
+                  </p>
+                </GroupedListItem>
+              ) : (
+                subjectsTaught.map((subject) => (
+                  <GroupedListItem key={subject.code}>
+                    <DetailRow
+                      label={subject.name}
+                      value={subject.code}
+                      icon={<BookOpen className="size-4 stroke-[1.75]" />}
+                    />
                   </GroupedListItem>
-                );
-              })
-            )}
-          </GroupedList>
+                ))
+              )}
+            </GroupedList>
+
+            <GroupedList header={t("detailClassesSection")}>
+              {assignmentsLoading ? (
+                <GroupedListItem className="block py-3">
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-2/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </GroupedListItem>
+              ) : classesTaught.length === 0 ? (
+                <GroupedListItem className="block py-3">
+                  <p className="text-[var(--text-subhead)] text-[var(--ios-secondary-label)]">
+                    {t("detailClassesEmpty")}
+                  </p>
+                </GroupedListItem>
+              ) : (
+                classesTaught.map((clazz) => {
+                  const classSubjects = assignments.filter((a) => a.classId === clazz.classId);
+                  return (
+                    <GroupedListItem key={clazz.classId} className="block py-3">
+                      <div className="flex w-full gap-3">
+                        <span className="mt-0.5 inline-flex shrink-0 text-[var(--ios-secondary-label)]">
+                          <School className="size-4 stroke-[1.75]" aria-hidden />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[var(--text-body)] font-medium text-[var(--ios-label)]">
+                            {clazz.className}
+                          </p>
+                          <p className="mt-0.5 text-[var(--text-footnote)] text-[var(--ios-secondary-label)]">
+                            {classSubjects
+                              .map((a) => localizedLabel(a.subjectName, locale))
+                              .join(" · ")}
+                          </p>
+                        </div>
+                      </div>
+                    </GroupedListItem>
+                  );
+                })
+              )}
+            </GroupedList>
+          </div>
         </div>
       )}
 
@@ -658,6 +726,61 @@ export function StaffDetailView({ type, id }: StaffDetailViewProps) {
         tone={pendingKind === "deactivate" ? "destructive" : "default"}
         onConfirm={() => void confirmAction()}
       />
+
+      <Dialog
+        open={loginAccessOpen}
+        onOpenChange={(open) => {
+          if (!open && !loginAccessBusy) {
+            setLoginAccessOpen(false);
+            setLoginEmailError(null);
+          }
+        }}
+        title={t("loginAccessTitle")}
+        description={t("loginAccessDescription", { name: member.fullName })}
+        icon={<KeyRound className="size-5 stroke-[1.75]" aria-hidden />}
+        size="md"
+        actions={[
+          {
+            label: tCommon("cancel"),
+            variant: "cancel",
+            onClick: () => {
+              if (!loginAccessBusy) setLoginAccessOpen(false);
+            },
+          },
+          {
+            label: loginAccessBusy ? t("loginAccessSubmitting") : t("loginAccessSubmit"),
+            onClick: () => {
+              if (!loginAccessBusy) void submitLoginAccess();
+            },
+            autoFocus: true,
+          },
+        ]}
+      >
+        <Field
+          label={t("emailRequiredLabel")}
+          htmlFor="staff-login-access-email"
+          required
+          error={loginEmailError ?? undefined}
+        >
+          <IconInput
+            id="staff-login-access-email"
+            type="email"
+            autoComplete="email"
+            icon={<Mail className="size-4" aria-hidden />}
+            value={loginEmail}
+            maxLength={INPUT_LIMITS.email}
+            disabled={loginAccessBusy}
+            onChange={(e) => {
+              setLoginEmail(e.target.value);
+              if (loginEmailError) setLoginEmailError(null);
+            }}
+            placeholder="prenom.nom@exemple.cm"
+          />
+        </Field>
+        <p className="mt-2 text-[12px] leading-relaxed text-[var(--ios-secondary-label)]">
+          {t("loginAccessHint")}
+        </p>
+      </Dialog>
     </div>
   );
 }

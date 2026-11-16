@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  CalendarDays,
   CheckCircle2,
   ChevronRight,
   CircleAlert,
@@ -96,11 +97,18 @@ function categoryStyle(category: NotificationCategory): CategoryStyle {
       Icon: category === "STAFF_SIGNAL" ? Megaphone : CircleAlert,
     };
   }
-  if (category === "CORRECTION_DECIDED") {
+  if (category === "CORRECTION_DECIDED" || category === "TIMETABLE_CHANGE_DECIDED") {
     return {
       chip: "bg-[color-mix(in_srgb,var(--ios-success)_14%,var(--ios-card))] text-[var(--ios-success)]",
       iconWrap: "bg-[color-mix(in_srgb,var(--ios-success)_14%,var(--ios-card))] text-[var(--ios-success)]",
       Icon: CheckCircle2,
+    };
+  }
+  if (category === "TIMETABLE_PUBLISHED") {
+    return {
+      chip: "bg-[color-mix(in_srgb,var(--ios-success)_14%,var(--ios-card))] text-[var(--ios-success)]",
+      iconWrap: "bg-[color-mix(in_srgb,var(--ios-success)_14%,var(--ios-card))] text-[var(--ios-success)]",
+      Icon: CalendarDays,
     };
   }
   if (category === "REPORT_SHEET_REJECTED") {

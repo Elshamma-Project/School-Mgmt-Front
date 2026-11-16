@@ -39,7 +39,12 @@ function accentFor(
       chip: "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]",
     };
   }
-  if (category === "CORRECTION_DECIDED" || severity === "SUCCESS") {
+  if (
+    category === "CORRECTION_DECIDED" ||
+    category === "TIMETABLE_PUBLISHED" ||
+    category === "TIMETABLE_CHANGE_DECIDED" ||
+    severity === "SUCCESS"
+  ) {
     return {
       chip: "bg-[var(--ios-success-soft)] text-[var(--ios-success)]",
     };

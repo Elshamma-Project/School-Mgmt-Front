@@ -136,6 +136,8 @@ export function RoleDashboard() {
   const openSessions = summary?.sessions?.openSessions ?? [];
   const recent = summary?.notifications.recent ?? [];
   const maxCycle = Math.max(1, ...(enrollments?.byCycle.map((c) => c.enrolledCount) ?? [1]));
+  const sessionsAttention = data.attention.find((item) => item.kind === "sessions");
+  const otherAttention = data.attention.filter((item) => item.kind !== "sessions");
 
   return (
     <div className="space-y-6 slide-up">
@@ -195,6 +197,25 @@ export function RoleDashboard() {
                   {data.yearLocked ? ` · ${t("yearLockedShort")}` : ""}
                 </span>
               ) : null}
+              {!data.loading && sessionsAttention ? (
+                sessionsAttention.href ? (
+                  <Link href={sessionsAttention.href} className="pressable">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ios-info-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ios-blue)]">
+                      <ClipboardList className="size-3.5 stroke-[1.75]" aria-hidden />
+                      {t("attention.sessions", {
+                        count: sessionsAttention.count ?? 0,
+                      })}
+                    </span>
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ios-info-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ios-blue)]">
+                    <ClipboardList className="size-3.5 stroke-[1.75]" aria-hidden />
+                    {t("attention.sessions", {
+                      count: sessionsAttention.count ?? 0,
+                    })}
+                  </span>
+                )
+              ) : null}
               {isMock ? (
                 <span className="inline-flex items-center rounded-full bg-[var(--ios-fill)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ios-secondary-label)]">
                   {tCommon("demoBadge")}
@@ -213,9 +234,9 @@ export function RoleDashboard() {
         />
       ) : null}
 
-      {!data.loading && data.attention.length > 0 ? (
+      {!data.loading && otherAttention.length > 0 ? (
         <section className="flex flex-wrap gap-2">
-          {data.attention.map((item) => {
+          {otherAttention.map((item) => {
             const label =
               item.kind === "yearLocked"
                 ? t("attention.yearLocked")

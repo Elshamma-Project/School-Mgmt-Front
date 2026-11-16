@@ -7,6 +7,7 @@ type EmptyStateProps = {
   icon?: ReactNode;
   action?: ReactNode;
   className?: string;
+  descriptionClassName?: string;
 };
 
 export function EmptyState({
@@ -15,6 +16,7 @@ export function EmptyState({
   icon,
   action,
   className,
+  descriptionClassName,
 }: EmptyStateProps) {
   return (
     <div
@@ -31,7 +33,12 @@ export function EmptyState({
       <h2 className="text-[var(--text-body)] font-semibold text-[var(--ios-label)]">
         {title}
       </h2>
-      <p className="mt-1.5 max-w-sm text-[var(--text-subhead)] leading-relaxed text-[var(--ios-secondary-label)]">
+      <p
+        className={cn(
+          "mt-1.5 max-w-sm text-[var(--text-subhead)] leading-relaxed text-[var(--ios-secondary-label)]",
+          descriptionClassName,
+        )}
+      >
         {description}
       </p>
       {action ? <div className="mt-5">{action}</div> : null}
