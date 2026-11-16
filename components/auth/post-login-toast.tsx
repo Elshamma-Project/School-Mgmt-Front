@@ -7,6 +7,7 @@ import { notify } from "@/lib/ui/notify";
 
 /**
  * Affiche le toast de connexion une fois le shell app monté (dashboard prêt).
+ * Consomme le flash une seule fois au montage (deps stables — évite d’annuler le timer).
  */
 export function PostLoginToast() {
   const t = useTranslations("auth");
@@ -15,7 +16,6 @@ export function PostLoginToast() {
     const flash = consumePostLoginFlash();
     if (!flash) return;
 
-    // Laisse le premier paint du dashboard se stabiliser avant le toast.
     const timer = window.setTimeout(() => {
       if (flash.kind === "loginSuccessDemo") {
         notify.success(t("loginSuccessDemo"), {
@@ -27,7 +27,9 @@ export function PostLoginToast() {
     }, 280);
 
     return () => window.clearTimeout(timer);
-  }, [t]);
+    // Une seule fois : le flash est déjà consommé ; [t] ferait perdre le toast.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return null;
 }

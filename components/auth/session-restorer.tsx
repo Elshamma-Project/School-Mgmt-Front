@@ -4,14 +4,16 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { LOGOUT_QUERY } from "@/lib/auth/constants";
 import { consumeLoggedOutFlag } from "@/lib/auth/logout-client";
+import { clearReturnPath, resolvePostLoginDestination } from "@/lib/auth/navigation";
+import { clearLocalAuthState } from "@/lib/auth/session-cache";
 import { useRouter } from "@/i18n/navigation";
-import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { syncAuthCookie, useAuthStore } from "@/stores/auth-store";
 import { primaryRole } from "@/types/auth";
 
 /**
  * Sur /login : restaure la session après montage (pas au 1er rendu SSR).
  * Ignore la restauration juste après une déconnexion volontaire.
+ * Rejoue l’URL deep-link mémorisée si le rôle y a accès.
  */
 export function SessionRestorer() {
   const router = useRouter();
@@ -19,7 +21,6 @@ export function SessionRestorer() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
   const user = useAuthStore((s) => s.user);
-  const clearSession = useAuthStore((s) => s.clearSession);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -50,9 +51,9 @@ export function SessionRestorer() {
       searchParams.get(LOGOUT_QUERY) === "1" || consumeLoggedOutFlag();
 
     if (justLoggedOut) {
-      clearSession();
-      syncAuthCookie(false);
-      // Nettoie ?loggedOut=1 sans repasser par le proxy (évite un rebond cookie → /).
+      clearLocalAuthState();
+      clearReturnPath();
+      // Nettoie ?loggedOut=1 sans repasser par le proxy.
       if (searchParams.get(LOGOUT_QUERY) === "1" && typeof window !== "undefined") {
         const url = new URL(window.location.href);
         url.searchParams.delete(LOGOUT_QUERY);
@@ -74,8 +75,8 @@ export function SessionRestorer() {
       router.replace("/change-password");
       return;
     }
-    router.replace(getRoleHomePath(role));
-  }, [accessToken, clearSession, mustChangePassword, ready, router, searchParams, user]);
+    router.replace(resolvePostLoginDestination(role));
+  }, [accessToken, mustChangePassword, ready, router, searchParams, user]);
 
   return null;
 }

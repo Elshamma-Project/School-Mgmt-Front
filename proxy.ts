@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   AUTH_COOKIE_LEGACY_NAME,
   AUTH_COOKIE_NAME,
-  AUTH_COOKIE_PRESENT,
 } from "@/lib/auth/constants";
 import { LOGOUT_QUERY } from "@/lib/auth/constants";
 import { routing } from "@/i18n/routing";
@@ -22,13 +21,6 @@ function stripLocale(pathname: string): { locale: string; path: string } {
   return { locale: routing.defaultLocale, path: pathname || "/" };
 }
 
-function hasSessionCookie(request: NextRequest): boolean {
-  const current = request.cookies.get(AUTH_COOKIE_NAME)?.value;
-  if (current === AUTH_COOKIE_PRESENT || Boolean(current)) return true;
-  const legacy = request.cookies.get(AUTH_COOKIE_LEGACY_NAME)?.value;
-  return Boolean(legacy);
-}
-
 function clearSessionCookies(response: NextResponse) {
   response.cookies.set(AUTH_COOKIE_NAME, "", { path: "/", maxAge: 0 });
   response.cookies.set(AUTH_COOKIE_LEGACY_NAME, "", { path: "/", maxAge: 0 });
@@ -36,27 +28,20 @@ function clearSessionCookies(response: NextResponse) {
 
 /**
  * Proxy léger (i18n).
- * Ne redirige PLUS vers /login si le cookie manque : les jetons vivent en localStorage
- * et un F5 avant JS ne doit pas déconnecter. AuthGuard client = source de vérité.
+ * Ne redirige PAS vers /login si le cookie manque : jetons en localStorage,
+ * AuthGuard client = source de vérité.
+ * Ne redirige PAS /login → / sur cookie seul (évite boucle cookie périmé).
  */
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const { locale, path } = stripLocale(pathname);
-  const hasSession = hasSessionCookie(request);
+  const { path } = stripLocale(pathname);
   const justLoggedOut = request.nextUrl.searchParams.get(LOGOUT_QUERY) === "1";
 
-  // Après déconnexion : rester sur /login même si le cookie opaque n’est pas encore parti.
+  // Après déconnexion : rester sur /login et purger les cookies de présence.
   if (path === "/login" && justLoggedOut) {
     const response = intlMiddleware(request);
     clearSessionCookies(response);
     return response;
-  }
-
-  // Cookie opaque présent + page login → évite le formulaire inutile.
-  if (hasSession && path === "/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${locale}`;
-    return NextResponse.redirect(url);
   }
 
   return intlMiddleware(request);

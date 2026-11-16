@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import {
   canRoleAccessPath,
@@ -33,12 +34,10 @@ export function RoleGuard({ children }: RoleGuardProps) {
     }
   }, [pathname, role, router]);
 
-  if (!role) return null;
-
-  if (pathname === "/" || !canRoleAccessPath(role, pathname)) {
+  if (!role || pathname === "/" || !canRoleAccessPath(role, pathname)) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-[var(--ios-secondary-label)]">
-        …
+      <div className="min-h-dvh bg-[var(--ios-bg)] px-5 py-8 md:px-8">
+        <PageSkeleton variant="home" />
       </div>
     );
   }

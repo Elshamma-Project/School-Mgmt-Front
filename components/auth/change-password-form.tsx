@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { IconInput } from "@/components/ui/icon-input";
 import { changePassword } from "@/lib/api/auth";
-import { getRoleHomePath } from "@/lib/auth/workspaces";
+import { resolvePostLoginDestination } from "@/lib/auth/navigation";
+import { queuePostLoginFlash } from "@/lib/ui/post-login-flash";
 import { notify } from "@/lib/ui/notify";
 import {
   INPUT_LIMITS,
@@ -84,8 +85,9 @@ export function ChangePasswordForm() {
         applyTokens(tokens);
         notify.success(tProfile("passwordSaved"));
       }
+      queuePostLoginFlash({ kind: "loginSuccess" });
       const role = primaryRole(useAuthStore.getState().user) ?? primaryRole(user);
-      router.replace(role ? getRoleHomePath(role) : "/");
+      router.replace(role ? resolvePostLoginDestination(role) : "/");
     } catch (error) {
       if (error instanceof ApiError) {
         setFormError(error.message || t("invalidCredentials"));

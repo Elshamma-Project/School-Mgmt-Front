@@ -21,6 +21,8 @@ export type UiCapability =
   | "reopenClosedSequence"
   | "approveGradeCorrections"
   | "reviewReportSheets"
+  /** Visa Surveillant Général sur fiche de report (Q-38). */
+  | "visaSupervisorReportSheet"
   | "visaPrincipalReportSheet"
   | "manageAdminAccounts"
   | "manageGradeTemplates"
@@ -33,13 +35,13 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
   PARENT: ["viewOwnChildren", "viewOwnGrades", "downloadAnnualReport"],
   TEACHER: ["viewTeacherClasses", "editOpenSequenceGrades", "viewOwnProfile"],
   SURVEILLANT_GENERAL: [
-    "manageReportCards",
     "reviewReportSheets",
-    "viewAuditJournal",
+    "visaSupervisorReportSheet",
     "viewOwnProfile",
   ],
   ADMINISTRATION: [
     "reviewReportSheets",
+    "visaSupervisorReportSheet",
     "manageSchoolStructure",
     "manageStaff",
     "manageStudents",
@@ -53,6 +55,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
   ],
   DIRECTOR: [
     "reviewReportSheets",
+    "visaSupervisorReportSheet",
     "visaPrincipalReportSheet",
     "approveGradeCorrections",
     "manageSchoolStructure",
@@ -71,6 +74,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
   ],
   SUPER_ADMIN: [
     "reviewReportSheets",
+    "visaSupervisorReportSheet",
     "visaPrincipalReportSheet",
     "approveGradeCorrections",
     "manageSchoolStructure",

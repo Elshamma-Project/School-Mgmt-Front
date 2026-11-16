@@ -3,6 +3,7 @@ import {
   LOGOUT_FLAG_KEY,
   LOGOUT_QUERY,
 } from "@/lib/auth/constants";
+import { clearReturnPath } from "@/lib/auth/navigation";
 import {
   clearLocalAuthState,
   withTimeoutSignal,
@@ -57,6 +58,7 @@ export async function performClientLogout(locale: string): Promise<void> {
 
   try {
     clearLocalAuthState();
+    clearReturnPath();
     markLoggedOut();
   } catch {
     /* dernier recours : au moins cookie + store */
@@ -65,6 +67,7 @@ export async function performClientLogout(locale: string): Promise<void> {
     } catch {
       /* ignore */
     }
+    clearReturnPath();
     markLoggedOut();
   }
 

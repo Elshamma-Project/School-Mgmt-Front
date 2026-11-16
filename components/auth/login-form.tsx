@@ -18,12 +18,12 @@ import {
   writeRememberedEmail,
   writeRememberMe,
 } from "@/lib/auth/remember";
+import { resolvePostLoginDestination } from "@/lib/auth/navigation";
 import {
   isAbortError,
   prepareForNewSession,
   withTimeoutSignal,
 } from "@/lib/auth/session-cache";
-import { getRoleHomePath } from "@/lib/auth/workspaces";
 import { getTenantConfig } from "@/lib/tenant/config";
 import { queuePostLoginFlash } from "@/lib/ui/post-login-flash";
 import { useRouter } from "@/i18n/navigation";
@@ -151,7 +151,7 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
           kind: "loginSuccessDemo",
           roleLabel: tRoles(`${role}.label`),
         });
-        router.replace(getRoleHomePath(role));
+        router.replace(resolvePostLoginDestination(role));
         return;
       } catch {
         setFormError(t("invalidCredentials"));
@@ -220,7 +220,7 @@ export function LoginForm({ schoolId: schoolIdFromServer }: LoginFormProps) {
         router.replace("/change-password");
       } else {
         queuePostLoginFlash({ kind: "loginSuccess" });
-        router.replace(getRoleHomePath(homeRole));
+        router.replace(resolvePostLoginDestination(homeRole));
       }
       return;
     } catch (error) {

@@ -96,6 +96,7 @@ async function tryRefreshAccessToken(clearOnFailure: boolean): Promise<RefreshOu
     const openedRefresh = resolveToken(refreshToken);
 
     if (isMock || !openedRefresh) {
+      // Pas de clear ici : l’appelant décide (forceSessionExpiredRedirect ou non).
       if (clearOnFailure) clearSession();
       return "unavailable";
     }
@@ -209,9 +210,11 @@ export async function apiRequest<T>(
     if (outcome === "transient_failed") {
       throw new ApiError(503, "auth_refresh_unavailable");
     }
-    if (clearSessionOnFailure && outcome !== "auth_failed") {
-      // auth_failed a déjà clearSession dans tryRefreshAccessToken
-      useAuthStore.getState().clearSession();
+    if (clearSessionOnFailure) {
+      // Purge caches + navigation dure (anti Retour vers page zombie).
+      // auth_failed a déjà clearSession ; on complète via forceSessionExpiredRedirect.
+      const { forceSessionExpiredRedirect } = await import("@/lib/auth/navigation");
+      forceSessionExpiredRedirect();
     }
     const problem = await parseProblem(response);
     throwHttpError(401, problem ?? { title: "UNAUTHORIZED", detail: "Authentication required", status: 401 });

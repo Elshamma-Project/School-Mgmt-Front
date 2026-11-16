@@ -59,6 +59,7 @@ import {
   updateEvaluationSessionSchedule,
   type EvaluationSessionResponse,
   type GradeAuditEntryResponse,
+  type GradeAuditPageResponse,
   type GradeReportSheetResponse,
   type GradingSchemeResponse,
 } from "@/lib/api/grading";
@@ -119,13 +120,18 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const canManageSchemes = userHasCapability(roles, "manageGradeTemplates");
 
   const canReviewReportSheets = userHasCapability(roles, "reviewReportSheets");
+  const canVisaSupervisor = userHasCapability(roles, "visaSupervisorReportSheet");
   const canVisaPrincipal = userHasCapability(roles, "visaPrincipalReportSheet");
   const canApproveCorrections = userHasCapability(roles, "approveGradeCorrections");
+  const canViewAudits = userHasCapability(roles, "viewAuditJournal");
+  /** SG : lecture année + fiches ; pas de barèmes ni journal d’audit (docs/05). */
+  const isSurveillantGeneral = role === "SURVEILLANT_GENERAL";
+  const canLoadSchemes = canManageSchemes || canOpenClose || roles.includes("TEACHER");
 
   const requestedTab = parseGradesTab(searchParams.get("tab"));
   // SG : atterrir sur les fiches de report (visas), pas sur les séances.
   const preferredDefault: GradesTab =
-    role === "SURVEILLANT_GENERAL" && canReviewReportSheets ? "reportSheets" : "sessions";
+    isSurveillantGeneral && canReviewReportSheets ? "reportSheets" : "sessions";
   const resolvedTab: GradesTab =
     !searchParams.get("tab") ? preferredDefault : requestedTab;
   const tab: GradesTab =
@@ -140,7 +146,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
     if (key === "reportSheets") return canReviewReportSheets;
     if (key === "corrections") return canApproveCorrections;
     if (key === "schemes") return canManageSchemes;
-    if (role === "SURVEILLANT_GENERAL") return key === "reportSheets";
+    if (isSurveillantGeneral) return key === "reportSheets";
     return true;
   });
   const [query, setQuery] = useState("");
@@ -235,48 +241,96 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [years, schemeRows, auditPage] = await Promise.all([
-        listAcademicYears({ page: 0, size: 20, schoolId }),
-        listGradingSchemes(schoolId),
-        listGradeAudits({ page: 0, size: 20, schoolId }),
-      ]);
-      const year =
-        years.content.find((y) => y.current) ??
-        years.content.find((y) => y.status === "ACTIVE") ??
-        years.content[0] ??
+      // Année d’abord, isolée : un 403 barèmes/audit ne doit jamais masquer l’année (cas SG).
+      let year: Awaited<ReturnType<typeof listAcademicYears>>["content"][number] | null =
         null;
+      try {
+        const years = await listAcademicYears({ page: 0, size: 20, schoolId });
+        year =
+          years.content.find((y) => y.current) ??
+          years.content.find((y) => y.status === "ACTIVE") ??
+          years.content[0] ??
+          null;
+      } catch (error) {
+        if (!isAuthFailure(error)) {
+          notify.error(error instanceof ApiError ? error.message : t("loadError"));
+        }
+        setYearId(null);
+        setYearLabel(null);
+        setYearStatus(null);
+        setYearLocked(false);
+        setSessions([]);
+        setSchemes([]);
+        setAudits([]);
+        setAuditTotalElements(0);
+        setAuditTotalPages(0);
+        return;
+      }
+
       setYearId(year?.id ?? null);
       setYearLabel(year?.label ?? null);
       setYearStatus(year?.status ?? null);
       setYearLocked(Boolean(year?.locked));
-      setSchemes(schemeRows);
-      setAudits(auditPage.content);
-      setAuditTotalElements(auditPage.totalElements);
-      setAuditTotalPages(auditPage.totalPages);
 
-      if (year) {
-        const sessionRows = await listEvaluationSessions({
-          academicYearId: year.id,
-          schoolId,
-        });
-        setSessions(sessionRows);
+      const emptyAudits: GradeAuditPageResponse = {
+        content: [],
+        page: 0,
+        size: 20,
+        totalElements: 0,
+        totalPages: 0,
+      };
+
+      const [schemeOutcome, auditOutcome, sessionOutcome] = await Promise.allSettled([
+        canLoadSchemes
+          ? listGradingSchemes(schoolId)
+          : Promise.resolve([] as GradingSchemeResponse[]),
+        canViewAudits
+          ? listGradeAudits({ page: 0, size: 20, schoolId })
+          : Promise.resolve(emptyAudits),
+        year
+          ? listEvaluationSessions({ academicYearId: year.id, schoolId })
+          : Promise.resolve([] as EvaluationSessionResponse[]),
+      ]);
+
+      if (schemeOutcome.status === "fulfilled") {
+        setSchemes(schemeOutcome.value);
+      } else {
+        setSchemes([]);
+        if (!isAuthFailure(schemeOutcome.reason) && canLoadSchemes) {
+          notify.error(
+            schemeOutcome.reason instanceof ApiError
+              ? schemeOutcome.reason.message
+              : t("loadError"),
+          );
+        }
+      }
+
+      if (auditOutcome.status === "fulfilled") {
+        setAudits(auditOutcome.value.content);
+        setAuditTotalElements(auditOutcome.value.totalElements);
+        setAuditTotalPages(auditOutcome.value.totalPages);
+      } else {
+        setAudits([]);
+        setAuditTotalElements(0);
+        setAuditTotalPages(0);
+      }
+
+      if (sessionOutcome.status === "fulfilled") {
+        setSessions(sessionOutcome.value);
       } else {
         setSessions([]);
+        if (!isAuthFailure(sessionOutcome.reason)) {
+          notify.error(
+            sessionOutcome.reason instanceof ApiError
+              ? sessionOutcome.reason.message
+              : t("loadError"),
+          );
+        }
       }
-    } catch (error) {
-      if (isAuthFailure(error)) return;
-      if (error instanceof ApiError) notify.error(error.message);
-      else notify.error(t("loadError"));
-      setYearId(null);
-      setSessions([]);
-      setSchemes([]);
-      setAudits([]);
-      setAuditTotalElements(0);
-      setAuditTotalPages(0);
     } finally {
       setLoading(false);
     }
-  }, [schoolId, t]);
+  }, [canLoadSchemes, canViewAudits, schoolId, t]);
 
   async function onEnsureSessions() {
     if (!yearId || ensuring || yearLocked) return;
@@ -695,14 +749,23 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
         emptyLabel={t("yearEmpty")}
       />
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+      <div
+        className={cn(
+          "grid gap-2.5 sm:gap-3",
+          isSurveillantGeneral
+            ? "grid-cols-2 lg:grid-cols-2"
+            : "grid-cols-2 lg:grid-cols-4",
+        )}
+      >
         <StatCard
           label={t("stats.sessions")}
           value={stats.sessions}
           loading={loading}
           tone="blue"
-          active={tab === "sessions"}
-          onSelect={() => selectTab("sessions")}
+          active={!isSurveillantGeneral && tab === "sessions"}
+          onSelect={
+            isSurveillantGeneral ? undefined : () => selectTab("sessions")
+          }
           icon={<ClipboardList className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
         <StatCard
@@ -712,24 +775,28 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
           tone="green"
           icon={<Shield className="size-[18px] stroke-[1.75]" aria-hidden />}
         />
-        <StatCard
-          label={t("stats.schemes")}
-          value={stats.schemes}
-          loading={loading}
-          tone="amber"
-          active={tab === "schemes"}
-          onSelect={() => selectTab("schemes")}
-          icon={<Scale className="size-[18px] stroke-[1.75]" aria-hidden />}
-        />
-        <StatCard
-          label={t("stats.audits")}
-          value={stats.audits}
-          loading={loading}
-          tone="slate"
-          active={tab === "audits"}
-          onSelect={() => selectTab("audits")}
-          icon={<ClipboardList className="size-[18px] stroke-[1.75]" aria-hidden />}
-        />
+        {!isSurveillantGeneral ? (
+          <>
+            <StatCard
+              label={t("stats.schemes")}
+              value={stats.schemes}
+              loading={loading}
+              tone="amber"
+              active={tab === "schemes"}
+              onSelect={() => selectTab("schemes")}
+              icon={<Scale className="size-[18px] stroke-[1.75]" aria-hidden />}
+            />
+            <StatCard
+              label={t("stats.audits")}
+              value={stats.audits}
+              loading={loading}
+              tone="slate"
+              active={tab === "audits"}
+              onSelect={() => selectTab("audits")}
+              icon={<ClipboardList className="size-[18px] stroke-[1.75]" aria-hidden />}
+            />
+          </>
+        ) : null}
       </div>
 
       <HubToolbar
@@ -932,7 +999,7 @@ export function GradesHubView({ modulePath = "grades" }: GradesHubViewProps) {
           defaultTerm={activeOpenTerm ?? 1}
           activeTerm={activeOpenTerm}
           query={query}
-          canVisaSupervisor={canReviewReportSheets}
+          canVisaSupervisor={canVisaSupervisor}
           canVisaPrincipal={canVisaPrincipal}
         />
       ) : tab === "corrections" ? (
