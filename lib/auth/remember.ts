@@ -4,8 +4,8 @@
  * - Jetons auth : toujours localStorage (survivent à F5) — remember ne change plus le storage
  */
 
-export const REMEMBER_ME_KEY = "smels-remember-me";
-export const REMEMBER_EMAIL_KEY = "smels-remember-email";
+export const REMEMBER_ME_KEY = "bee-sm-remember-me";
+export const REMEMBER_EMAIL_KEY = "bee-sm-remember-email";
 
 export function readRememberMe(): boolean {
   if (typeof window === "undefined") return false;

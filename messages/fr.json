@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "SMELS",
+    "appName": "Bee SM",
     "schoolName": "El Shammah",
     "loading": "Chargement…",
     "loadingTips": {
@@ -72,10 +72,10 @@
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
     "rememberMe": "Se souvenir de moi",
-    "rememberMeHint": "Mémorise l’e-mail et garde la session ouverte. Le mot de passe n’est jamais enregistré par SMELS (utilisez le gestionnaire du navigateur si besoin).",
+    "rememberMeHint": "Mémorise l’e-mail et garde la session ouverte. Le mot de passe n’est jamais enregistré par Bee SM (utilisez le gestionnaire du navigateur si besoin).",
     "forgotPasswordLink": "Mot de passe oublié ?",
     "forgotPasswordTitle": "Mot de passe oublié",
-    "forgotPasswordSubtitle": "Indiquez l’e-mail de votre compte SMELS.",
+    "forgotPasswordSubtitle": "Indiquez l’e-mail de votre compte Bee SM.",
     "forgotPasswordHint": "Si un compte existe pour cet e-mail, l’administration de l’établissement sera informée. L’envoi automatique d’e-mail arrivera plus tard : en attendant, le secrétariat peut réinitialiser votre accès.",
     "forgotPasswordSubmit": "Envoyer la demande",
     "forgotPasswordSubmitting": "Envoi…",
@@ -95,7 +95,7 @@
     "logoutPreparingHint": "Sécurisation de votre espace…",
     "openProfile": "Ouvrir mon profil",
     "logoutConfirmTitle": "Se déconnecter ?",
-    "logoutConfirmDescription": "Votre session SMELS sera fermée sur cet appareil. Vous pourrez vous reconnecter quand vous voulez.",
+    "logoutConfirmDescription": "Votre session Bee SM sera fermée sur cet appareil. Vous pourrez vous reconnecter quand vous voulez.",
     "changePasswordTitle": "Changer le mot de passe",
     "changePasswordSubtitle": "Vous devez définir un nouveau mot de passe avant de continuer.",
     "currentPassword": "Mot de passe actuel",
@@ -301,7 +301,7 @@
   },
   "home": {
     "title": "Accueil",
-    "description": "Tableau de bord SMELS.",
+    "description": "Tableau de bord Bee SM.",
     "greeting": "Bonjour, {name}",
     "greetingMorning": "Bonjour",
     "greetingAfternoon": "Bon après-midi",
@@ -907,7 +907,7 @@
     "profileType": "Profil lié",
     "identitySection": "Identité",
     "identityUnavailableHint": "Noms protégés",
-    "identityUnavailableBody": "Les élèves et tuteurs ne peuvent pas modifier leur nom ici : il figure dans la base et sur les bulletins. Seule l’administration peut le corriger. Vous pouvez toutefois définir une photo de profil (affichage SMELS uniquement, jamais sur le bulletin).",
+    "identityUnavailableBody": "Les élèves et tuteurs ne peuvent pas modifier leur nom ici : il figure dans la base et sur les bulletins. Seule l’administration peut le corriger. Vous pouvez toutefois définir une photo de profil (affichage Bee SM uniquement, jamais sur le bulletin).",
     "identityLocalOnlyHint": "Enregistré localement — aucune fiche Staff liée.",
     "lastName": "Nom",
     "firstName": "Prénom",

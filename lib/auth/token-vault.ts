@@ -3,7 +3,7 @@
  * Empêche de laisser un JWT lisible en clair dans DevTools / dumps storage.
  */
 
-const PREFIX = "smels.v1.";
+const PREFIX = "bee-sm.v1.";
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -32,7 +32,7 @@ function xorMask(bytes: Uint8Array, key: string): Uint8Array {
   return out;
 }
 
-const MASK_KEY = "smels-auth-at-rest-v1";
+const MASK_KEY = "bee-sm-auth-at-rest-v1";
 
 export function isSealedSecret(value: string): boolean {
   return value.startsWith(PREFIX);

@@ -1,4 +1,4 @@
-# SMELS front-office — règles assistants
+# Bee SM front-office — règles assistants
 
 > Complète `AGENTS.md` (règles Next.js générées). Lire aussi `docs/10-front-auth-multitenant.md`.
 

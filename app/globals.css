@@ -210,24 +210,24 @@ html.dark ::selection {
     color-mix(in srgb, var(--ios-card) 70%, transparent),
     transparent
   );
-  animation: smels-shimmer 1.2s ease-in-out infinite;
+  animation: bee-sm-shimmer 1.2s ease-in-out infinite;
 }
 
-@keyframes smels-shimmer {
+@keyframes bee-sm-shimmer {
   100% {
     transform: translateX(100%);
   }
 }
 
 .fade-in {
-  animation: smels-fade-in var(--duration-normal) var(--ease-emphasized) both;
+  animation: bee-sm-fade-in var(--duration-normal) var(--ease-emphasized) both;
 }
 
 .slide-up {
-  animation: smels-slide-up var(--duration-slow) var(--ease-emphasized) both;
+  animation: bee-sm-slide-up var(--duration-slow) var(--ease-emphasized) both;
 }
 
-@keyframes smels-fade-in {
+@keyframes bee-sm-fade-in {
   from {
     opacity: 0;
   }
@@ -236,7 +236,7 @@ html.dark ::selection {
   }
 }
 
-@keyframes smels-slide-up {
+@keyframes bee-sm-slide-up {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -247,7 +247,7 @@ html.dark ::selection {
   }
 }
 
-@keyframes smels-spin {
+@keyframes bee-sm-spin {
   to {
     transform: rotate(360deg);
   }

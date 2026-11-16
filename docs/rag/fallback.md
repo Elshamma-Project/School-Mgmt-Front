@@ -4,8 +4,8 @@ priority: 0
 routes:
   - path: /**
 title:
-  fr: Aide SMELS
-  en: SMELS help
+  fr: Aide Bee SM
+  en: Bee SM help
 ---
 
 ## FR

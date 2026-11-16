@@ -1023,8 +1023,8 @@ export const HELP_CATALOG: HelpArticle[] = [
       }
     ],
     "title": {
-      "fr": "Aide SMELS",
-      "en": "SMELS help"
+      "fr": "Aide Bee SM",
+      "en": "Bee SM help"
     },
     "sections": [
       {

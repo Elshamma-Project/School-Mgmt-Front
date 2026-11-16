@@ -52,7 +52,7 @@ export function LogoutLoading({ open }: LogoutLoadingProps) {
       <div className="flex w-full max-w-[300px] flex-col items-center text-center">
         <div className="relative">
           <BrandMark size="xl" />
-          <span className="absolute -inset-4 rounded-full border border-[var(--ios-secondary-label)]/20 animate-[smels-spin_1.4s_linear_infinite]" />
+          <span className="absolute -inset-4 rounded-full border border-[var(--ios-secondary-label)]/20 animate-[bee-sm-spin_1.4s_linear_infinite]" />
         </div>
 
         <Spinner size="lg" tone="default" className="mt-8" label={t("logoutSubmitting")} />

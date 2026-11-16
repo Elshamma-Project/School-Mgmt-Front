@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "SMELS",
+    "appName": "Bee SM",
     "schoolName": "El Shammah",
     "loading": "Loading…",
     "loadingTips": {
@@ -72,10 +72,10 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "rememberMe": "Remember me",
-    "rememberMeHint": "Remembers your email and keeps the session. SMELS never stores your password (use the browser password manager if you want).",
+    "rememberMeHint": "Remembers your email and keeps the session. Bee SM never stores your password (use the browser password manager if you want).",
     "forgotPasswordLink": "Forgot password?",
     "forgotPasswordTitle": "Forgot password",
-    "forgotPasswordSubtitle": "Enter the email of your SMELS account.",
+    "forgotPasswordSubtitle": "Enter the email of your Bee SM account.",
     "forgotPasswordHint": "If an account exists for this email, school administration will be notified. Automatic email delivery comes later — until then, the office can reset your access.",
     "forgotPasswordSubmit": "Send request",
     "forgotPasswordSubmitting": "Sending…",
@@ -95,7 +95,7 @@
     "logoutPreparingHint": "Securing your workspace…",
     "openProfile": "Open my profile",
     "logoutConfirmTitle": "Sign out?",
-    "logoutConfirmDescription": "Your SMELS session will end on this device. You can sign back in whenever you like.",
+    "logoutConfirmDescription": "Your Bee SM session will end on this device. You can sign back in whenever you like.",
     "changePasswordTitle": "Change password",
     "changePasswordSubtitle": "You must set a new password before continuing.",
     "currentPassword": "Current password",
@@ -301,7 +301,7 @@
   },
   "home": {
     "title": "Home",
-    "description": "SMELS dashboard.",
+    "description": "Bee SM dashboard.",
     "greeting": "Hello, {name}",
     "greetingMorning": "Good morning",
     "greetingAfternoon": "Good afternoon",
@@ -907,7 +907,7 @@
     "profileType": "Linked profile",
     "identitySection": "Identity",
     "identityUnavailableHint": "Protected names",
-    "identityUnavailableBody": "Students and guardians cannot change their name here: it is stored in the database and printed on report cards. Only administration can correct it. You can still set a profile photo (SMELS UI only — never on report cards).",
+    "identityUnavailableBody": "Students and guardians cannot change their name here: it is stored in the database and printed on report cards. Only administration can correct it. You can still set a profile photo (Bee SM UI only — never on report cards).",
     "identityLocalOnlyHint": "Saved locally — no linked Staff record.",
     "lastName": "Last name",
     "firstName": "First name",

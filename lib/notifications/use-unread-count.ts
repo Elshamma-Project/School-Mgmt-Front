@@ -5,7 +5,7 @@ import { fetchUnreadNotificationCount } from "@/lib/api/notifications";
 import { useAuthStore } from "@/stores/auth-store";
 import { isAuthFailure } from "@/types/api";
 
-const EVENT = "smels:notifications-unread-changed";
+const EVENT = "bee-sm:notifications-unread-changed";
 
 /** Invalide les badges (après lecture / accusé, etc.). */
 export function bumpUnreadNotificationCount() {

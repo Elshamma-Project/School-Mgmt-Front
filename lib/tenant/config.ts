@@ -24,7 +24,7 @@ function readBool(value: string | undefined, fallback: boolean): boolean {
 }
 
 export type TenantPublicConfig = {
-  /** URL de base de l’API SMELS (ex. http://localhost:8090). */
+  /** URL de base de l’API Bee SM (ex. http://localhost:8090). */
   apiBaseUrl: string;
   /**
    * Identifiant établissement (env prioritaire, sinon hostname hors localhost).
@@ -33,7 +33,7 @@ export type TenantPublicConfig = {
   schoolId: string;
   /** Libellé UI de l’école (branding déploiement). */
   schoolDisplayName: string;
-  /** Nom produit affiché (souvent SMELS). */
+  /** Nom produit affiché (souvent Bee SM). */
   appDisplayName: string;
   /** Personas UI sans API (dev seulement). */
   enableDemoLogin: boolean;
@@ -69,7 +69,7 @@ export function getTenantConfig(schoolIdOverride?: string | null): TenantPublicC
     apiBaseUrl: trimEnv(ENV_API_BASE_URL, "http://localhost:8090"),
     schoolId: resolveSchoolId(schoolIdOverride),
     schoolDisplayName: trimEnv(ENV_SCHOOL_DISPLAY_NAME, "School"),
-    appDisplayName: trimEnv(ENV_APP_DISPLAY_NAME, "SMELS"),
+    appDisplayName: trimEnv(ENV_APP_DISPLAY_NAME, "Bee SM"),
     enableDemoLogin: readBool(ENV_ENABLE_DEMO_LOGIN, false),
   };
 }

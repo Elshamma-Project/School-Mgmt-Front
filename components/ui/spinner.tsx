@@ -30,7 +30,7 @@ export function Spinner({
       role="status"
       aria-label={label}
       className={cn(
-        "inline-block animate-[smels-spin_0.7s_linear_infinite] rounded-full",
+        "inline-block animate-[bee-sm-spin_0.7s_linear_infinite] rounded-full",
         sizeMap[size],
         toneMap[tone],
         className,

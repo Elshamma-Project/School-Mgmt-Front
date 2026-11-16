@@ -1,5 +1,5 @@
-export const THEME_STORAGE_KEY = "smels-theme";
-export const THEME_COOKIE_NAME = "smels-theme";
+export const THEME_STORAGE_KEY = "bee-sm-theme";
+export const THEME_COOKIE_NAME = "bee-sm-theme";
 
 export type AppTheme = "light" | "dark";
 

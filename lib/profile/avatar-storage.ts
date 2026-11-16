@@ -3,7 +3,7 @@
  * Persistance locale par compte tant que le module fichiers serveur n’existe pas (docs/03).
  */
 
-const PREFIX = "smels-avatar-v1:";
+const PREFIX = "bee-sm-avatar-v1:";
 const MAX_EDGE = 320;
 const JPEG_QUALITY = 0.82;
 

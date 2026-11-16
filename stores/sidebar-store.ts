@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-const STORAGE_KEY = "smels-sidebar-collapsed";
+const STORAGE_KEY = "bee-sm-sidebar-collapsed";
 
 type SidebarState = {
   collapsed: boolean;

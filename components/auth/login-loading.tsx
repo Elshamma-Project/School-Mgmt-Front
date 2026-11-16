@@ -54,7 +54,7 @@ export function LoginLoading({ open, roleLabel }: LoginLoadingProps) {
       <div className="flex w-full max-w-[300px] flex-col items-center text-center">
         <div className="relative">
           <BrandMark size="xl" />
-          <span className="absolute -inset-4 rounded-full border border-[var(--ios-blue)]/25 animate-[smels-spin_1.4s_linear_infinite]" />
+          <span className="absolute -inset-4 rounded-full border border-[var(--ios-blue)]/25 animate-[bee-sm-spin_1.4s_linear_infinite]" />
         </div>
 
         <Spinner size="lg" tone="blue" className="mt-8" label={t("submitting")} />

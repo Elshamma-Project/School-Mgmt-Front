@@ -3,7 +3,7 @@
  * pas pendant l’écran de connexion / le loader.
  */
 
-const FLASH_KEY = "smels-post-login-flash";
+const FLASH_KEY = "bee-sm-post-login-flash";
 
 export type PostLoginFlash =
   | { kind: "loginSuccess" }

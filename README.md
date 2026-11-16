@@ -1,4 +1,4 @@
-# SMELS — Front-office
+# Bee SM — Front-office
 
 Back-office Next.js (App Router) pour El Shammah — école bilingue FR/EN, Cameroun.
 
@@ -22,7 +22,7 @@ npm run dev
 |---|---|
 | `directeur@elshammah.demo` | `DemoPass123!` |
 | `enseignant@elshammah.demo` | `DemoPass123!` |
-| `superadmin@smels.local` | `DemoPass123!` |
+| `superadmin@bee-sm.local` | `DemoPass123!` |
 
 ## Docker (`setup/`)
 

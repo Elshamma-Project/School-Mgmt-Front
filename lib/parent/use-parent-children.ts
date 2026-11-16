@@ -9,7 +9,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 import { ApiError, isAuthFailure } from "@/types/api";
 
-const STORAGE_KEY = "smels.parent.selectedChildId";
+const STORAGE_KEY = "bee-sm.parent.selectedChildId";
 
 function readStoredId(): string {
   if (typeof window === "undefined") return "";

@@ -40,7 +40,7 @@ const PERSONAS: Record<AppRole, MockPersona> = {
   },
   SUPER_ADMIN: {
     role: "SUPER_ADMIN",
-    username: "superadmin@smels.local",
+    username: "superadmin@bee-sm.local",
     displayName: "Demo Platform",
   },
   STUDENT: {

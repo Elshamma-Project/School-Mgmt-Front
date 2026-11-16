@@ -7,7 +7,7 @@ import { clearLocalAuthState } from "@/lib/auth/session-cache";
 import { canRoleAccessPath, getRoleHomePath } from "@/lib/auth/workspaces";
 import type { AppRole } from "@/types/auth";
 
-const RETURN_PATH_KEY = "smels-auth-return";
+const RETURN_PATH_KEY = "bee-sm-auth-return";
 
 let sessionExpiredRedirecting = false;
 

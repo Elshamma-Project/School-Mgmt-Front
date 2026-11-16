@@ -2,10 +2,10 @@
  * Cookie **opaque** pour le proxy Next (présence de session seulement).
  * Ne contient plus le JWT — réduit l’exposition XSS via document.cookie.
  */
-export const AUTH_COOKIE_NAME = "smels_session";
+export const AUTH_COOKIE_NAME = "bee_sm_session";
 
 /** Ancien cookie (JWT en clair) — encore accepté au refresh pour ne pas déconnecter. */
-export const AUTH_COOKIE_LEGACY_NAME = "smels_access_token";
+export const AUTH_COOKIE_LEGACY_NAME = "bee_sm_access_token";
 
 /** Valeur fixe du cookie de présence (pas un secret). */
 export const AUTH_COOKIE_PRESENT = "1";
@@ -14,18 +14,18 @@ export const AUTH_COOKIE_PRESENT = "1";
 export const AUTH_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 30;
 
 /** Clé de persistance zustand. */
-export const AUTH_STORAGE_KEY = "smels-auth";
+export const AUTH_STORAGE_KEY = "bee-sm-auth";
 
 /** Query string posée après déconnexion volontaire (proxy + login). */
 export const LOGOUT_QUERY = "loggedOut";
 
 /** Flag sessionStorage anti-restauration de session juste après logout. */
-export const LOGOUT_FLAG_KEY = "smels_logged_out";
+export const LOGOUT_FLAG_KEY = "bee_sm_logged_out";
 
 /**
  * Persistance :
  * - access/refresh scellés (token-vault) dans localStorage (survivent à F5)
- * - cookie opaque `smels_session` (Max-Age 30 j) pour éviter un redirect login inutile
+ * - cookie opaque `bee_sm_session` (Max-Age 30 j) pour éviter un redirect login inutile
  * - le proxy Next ne déconnecte plus si le cookie manque (AuthGuard client = vérité)
  *
  * « Se souvenir de moi » ne mémorise que l’e-mail, pas le mot de passe.

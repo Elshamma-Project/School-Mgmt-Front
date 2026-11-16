@@ -1,8 +1,15 @@
-# Front SMELS — build depuis la racine du repo (package.json parent).
+# Front Bee SM — build depuis la racine du repo (package.json parent).
 # Variables lues depuis setup/.env (env_file + interpolation ${…}).
+#
+# Usage (depuis setup/) :
+#   docker compose up --build
+# Conteneur : bee-sm-front (port 3000)
+
+name: bee-sm-front
 
 services:
-  server:
+  bee-sm-front:
+    container_name: bee-sm-front
     build:
       context: ..
       dockerfile: setup/Dockerfile

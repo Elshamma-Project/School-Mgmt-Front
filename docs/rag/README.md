@@ -1,4 +1,4 @@
-# Base d’aide SMELS (`docs/rag`)
+# Base d’aide Bee SM (`docs/rag`)
 
 Source unique des textes du menu **?** (topbar).
 

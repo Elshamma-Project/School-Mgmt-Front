@@ -1,4 +1,4 @@
-/** Classes partagées — contrôle / focus / press (design system SMELS). */
+/** Classes partagées — contrôle / focus / press (design system Bee SM). */
 
 export const focusRing =
   "focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]";

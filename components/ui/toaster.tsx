@@ -2,7 +2,7 @@
 
 import { Toaster as SonnerToaster } from "sonner";
 
-/** Toaster global SMELS — bas droite, style iOS. */
+/** Toaster global Bee SM — bas droite, style iOS. */
 export function AppToaster() {
   return (
     <SonnerToaster

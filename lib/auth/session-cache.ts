@@ -13,7 +13,7 @@ import { useSchoolBrandStore } from "@/stores/school-brand-store";
 /**
  * Vide les caches mémoire / blob / marque école pour un compte (ou tout).
  * Ne touche pas à « se souvenir de moi » (e-mail).
- * Laisse smels_logged_out et le flash post-login (gérés à part).
+ * Laisse bee_sm_logged_out et le flash post-login (gérés à part).
  */
 export function purgeSessionCaches(options: {
   userId?: string | null;

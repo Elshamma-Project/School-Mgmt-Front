@@ -53,7 +53,7 @@ function mergeAbortSignals(
 type RefreshOutcome = "ok" | "auth_failed" | "transient_failed" | "unavailable";
 
 let refreshInFlight: Promise<RefreshOutcome> | null = null;
-const REFRESH_LOCK = "smels-auth-refresh";
+const REFRESH_LOCK = "bee-sm-auth-refresh";
 
 async function parseProblem(response: Response): Promise<ProblemDetails | null> {
   const contentType = response.headers.get("content-type") ?? "";
@@ -131,7 +131,7 @@ function throwHttpError(status: number, problem: ProblemDetails | null): never {
 }
 
 /**
- * Client HTTP vers l’API SMELS.
+ * Client HTTP vers l’API Bee SM.
  * Ne journalise jamais d’identifiants élèves côté client.
  */
 export async function apiRequest<T>(

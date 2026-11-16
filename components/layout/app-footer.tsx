@@ -6,7 +6,7 @@ type AppFooterProps = {
   className?: string;
 };
 
-/** Pied de page léger — copyright école / SMELS (année côté client). */
+/** Pied de page léger — copyright école / Bee SM (année côté client). */
 export function AppFooter({ className }: AppFooterProps) {
   const t = useTranslations("common");
   const year = new Date().getFullYear();

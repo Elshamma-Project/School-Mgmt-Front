@@ -1,4 +1,4 @@
-/** Design system SMELS — exports UI de base. */
+/** Design system Bee SM — exports UI de base. */
 
 export { Alert } from "./alert";
 export { Badge } from "./badge";

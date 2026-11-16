@@ -1,4 +1,4 @@
-### SMELS front — Docker
+### Bee SM front — Docker
 
 Depuis `setup/` :
 
@@ -7,7 +7,7 @@ cp .env.example .env   # si besoin
 docker compose up --build
 ```
 
-L’image est construite depuis la racine du repo (`context: ..`). L’app écoute sur http://localhost:3000.
+L’image est construite depuis la racine du repo (`context: ..`). Conteneur `bee-sm-front`, app sur http://localhost:3000.
 
 Variables dans `setup/.env` :
 - `NEXT_PUBLIC_API_BASE_URL` — API depuis le conteneur (défaut `http://host.docker.internal:8090`)

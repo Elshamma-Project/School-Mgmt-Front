@@ -198,7 +198,7 @@ export const useAuthStore = create<AuthState>()(
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {
-          console.warn("[smels-auth] rehydrate failed", error);
+          console.warn("[bee-sm-auth] rehydrate failed", error);
           return;
         }
         if (state?.accessToken) {

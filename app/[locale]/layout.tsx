@@ -23,8 +23,8 @@ export function generateStaticParams() {
 
 export const metadata: Metadata = {
   title: {
-    default: "SMELS — El Shammah",
-    template: "%s · SMELS",
+    default: "Bee SM — El Shammah",
+    template: "%s · Bee SM",
   },
   description: "School Management System — El Shammah (Cameroon)",
 };
