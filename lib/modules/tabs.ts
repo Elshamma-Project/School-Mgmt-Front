@@ -15,7 +15,14 @@ export const GRADES_TABS = [
 ] as const;
 export type GradesTab = (typeof GRADES_TABS)[number];
 
-export const TIMETABLE_TABS = ["overview", "rooms"] as const;
+export const TIMETABLE_TABS = [
+  "overview",
+  "editor",
+  "grid",
+  "conflicts",
+  "changes",
+  "rooms",
+] as const;
 export type TimetableTab = (typeof TIMETABLE_TABS)[number];
 
 function parseTab<T extends string>(

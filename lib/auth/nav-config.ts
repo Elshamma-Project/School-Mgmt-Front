@@ -180,7 +180,7 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
         ...sharedTail,
       ];
     case "SURVEILLANT_GENERAL":
-      // Espace dédié `/surveillant-general` — visa SG des fiches de report (Q-38 v1).
+      // Espace dédié `/surveillant-general` — visa SG des fiches de report (Q-38 v1) + EDT lecture.
       return [
         item(home, "home", LayoutDashboard),
         item(
@@ -189,6 +189,7 @@ export function getNavItemsForRole(role: AppRole | null): NavItem[] {
           FileSpreadsheet,
           gradesNavChildren(home, "grades").filter((child) => child.tab === "reportSheets"),
         ),
+        item(`${home}/timetable`, "timetable", CalendarDays),
         ...sharedTail,
       ];
     case "ADMINISTRATION":

@@ -427,6 +427,34 @@ export type SequenceMarkResponse = {
   computedAt: string | null;
 };
 
+/** Consultation parent / élève — résumé par matière et séquence. */
+export type SequenceMarkSummaryDto = {
+  id: string;
+  schoolId: string;
+  studentId: string;
+  academicYearId: string;
+  classId: string;
+  classSubjectId: string;
+  sessionId: string;
+  sessionNumber: number;
+  termNumber: number;
+  value: string | number | null;
+  status: GradeStatus;
+};
+
+export async function listStudentSequenceMarks(options: {
+  studentId: string;
+  academicYearId?: string | null;
+  schoolId?: string | null;
+}): Promise<SequenceMarkSummaryDto[]> {
+  const qs = toSearch({
+    studentId: options.studentId,
+    academicYearId: options.academicYearId ?? null,
+    ...schoolParams(options.schoolId),
+  });
+  return apiRequest<SequenceMarkSummaryDto[]>(`/api/v1/sequence-marks?${qs}`);
+}
+
 /** Séquences de l’enseignant connecté (ou de toute l’école pour l’administration). */
 export async function listGradeSheets(
   sessionId: string,

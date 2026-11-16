@@ -9,6 +9,8 @@ export type UiCapability =
   | "viewOwnChildren"
   | "viewOwnGrades"
   | "downloadAnnualReport"
+  /** Consultation + PDF de l’emploi du temps publié (tous les acteurs scolaires). */
+  | "viewTimetable"
   | "viewTeacherClasses"
   | "editOpenSequenceGrades"
   | "manageSchoolStructure"
@@ -31,13 +33,19 @@ export type UiCapability =
   | "managePlatform";
 
 const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
-  STUDENT: ["viewOwnProfile", "viewOwnGrades", "downloadAnnualReport"],
-  PARENT: ["viewOwnChildren", "viewOwnGrades", "downloadAnnualReport"],
-  TEACHER: ["viewTeacherClasses", "editOpenSequenceGrades", "viewOwnProfile"],
+  STUDENT: ["viewOwnProfile", "viewOwnGrades", "downloadAnnualReport", "viewTimetable"],
+  PARENT: ["viewOwnChildren", "viewOwnGrades", "downloadAnnualReport", "viewTimetable"],
+  TEACHER: [
+    "viewTeacherClasses",
+    "editOpenSequenceGrades",
+    "viewOwnProfile",
+    "viewTimetable",
+  ],
   SURVEILLANT_GENERAL: [
     "reviewReportSheets",
     "visaSupervisorReportSheet",
     "viewOwnProfile",
+    "viewTimetable",
   ],
   ADMINISTRATION: [
     "reviewReportSheets",
@@ -46,6 +54,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
     "manageStaff",
     "manageStudents",
     "manageEnrollments",
+    "viewTimetable",
     "manageTimetable",
     "manageReportCards",
     "manageAbsences",
@@ -62,6 +71,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
     "manageStaff",
     "manageStudents",
     "manageEnrollments",
+    "viewTimetable",
     "manageTimetable",
     "manageReportCards",
     "manageAbsences",
@@ -81,6 +91,7 @@ const ROLE_CAPS: Record<AppRole, UiCapability[]> = {
     "manageStaff",
     "manageStudents",
     "manageEnrollments",
+    "viewTimetable",
     "manageTimetable",
     "manageReportCards",
     "manageAbsences",

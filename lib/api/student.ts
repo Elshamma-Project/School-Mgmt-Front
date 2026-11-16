@@ -15,6 +15,20 @@ export type StudentContactDto = {
   city: string | null;
 };
 
+export type GuardianRelationship =
+  | "FATHER"
+  | "MOTHER"
+  | "LEGAL_GUARDIAN"
+  | "OTHER";
+
+export type GuardianLinkDto = {
+  guardianId: string;
+  relationship: GuardianRelationship;
+  primary: boolean;
+  canViewGrades: boolean;
+  canDownloadReportCards: boolean;
+};
+
 export type StudentResponse = {
   id: string;
   schoolId: string;
@@ -30,7 +44,7 @@ export type StudentResponse = {
   photoFileId: string | null;
   hasSchoolPhoto: boolean;
   contact: StudentContactDto;
-  guardians: unknown[];
+  guardians: GuardianLinkDto[];
   active: boolean;
 };
 
@@ -82,6 +96,26 @@ export async function listStudents(options: {
     ...schoolParams(options.schoolId),
   });
   return apiRequest<PageResponse<StudentResponse>>(`/api/v1/students?${qs}`);
+}
+
+/** Enfants liés au parent connecté (`Student.guardians`). */
+export async function listMyChildren(
+  schoolId?: string | null,
+): Promise<StudentResponse[]> {
+  const qs = toSearch(schoolParams(schoolId));
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<StudentResponse[]>(`/api/v1/students/my-children${suffix}`);
+}
+
+export async function listEnrollmentsByStudent(
+  studentId: string,
+  schoolId?: string | null,
+): Promise<EnrollmentResponse[]> {
+  const qs = toSearch(schoolParams(schoolId));
+  const suffix = qs ? `?${qs}` : "";
+  return apiRequest<EnrollmentResponse[]>(
+    `/api/v1/enrollments/by-student/${encodeURIComponent(studentId)}${suffix}`,
+  );
 }
 
 export async function listEnrollments(options: {

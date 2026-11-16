@@ -13,6 +13,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { TeacherAssignmentSwitcher } from "@/components/teacher/teacher-assignment-switcher";
 import { ReportSheetPaper, REPORT_SHEET_DEADLINE_HOURS } from "@/components/teacher/report-sheet-paper";
 import { SequenceEntryPanel } from "@/components/teacher/sequence-entry-panel";
 import { Alert } from "@/components/ui/alert";
@@ -20,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
   HubLoadingRows,
@@ -43,7 +45,6 @@ import {
   type EvaluationSessionResponse,
   type GradeReportSheetResponse,
 } from "@/lib/api/grading";
-import { formatCoefficient } from "@/lib/grading/marks";
 import { notify } from "@/lib/ui/notify";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
@@ -299,6 +300,7 @@ export function TeacherGradesView() {
   if (!staffProfileId) {
     return (
       <div className="space-y-5 slide-up">
+        <PageHeader description={t("description")} />
         <EmptyState
           title={t("noStaffProfileTitle")}
           description={t("noStaffProfileDescription")}
@@ -313,6 +315,8 @@ export function TeacherGradesView() {
 
   return (
     <div className="space-y-5 slide-up">
+      <PageHeader description={t("description")} />
+
       <HubYearBanner
         label={t("yearLabel")}
         yearLabel={year?.label ?? null}
@@ -320,6 +324,7 @@ export function TeacherGradesView() {
         yearStatusLabel={yearStatusText}
         yearLocked={Boolean(year?.locked)}
         lockedLabel={year?.locked ? tHub("yearLockedBadge") : null}
+        hint={t("yearHint")}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />
@@ -334,48 +339,11 @@ export function TeacherGradesView() {
         />
       ) : (
         <>
-          <section className="space-y-2.5" aria-label={t("assignmentsTitle")}>
-            <div>
-              <h2 className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--ios-label)]">
-                {t("assignmentsTitle")}
-              </h2>
-              <p className="mt-0.5 text-[11px] text-[var(--ios-secondary-label)]">
-                {t("assignmentsHint")}
-              </p>
-            </div>
-            <ul className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-              {assignments.map((item) => {
-                const active = item.classSubjectId === selectedId;
-                return (
-                  <li key={item.classSubjectId}>
-                    <button
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => setSelectedId(item.classSubjectId)}
-                      className={cn(
-                        "pressable flex w-full items-start justify-between gap-3 rounded-[var(--radius-lg)] border bg-[var(--ios-card)] p-3.5 text-left shadow-[var(--ios-shadow)] transition-colors focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]",
-                        active
-                          ? "border-[var(--ios-blue)] bg-[color-mix(in_srgb,var(--ios-blue)_6%,var(--ios-card))]"
-                          : "border-[var(--ios-separator)]/55 hover:bg-[var(--ios-fill)]/50",
-                      )}
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-[13px] font-semibold text-[var(--ios-label)]">
-                          {item.className} · {localizedLabel(item.subjectName, locale)}
-                        </span>
-                        <span className="mt-0.5 block text-[11px] text-[var(--ios-secondary-label)]">
-                          {item.subjectCode}
-                        </span>
-                      </span>
-                      <Badge tone={active ? "blue" : "neutral"}>
-                        {t("coefficient", { coef: formatCoefficient(item.coefficient, locale) })}
-                      </Badge>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+          <TeacherAssignmentSwitcher
+            assignments={assignments}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
             <div className="space-y-1">

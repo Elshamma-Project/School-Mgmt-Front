@@ -118,12 +118,12 @@
     "PARENT": {
       "label": "Parent / tuteur",
       "hint": "Suivi de tous ses enfants uniquement",
-      "homeBlurb": "Espace famille — enfants liés à votre compte, notes et bulletin annuel."
+      "homeBlurb": "Espace famille — enfants liés, notes de séquence, bulletin annuel et emploi du temps."
     },
     "TEACHER": {
       "label": "Enseignant",
       "hint": "ClassSubject, notes, emploi du temps",
-      "homeBlurb": "Espace enseignant — vos classes, fiches de notes (séquence ouverte) et cours."
+      "homeBlurb": "Espace enseignant — classes, fiches de report, saisie de séquence et emploi du temps."
     },
     "ADMINISTRATION": {
       "label": "Administration",
@@ -157,6 +157,7 @@
     "manageStaff": "Gérer le personnel",
     "manageStudents": "Gérer élèves et tuteurs",
     "manageEnrollments": "Gérer les inscriptions",
+    "viewTimetable": "Consulter l’emploi du temps",
     "manageTimetable": "Gérer l’emploi du temps",
     "manageReportCards": "Bulletins et reporting",
     "manageAbsences": "Absences, retards, sanctions",
@@ -982,20 +983,20 @@
       "empty": "Aucune fiche de notes pour le moment."
     },
     "teacherTimetable": {
-      "description": "Vos cours publiés.",
+      "description": "Vos cours et l’emploi du temps général par classe (lecture seule).",
       "empty": "Aucun cours à afficher."
     },
     "parentChildren": {
       "description": "Enfants liés à votre compte tuteur.",
       "hint": "Uniquement via Student.guardians — jamais d’autres élèves.",
-      "empty": "Aucun enfant lié pour cette démo."
+      "empty": "Aucun enfant lié."
     },
     "parentGrades": {
-      "description": "Notes de vos enfants (temps réel).",
+      "description": "Notes de séquence de vos enfants.",
       "empty": "Aucune note à afficher."
     },
     "parentReportCards": {
-      "description": "Bulletins annuels téléchargeables.",
+      "description": "Bulletins annuels publiés.",
       "hint": "Uniquement ANNUAL + PUBLISHED.",
       "empty": "Aucun bulletin publié."
     },
@@ -1075,7 +1076,11 @@
       "empty": "Aucun bulletin publié."
     },
     "studentTimetable": {
-      "description": "Emploi du temps de votre classe.",
+      "description": "Emploi du temps de votre classe et PDF.",
+      "empty": "Aucun emploi du temps."
+    },
+    "sgTimetable": {
+      "description": "Consultation de l’emploi du temps publié et téléchargement PDF.",
       "empty": "Aucun emploi du temps."
     }
   },
@@ -1241,8 +1246,10 @@
     }
   },
   "teacherClasses": {
+    "description": "Vos classes et matières affectées — ouvrez une ligne pour saisir les notes.",
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire",
+    "yearHint": "Affectations de l’année courante uniquement.",
     "loadError": "Impossible de charger vos classes.",
     "noStaffProfileTitle": "Profil enseignant manquant",
     "noStaffProfileDescription": "Votre compte n’est lié à aucune fiche personnel. Contactez l’administration.",
@@ -1258,12 +1265,142 @@
     "coefficient": "Coef. {coef}",
     "weeklyHours": "{hours} h / sem.",
     "inactive": "Inactive",
-    "openGrades": "Notes"
+    "openGrades": "Notes",
+    "shortcuts": {
+      "grades": "Fiches de notes",
+      "gradesHint": "Report et saisie de séquence",
+      "timetable": "Emploi du temps",
+      "timetableHint": "Mes cours, vue générale et demandes"
+    }
   },
-  "teacherGrades": {
-    "description": "Fiche de report de notes et saisie de vos séquences.",
+  "teacherTimetable": {
+    "description": "Vos cours publiés, l’emploi du temps général, PDF et demandes de modification.",
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire",
+    "loadError": "Impossible de charger votre emploi du temps.",
+    "pdfError": "Impossible d’ouvrir le PDF.",
+    "pdfNeedClass": "Choisissez une classe pour télécharger le PDF.",
+    "pdf": "Télécharger le PDF",
+    "filterClass": "Classe",
+    "allMyClasses": "Toutes mes classes",
+    "pickClass": "Choisir une classe…",
+    "tabsAria": "Vue emploi du temps",
+    "tabs": {
+      "mine": "Mes cours",
+      "general": "Emploi du temps général"
+    },
+    "periodCount": "{count, plural, one {# période / semaine} other {# périodes / semaine}}",
+    "hintPublishedMine": "Emploi du temps publié (révision {revision}) — vos cours.",
+    "hintPublishedGeneral": "Emploi du temps publié (révision {revision}) — vue par classe.",
+    "hintDraft": "Brouillon visible : l’administration n’a pas encore publié.",
+    "hintEmpty": "Aucun emploi du temps pour cette année.",
+    "changeHint": "Sur une de vos cases : ouvrez le détail puis « Demander une modification » (validation admin / directeur).",
+    "noProfileTitle": "Profil enseignant manquant",
+    "noProfileDescription": "Votre compte n’est pas lié à une fiche personnel.",
+    "empty": {
+      "title": "Pas encore d’emploi du temps",
+      "description": "L’administration n’a pas encore publié d’emploi du temps pour cette année."
+    },
+    "emptyMine": {
+      "title": "Aucun cours vous est assigné",
+      "description": "Aucune case de l’emploi du temps ne vous mentionne comme enseignant."
+    },
+    "emptyGeneralPick": {
+      "title": "Choisissez une classe",
+      "description": "Sélectionnez une classe pour afficher son emploi du temps complet."
+    },
+    "emptyGeneral": {
+      "title": "Classe sans créneaux",
+      "description": "Aucune case n’est planifiée pour cette classe dans l’emploi du temps publié."
+    },
+    "changeRequest": {
+      "title": "Demander une modification",
+      "description": "Votre demande sera revue par l’administration ou le directeur.",
+      "slotSummary": "{subject} — {day} · {slot}",
+      "kind": "Type de demande",
+      "kinds": {
+        "UPDATE": "Modifier le créneau",
+        "REMOVE": "Supprimer le créneau"
+      },
+      "proposedNote": "Précision sur la proposition",
+      "proposedNoteHint": "Ex. nouvelle salle, horaire souhaité…",
+      "reason": "Motif",
+      "reasonHint": "Expliquez le problème (15 caractères minimum).",
+      "reasonRequired": "Le motif doit contenir au moins 15 caractères.",
+      "cancel": "Annuler",
+      "submit": "Envoyer la demande",
+      "submitting": "Envoi…",
+      "success": "Demande envoyée.",
+      "error": "Impossible d’envoyer la demande."
+    }
+  },
+  "studentTimetable": {
+    "description": "Votre classe et, au choix, l’emploi du temps de toute l’école — consultation et téléchargement PDF.",
+    "yearLabel": "Année scolaire",
+    "yearEmpty": "Aucune année scolaire",
+    "loadError": "Impossible de charger l’emploi du temps.",
+    "hint": "Affiche la semaine type de votre classe d’inscription.",
+    "hintGeneral": "Toutes les classes de l’école : choisissez-en une pour voir et télécharger son EDT.",
+    "hintClass": "Classe {className} — emploi du temps publié (lecture seule).",
+    "tabsAria": "Vue emploi du temps",
+    "tabs": {
+      "mine": "Ma classe",
+      "general": "Toute l’école"
+    },
+    "filterClass": "Classe de l’école",
+    "pickClass": "Choisir une classe…",
+    "readOnlyNotice": "Consultation et téléchargement uniquement — aucune modification possible.",
+    "noProfileTitle": "Profil élève manquant",
+    "noProfileDescription": "Votre compte n’est pas lié à une fiche élève.",
+    "noEnrollmentTitle": "Pas d’inscription",
+    "noEnrollmentDescription": "Vous n’avez pas d’inscription pour l’année en cours.",
+    "empty": {
+      "title": "Pas encore d’emploi du temps",
+      "description": "L’administration n’a pas encore publié d’emploi du temps pour cette année."
+    },
+    "emptyGeneralPick": {
+      "title": "Choisissez une classe",
+      "description": "Sélectionnez n’importe quelle classe de l’école pour afficher et télécharger son emploi du temps."
+    },
+    "emptyClass": {
+      "title": "Classe sans créneaux",
+      "description": "Aucune case planifiée pour cette classe."
+    },
+    "pdf": "Télécharger le PDF",
+    "pdfNeedClass": "Choisissez une classe pour télécharger le PDF.",
+    "pdfError": "Impossible d’ouvrir le PDF."
+  },
+  "sgTimetable": {
+    "description": "Consultez et téléchargez l’emploi du temps publié de chaque classe.",
+    "yearLabel": "Année scolaire",
+    "yearEmpty": "Aucune année scolaire",
+    "loadError": "Impossible de charger l’emploi du temps.",
+    "hint": "Choisissez une classe pour afficher la semaine type.",
+    "hintClass": "Classe {className} — emploi du temps publié (lecture seule).",
+    "filterClass": "Classe",
+    "pickClass": "Choisir une classe…",
+    "readOnlyNotice": "Consultation et téléchargement uniquement — la publication reste réservée à l’administration.",
+    "empty": {
+      "title": "Pas encore d’emploi du temps",
+      "description": "L’administration n’a pas encore publié d’emploi du temps pour cette année."
+    },
+    "emptyPick": {
+      "title": "Choisissez une classe",
+      "description": "Sélectionnez une classe pour afficher son emploi du temps complet."
+    },
+    "emptyClass": {
+      "title": "Classe sans créneaux",
+      "description": "Aucune case planifiée pour cette classe."
+    },
+    "pdf": "Télécharger le PDF",
+    "pdfNeedClass": "Choisissez une classe pour télécharger le PDF.",
+    "pdfError": "Impossible d’ouvrir le PDF."
+  },
+  "teacherGrades": {
+    "description": "Fiche de report et saisie de séquence pour vos matières — choisissez une affectation puis un trimestre.",
+    "yearLabel": "Année scolaire",
+    "yearEmpty": "Aucune année scolaire",
+    "yearHint": "Trimestre actif selon les séquences ouvertes (BR-25).",
     "loadError": "Impossible de charger vos matières.",
     "noStaffProfileTitle": "Profil enseignant manquant",
     "noStaffProfileDescription": "Votre compte n’est lié à aucune fiche personnel. Contactez l’administration.",
@@ -1703,7 +1840,6 @@
       "openedAtLabel": "Ouverte le",
       "closedAtLabel": "Clôturée le",
       "numberLabel": "N°",
-
       "reasonLabel": "Motif",
       "reasonPlaceholder": "Motif de la réouverture…",
       "reasonRequired": "Le motif est obligatoire pour rouvrir une session.",
@@ -1842,9 +1978,9 @@
     "tabsNav": "Emploi du temps",
     "yearLabel": "Année scolaire",
     "yearEmpty": "Aucune année scolaire configurée",
-    "yearHint": "Les salles sont déjà disponibles ; la grille d’emploi du temps arrive ensuite.",
+    "yearHint": "Créez une grille, un brouillon, saisissez les cases, puis publiez.",
     "yearLockedBadge": "Lecture seule",
-    "yearLockedHint": "Année terminée : consultation seule de l’emploi du temps de cette année.",
+    "yearLockedHint": "Année terminée : consultation seule de l’emploi du temps.",
     "yearStatus": {
       "PLANNED": "Planifiée",
       "ACTIVE": "Active",
@@ -1854,34 +1990,310 @@
     "statusActive": "Actif",
     "inactive": "Inactif",
     "loadError": "Impossible de charger l’emploi du temps.",
+    "actionError": "Action impossible.",
+    "pdfError": "Impossible de générer le PDF.",
+    "needGrid": "Créez d’abord une grille horaire.",
+    "linkNeedTwo": "Sélectionnez au moins deux cases à lier.",
     "tableCount": "{count, plural, one {# salle affichée} other {# salles affichées}}",
+    "ttCount": "{count, plural, one {# révision} other {# révisions}}",
+    "gridCount": "{count, plural, one {# grille} other {# grilles}}",
     "stats": {
-      "overview": "Grille",
+      "overview": "Vue d’ensemble",
+      "editor": "Éditeur",
+      "grid": "Grille",
+      "conflicts": "Conflits",
+      "changes": "Demandes",
       "rooms": "Salles"
     },
     "tabs": {
       "overview": "Vue d’ensemble",
+      "editor": "Éditeur",
+      "grid": "Grille",
+      "conflicts": "Conflits",
+      "changes": "Demandes",
       "rooms": "Salles"
     },
     "search": {
       "overview": "Recherche…",
+      "editor": "Recherche…",
+      "grid": "Nom…",
+      "conflicts": "Recherche…",
+      "changes": "Enseignant, classe…",
       "rooms": "Nom ou type…"
     },
     "columns": {
       "name": "Nom",
       "type": "Type",
       "capacity": "Capacité",
-      "status": "Statut"
+      "status": "Statut",
+      "revision": "Révision",
+      "publishedAt": "Publié le",
+      "actions": "Actions",
+      "periods": "Périodes"
+    },
+    "status": {
+      "DRAFT": "Brouillon",
+      "PUBLISHED": "Publié",
+      "ARCHIVED": "Archivé"
+    },
+    "days": {
+      "MONDAY": "Lun",
+      "TUESDAY": "Mar",
+      "WEDNESDAY": "Mer",
+      "THURSDAY": "Jeu",
+      "FRIDAY": "Ven",
+      "SATURDAY": "Sam",
+      "SUNDAY": "Dim"
+    },
+    "activity": {
+      "CLUB": "Club",
+      "LIBRARY": "Bibliothèque",
+      "MUSIC": "Musique",
+      "CHINESE": "Chinois",
+      "GENERAL_CLEANING": "Ménage",
+      "STUDY_HALL": "Étude",
+      "OTHER": "Autre"
+    },
+    "actions": {
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "createGrid": "Créer la grille type",
+      "createDraft": "Nouveau brouillon",
+      "publish": "Publier",
+      "revise": "Nouvelle révision",
+      "pdf": "PDF classe",
+      "openEditor": "Ouvrir",
+      "linkMode": "Lier séances",
+      "linkSelected": "Lier ({count})",
+      "unlink": "Délier",
+      "addOffGrid": "Hors grille / samedi",
+      "requestChange": "Demander une modification"
+    },
+    "changes": {
+      "pendingCount": "{count, plural, one {# demande en attente} other {# demandes en attente}}",
+      "refresh": "Actualiser",
+      "loadError": "Impossible de charger les demandes.",
+      "actionError": "Action impossible.",
+      "approveSuccess": "Demande approuvée — appliquée sur le brouillon.",
+      "rejectSuccess": "Demande refusée.",
+      "approve": "Approuver",
+      "approving": "…",
+      "reject": "Refuser",
+      "rejectTitle": "Refuser la demande",
+      "rejectHint": "Indiquez le motif du refus (visible par l’enseignant).",
+      "reviewNote": "Motif du refus",
+      "reviewNoteRequired": "Le motif doit contenir au moins 5 caractères.",
+      "confirmReject": "Confirmer le refus",
+      "rejecting": "…",
+      "emptyTitle": "Aucune demande en attente",
+      "emptyDescription": "Les propositions de modification des enseignants apparaîtront ici.",
+      "tableCount": "{count, plural, one {# demande} other {# demandes}}",
+      "columns": {
+        "teacher": "Enseignant",
+        "class": "Classe",
+        "slot": "Créneau",
+        "kind": "Type",
+        "reason": "Motif",
+        "when": "Demandé le",
+        "actions": "Actions"
+      },
+      "kinds": {
+        "UPDATE": "Modification",
+        "REMOVE": "Suppression",
+        "ADD": "Ajout"
+      }
+    },
+    "toast": {
+      "gridCreated": "Grille créée.",
+      "draftCreated": "Brouillon créé.",
+      "published": "Emploi du temps publié.",
+      "revised": "Nouvelle révision créée.",
+      "entrySaved": "Case enregistrée.",
+      "entryDeleted": "Case supprimée.",
+      "linked": "Séance commune créée.",
+      "unlinked": "Séance commune dissoute."
     },
     "empty": {
       "overview": {
-        "title": "Grille à brancher",
-        "description": "La liste / édition des créneaux d’emploi du temps arrivera ensuite."
+        "title": "Aucun emploi du temps",
+        "description": "Créez une grille horaire puis un brouillon pour commencer la saisie."
+      },
+      "editor": {
+        "title": "Rien à éditer",
+        "description": "Choisissez une révision et une classe, ou créez un brouillon."
+      },
+      "grid": {
+        "title": "Aucune grille",
+        "description": "La grille type (lun–ven, 8 périodes) peut être créée en un clic."
+      },
+      "conflicts": {
+        "title": "Sélectionnez un EDT",
+        "description": "Ouvrez une révision pour analyser les conflits."
       },
       "rooms": {
         "title": "Aucune salle",
         "description": "Ajoutez des salles dans le module Académique."
       }
+    },
+    "conflicts": {
+      "banner": "{count, plural, one {# conflit bloquant détecté} other {# conflits bloquants détectés}}",
+      "noneTitle": "Aucun conflit",
+      "noneDescription": "Pas de chevauchement bloquant ni d’avertissement pour cette révision."
+    },
+    "editor": {
+      "timetable": "Révision",
+      "class": "Classe",
+      "sessionGroups": "Séances communes"
+    },
+    "grid": {
+      "period": "Créneau",
+      "add": "+",
+      "offGrid": "Hors grille",
+      "lessons": "cours"
+    },
+    "entry": {
+      "createTitle": "Nouvelle case",
+      "editTitle": "Modifier la case",
+      "description": "Matière, enseignant, options LV2, activité…",
+      "readOnly": "Consultation seule.",
+      "delete": "Supprimer",
+      "class": "Classe",
+      "kind": "Type",
+      "kindLesson": "Cours",
+      "kindActivity": "Activité",
+      "day": "Jour",
+      "slotMode": "Créneau",
+      "slotPeriod": "Période de grille",
+      "slotCustom": "Heures libres",
+      "customStart": "Début",
+      "customEnd": "Fin",
+      "startPeriod": "Période",
+      "periodCount": "Durée (périodes)",
+      "classSubject": "Matière de classe",
+      "activityType": "Activité",
+      "teacher": "Enseignant",
+      "room": "Salle",
+      "subjectLabel": "Libellé imprimé",
+      "teacherLabel": "Enseignant imprimé",
+      "optionGroup": "Groupe d’option",
+      "optionCode": "Code option",
+      "note": "Note",
+      "none": "—"
+    }
+  },
+  "teacherSpace": {
+    "assignmentSwitcherLabel": "Matière suivie",
+    "home": {
+      "quickTitle": "Bureau enseignant",
+      "quickHeadline": "Aller à l’essentiel",
+      "quickHint": "Classes, notes et emploi du temps — vos outils du quotidien.",
+      "assignmentsTitle": "Affectations actives",
+      "shortcuts": {
+        "classes": "Mes classes",
+        "classesHint": "Affectations de l’année",
+        "grades": "Notes",
+        "gradesHint": "Fiche de report et saisie",
+        "timetable": "Emploi du temps",
+        "timetableHint": "Cours, vue générale, PDF"
+      }
+    }
+  },
+  "parentSpace": {
+    "loadError": "Impossible de charger les données famille.",
+    "yearLabel": "Année scolaire",
+    "yearEmpty": "Aucune année scolaire",
+    "yearLocked": "Lecture seule",
+    "noProfileTitle": "Profil tuteur manquant",
+    "noProfileDescription": "Votre compte n’est pas lié à une fiche parent / tuteur.",
+    "childSwitcherLabel": "Enfant suivi",
+    "primaryContact": "Contact principal",
+    "matricule": "Matricule {value}",
+    "selectedChild": "Enfant sélectionné",
+    "enrolledIn": "Inscrit en {className} · {year}",
+    "noEnrollment": "Pas d’inscription pour l’année en cours.",
+    "relationship": {
+      "FATHER": "Père",
+      "MOTHER": "Mère",
+      "LEGAL_GUARDIAN": "Tuteur légal",
+      "OTHER": "Lien familial"
+    },
+    "children": {
+      "description": "Retrouvez ici uniquement les enfants liés à votre compte — jamais d’autres élèves.",
+      "emptyTitle": "Aucun enfant lié",
+      "emptyDescription": "L’administration doit vous rattacher comme tuteur sur la fiche de l’élève."
+    },
+    "shortcuts": {
+      "grades": "Notes",
+      "gradesHint": "Moyennes de séquence en temps réel",
+      "reportCards": "Bulletins",
+      "reportCardsHint": "Bulletin annuel publié (PDF)",
+      "timetable": "Emploi du temps",
+      "timetableHint": "Classe de l’enfant, EDT général et PDF"
+    },
+    "grades": {
+      "description": "Notes de séquence de l’enfant sélectionné (si votre lien l’autorise).",
+      "hint": "Consultation seule — les notes PENDING ne s’affichent pas comme 0.",
+      "forbiddenTitle": "Consultation des notes non autorisée",
+      "forbiddenBody": "Votre lien tuteur n’inclut pas l’accès aux notes pour cet enfant.",
+      "emptyTitle": "Pas encore de notes",
+      "emptyDescription": "Aucune note de séquence n’est disponible pour cet enfant cette année.",
+      "unknownSubject": "Matière",
+      "termFilter": "Trimestre",
+      "allTerms": "Tous",
+      "termOption": "T{number}",
+      "tableCount": "{count, plural, one {# matière} other {# matières}}",
+      "columns": {
+        "subject": "Matière",
+        "session": "S{number}"
+      }
+    },
+    "reportCards": {
+      "description": "Bulletins annuels publiés de l’enfant sélectionné.",
+      "hint": "Seuls les bulletins ANNUAL + PUBLISHED sont téléchargeables.",
+      "forbiddenTitle": "Téléchargement non autorisé",
+      "forbiddenBody": "Votre lien tuteur n’inclut pas le téléchargement des bulletins pour cet enfant.",
+      "emptyTitle": "Aucun bulletin publié",
+      "emptyDescription": "Le bulletin annuel apparaîtra ici dès qu’il sera publié par l’établissement.",
+      "tableCount": "{count, plural, one {# bulletin} other {# bulletins}}",
+      "annual": "Bulletin annuel",
+      "revision": "Révision {revision}",
+      "published": "Publié",
+      "download": "PDF",
+      "downloading": "…",
+      "pdfError": "Impossible d’ouvrir le PDF.",
+      "columns": {
+        "period": "Période",
+        "average": "Moyenne",
+        "rank": "Rang",
+        "status": "Statut",
+        "actions": "Actions"
+      }
+    },
+    "timetable": {
+      "description": "Emploi du temps de vos enfants et de toute l’école — consultation et téléchargement PDF.",
+      "hint": "Choisissez un enfant pour afficher la semaine type de sa classe.",
+      "hintGeneral": "Toutes les classes de l’école : choisissez-en une pour voir et télécharger son EDT.",
+      "hintClass": "Classe {className} — emploi du temps publié (lecture seule).",
+      "tabsAria": "Vue emploi du temps",
+      "tabs": {
+        "child": "Classe de l’enfant",
+        "general": "Toute l’école"
+      },
+      "filterClass": "Classe de l’école",
+      "pickClass": "Choisir une classe…",
+      "pickClassTitle": "Choisissez une classe",
+      "pickClassDescription": "Sélectionnez n’importe quelle classe de l’établissement pour afficher et télécharger son emploi du temps.",
+      "readOnlyNotice": "Consultation et téléchargement uniquement — aucune modification possible.",
+      "emptyTitle": "Pas encore d’emploi du temps",
+      "emptyDescription": "L’administration n’a pas encore publié d’emploi du temps pour cette année.",
+      "noEnrollmentTitle": "Pas d’inscription",
+      "noEnrollmentDescription": "Cet enfant n’a pas d’inscription pour l’année en cours.",
+      "emptyClassTitle": "Classe sans créneaux",
+      "emptyClassDescription": "Aucune case planifiée pour cette classe.",
+      "pdf": "Télécharger le PDF",
+      "pdfNeedClass": "Choisissez une classe pour télécharger le PDF.",
+      "pdfError": "Impossible d’ouvrir le PDF."
     }
   }
 }

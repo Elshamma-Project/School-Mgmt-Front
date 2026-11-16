@@ -1,16 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronRight, Clock3 } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  ChevronRight,
+  ClipboardList,
+  Clock3,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   HubLoadingRows,
   HubTableShell,
   HubYearBanner,
 } from "@/components/workspace/hub-chrome";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import {
   listAcademicYears,
   listTeacherAssignments,
@@ -44,7 +51,8 @@ export function TeacherClassesView() {
   const user = useAuthStore((s) => s.user);
   const schoolId = user?.schoolId;
   const staffProfileId = user?.profileType === "STAFF" ? user.profileId : null;
-  const gradesHref = `${getRoleHomePath("TEACHER")}/grades`;
+  const home = getRoleHomePath("TEACHER");
+  const gradesHref = `${home}/grades`;
 
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState<AcademicYearResponse | null>(null);
@@ -111,6 +119,7 @@ export function TeacherClassesView() {
   if (!staffProfileId) {
     return (
       <div className="space-y-5 slide-up">
+        <PageHeader description={t("description")} />
         <EmptyState
           title={t("noStaffProfileTitle")}
           description={t("noStaffProfileDescription")}
@@ -122,6 +131,8 @@ export function TeacherClassesView() {
 
   return (
     <div className="space-y-5 slide-up">
+      <PageHeader description={t("description")} />
+
       <HubYearBanner
         label={t("yearLabel")}
         yearLabel={year?.label ?? null}
@@ -129,9 +140,49 @@ export function TeacherClassesView() {
         yearStatusLabel={yearStatusText}
         yearLocked={Boolean(year?.locked)}
         lockedLabel={year?.locked ? tHub("yearLockedBadge") : null}
+        hint={t("yearHint")}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />
+
+      <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--ios-separator)]/55 bg-[var(--ios-card)] shadow-[var(--ios-shadow)]">
+        <div className="grid divide-y divide-[var(--ios-separator)]/55 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+          {(
+            [
+              {
+                href: `${home}/grades`,
+                icon: ClipboardList,
+                label: t("shortcuts.grades"),
+                hint: t("shortcuts.gradesHint"),
+              },
+              {
+                href: `${home}/timetable`,
+                icon: CalendarDays,
+                label: t("shortcuts.timetable"),
+                hint: t("shortcuts.timetableHint"),
+              },
+            ] as const
+          ).map((item) => (
+            <Link
+              key={item.href}
+              href={item.href as `/${string}`}
+              className="pressable flex items-start gap-3 px-4 py-4 transition-colors hover:bg-[color-mix(in_srgb,var(--ios-blue)_6%,transparent)] focus-visible:shadow-[var(--focus-ring)] sm:px-5"
+            >
+              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--ios-blue)_12%,transparent)] text-[var(--ios-blue)]">
+                <item.icon className="size-[18px] stroke-[1.75]" aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[13px] font-semibold text-[var(--ios-label)]">
+                  {item.label}
+                </span>
+                <span className="mt-0.5 block text-[11px] leading-snug text-[var(--ios-secondary-label)]">
+                  {item.hint}
+                </span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {loading ? (
         <HubLoadingRows rows={4} />

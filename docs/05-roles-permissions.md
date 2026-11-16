@@ -49,7 +49,7 @@ Un compte peut cumuler plusieurs rôles (enseignant + administration). Le droit 
 | **Télécharger le bulletin annuel** | ◐ | ◐ | ✖ | ✔ | ✔ | ◐ | `PUBLISHED`, période `ANNUAL`, élève concerné (parent : tous ses enfants) |
 | Journal d'audit des notes | ✖ | ✖ | ✖ | ✔ | ✔ | ◐ | |
 | **Emploi du temps** : créer, modifier, publier (timetable) | ✖ | ✖ | ✖ | ✔ | ✔ | ✔ | |
-| Emploi du temps : consulter | ◐ | ◐ | ◐ | ✔ | ✔ | ✔ | élève : sa classe ; parent : classes de ses enfants ; enseignant : ses cours |
+| Emploi du temps : consulter + PDF | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | tous les acteurs scolaires ; élève : sa classe + général ; parent : classe enfant + général ; enseignant : ses cours + général ; SG : lecture par classe |
 | Comptes élèves et parents : créer, réinitialiser (user) | ✖ | ✖ | ✖ | ✔ | ✔ | ✔ | |
 | Plusieurs établissements, support | ✖ | ✖ | ✖ | ✖ | ✖ | ✔ | accès journalisé |
 

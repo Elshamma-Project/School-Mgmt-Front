@@ -1,7 +1,7 @@
-import { ModulePage } from "@/components/workspace/module-page";
+import { StudentTimetableView } from "@/components/student/student-timetable-view";
 
 export const instant = false;
 
 export default function StudentTimetablePage() {
-  return <ModulePage ns="studentTimetable" />;
+  return <StudentTimetableView />;
 }

@@ -118,12 +118,12 @@
     "PARENT": {
       "label": "Parent / guardian",
       "hint": "Follow all their children only",
-      "homeBlurb": "Family workspace — linked children, grades and annual report cards."
+      "homeBlurb": "Family workspace — linked children, sequence grades, annual report card and timetable."
     },
     "TEACHER": {
       "label": "Teacher",
       "hint": "ClassSubject, grades, timetable",
-      "homeBlurb": "Teacher workspace — your classes, grade sheets (open sequence) and lessons."
+      "homeBlurb": "Teacher workspace — classes, report sheets, sequence entry and timetable."
     },
     "ADMINISTRATION": {
       "label": "Administration",
@@ -157,6 +157,7 @@
     "manageStaff": "Manage staff",
     "manageStudents": "Manage students & guardians",
     "manageEnrollments": "Manage enrollments",
+    "viewTimetable": "View timetable",
     "manageTimetable": "Manage timetable",
     "manageReportCards": "Report cards & reporting",
     "manageAbsences": "Absences, lateness, sanctions",
@@ -982,20 +983,20 @@
       "empty": "No grade sheets yet."
     },
     "teacherTimetable": {
-      "description": "Your published lessons.",
+      "description": "Your lessons and the school timetable by class (read only).",
       "empty": "No lessons to show."
     },
     "parentChildren": {
       "description": "Children linked to your guardian account.",
       "hint": "Only via Student.guardians — never other students.",
-      "empty": "No linked children in this demo."
+      "empty": "No linked children."
     },
     "parentGrades": {
-      "description": "Your children’s grades (live).",
+      "description": "Your children’s sequence marks.",
       "empty": "No grades to show."
     },
     "parentReportCards": {
-      "description": "Downloadable annual report cards.",
+      "description": "Published annual report cards.",
       "hint": "ANNUAL + PUBLISHED only.",
       "empty": "No published report card."
     },
@@ -1075,7 +1076,11 @@
       "empty": "No published report card."
     },
     "studentTimetable": {
-      "description": "Your class timetable.",
+      "description": "Your class timetable and PDF.",
+      "empty": "No timetable."
+    },
+    "sgTimetable": {
+      "description": "View the published timetable and download PDF.",
       "empty": "No timetable."
     }
   },
@@ -1241,8 +1246,10 @@
     }
   },
   "teacherClasses": {
+    "description": "Your assigned classes and subjects — open a row to enter grades.",
     "yearLabel": "School year",
     "yearEmpty": "No school year",
+    "yearHint": "Assignments for the current year only.",
     "loadError": "Could not load your classes.",
     "noStaffProfileTitle": "Missing teacher profile",
     "noStaffProfileDescription": "Your account is not linked to a staff record. Please contact the administration.",
@@ -1258,12 +1265,142 @@
     "coefficient": "Coef. {coef}",
     "weeklyHours": "{hours} h / week",
     "inactive": "Inactive",
-    "openGrades": "Grades"
+    "openGrades": "Grades",
+    "shortcuts": {
+      "grades": "Grade sheets",
+      "gradesHint": "Report sheet and sequence entry",
+      "timetable": "Timetable",
+      "timetableHint": "My lessons, school view and requests"
+    }
+  },
+  "teacherTimetable": {
+    "description": "Your published lessons, school timetable, PDF download and change requests.",
+    "yearLabel": "Academic year",
+    "yearEmpty": "No academic year",
+    "loadError": "Could not load your timetable.",
+    "pdfError": "Could not open the PDF.",
+    "pdfNeedClass": "Select a class to download the PDF.",
+    "pdf": "Download PDF",
+    "filterClass": "Class",
+    "allMyClasses": "All my classes",
+    "pickClass": "Choose a class…",
+    "tabsAria": "Timetable view",
+    "tabs": {
+      "mine": "My lessons",
+      "general": "School timetable"
+    },
+    "periodCount": "{count, plural, one {# period / week} other {# periods / week}}",
+    "hintPublishedMine": "Published timetable (revision {revision}) — your lessons.",
+    "hintPublishedGeneral": "Published timetable (revision {revision}) — by class.",
+    "hintDraft": "Draft visible: administration has not published yet.",
+    "hintEmpty": "No timetable for this year.",
+    "changeHint": "On one of your slots: open the detail then “Request a change” (admin / director review).",
+    "noProfileTitle": "Teacher profile missing",
+    "noProfileDescription": "Your account is not linked to a staff profile.",
+    "empty": {
+      "title": "No timetable yet",
+      "description": "Administration has not published a timetable for this year yet."
+    },
+    "emptyMine": {
+      "title": "No lessons assigned to you",
+      "description": "No timetable cell lists you as the teacher."
+    },
+    "emptyGeneralPick": {
+      "title": "Choose a class",
+      "description": "Select a class to display its full timetable."
+    },
+    "emptyGeneral": {
+      "title": "No slots for this class",
+      "description": "No cells are scheduled for this class in the published timetable."
+    },
+    "changeRequest": {
+      "title": "Request a change",
+      "description": "Your request will be reviewed by administration or the director.",
+      "slotSummary": "{subject} — {day} · {slot}",
+      "kind": "Request type",
+      "kinds": {
+        "UPDATE": "Update the slot",
+        "REMOVE": "Remove the slot"
+      },
+      "proposedNote": "Details of the proposal",
+      "proposedNoteHint": "E.g. new room, preferred time…",
+      "reason": "Reason",
+      "reasonHint": "Explain the issue (15 characters minimum).",
+      "reasonRequired": "Reason must be at least 15 characters.",
+      "cancel": "Cancel",
+      "submit": "Send request",
+      "submitting": "Sending…",
+      "success": "Request sent.",
+      "error": "Could not send the request."
+    }
+  },
+  "studentTimetable": {
+    "description": "Your class and, if you like, any class in the school — view and download PDF.",
+    "yearLabel": "Academic year",
+    "yearEmpty": "No academic year",
+    "loadError": "Could not load the timetable.",
+    "hint": "Shows the typical week for your enrolled class.",
+    "hintGeneral": "All school classes: pick one to view and download its timetable.",
+    "hintClass": "Class {className} — published timetable (read only).",
+    "tabsAria": "Timetable view",
+    "tabs": {
+      "mine": "My class",
+      "general": "Whole school"
+    },
+    "filterClass": "School class",
+    "pickClass": "Choose a class…",
+    "readOnlyNotice": "View and download only — no changes possible.",
+    "noProfileTitle": "Student profile missing",
+    "noProfileDescription": "Your account is not linked to a student profile.",
+    "noEnrollmentTitle": "No enrollment",
+    "noEnrollmentDescription": "You have no enrollment for the current year.",
+    "empty": {
+      "title": "No timetable yet",
+      "description": "Administration has not published a timetable for this year yet."
+    },
+    "emptyGeneralPick": {
+      "title": "Choose a class",
+      "description": "Select any class in the school to view and download its timetable."
+    },
+    "emptyClass": {
+      "title": "No slots for this class",
+      "description": "No cells are scheduled for this class."
+    },
+    "pdf": "Download PDF",
+    "pdfNeedClass": "Choose a class to download the PDF.",
+    "pdfError": "Could not open the PDF."
+  },
+  "sgTimetable": {
+    "description": "View and download the published timetable for each class.",
+    "yearLabel": "Academic year",
+    "yearEmpty": "No academic year",
+    "loadError": "Could not load the timetable.",
+    "hint": "Choose a class to display the typical week.",
+    "hintClass": "Class {className} — published timetable (read only).",
+    "filterClass": "Class",
+    "pickClass": "Choose a class…",
+    "readOnlyNotice": "View and download only — publishing stays with administration.",
+    "empty": {
+      "title": "No timetable yet",
+      "description": "Administration has not published a timetable for this year yet."
+    },
+    "emptyPick": {
+      "title": "Choose a class",
+      "description": "Select a class to display its full timetable."
+    },
+    "emptyClass": {
+      "title": "No slots for this class",
+      "description": "No cells are scheduled for this class."
+    },
+    "pdf": "Download PDF",
+    "pdfNeedClass": "Choose a class to download the PDF.",
+    "pdfError": "Could not open the PDF."
   },
   "teacherGrades": {
-    "description": "Grade report sheet and entry for your sequences.",
+    "description": "Report sheet and sequence entry for your subjects — pick an assignment then a term.",
     "yearLabel": "School year",
     "yearEmpty": "No school year",
+    "yearHint": "Active term follows open sequences (BR-25).",
     "loadError": "Could not load your subjects.",
     "noStaffProfileTitle": "Missing teacher profile",
     "noStaffProfileDescription": "Your account is not linked to a staff record. Please contact the administration.",
@@ -1841,9 +1978,9 @@
     "tabsNav": "Timetable",
     "yearLabel": "Academic year",
     "yearEmpty": "No academic year configured",
-    "yearHint": "Rooms are already available; the timetable grid comes next.",
-    "yearLockedBadge": "Read-only",
-    "yearLockedHint": "Year ended: timetable for this year is read-only.",
+    "yearHint": "Create a grid, a draft, fill cells, then publish.",
+    "yearLockedBadge": "Read only",
+    "yearLockedHint": "Year closed: timetable is view-only.",
     "yearStatus": {
       "PLANNED": "Planned",
       "ACTIVE": "Active",
@@ -1852,35 +1989,311 @@
     },
     "statusActive": "Active",
     "inactive": "Inactive",
-    "loadError": "Unable to load timetable.",
+    "loadError": "Could not load the timetable.",
+    "actionError": "Action failed.",
+    "pdfError": "Could not generate the PDF.",
+    "needGrid": "Create a time-slot grid first.",
+    "linkNeedTwo": "Select at least two cells to link.",
     "tableCount": "{count, plural, one {# room shown} other {# rooms shown}}",
+    "ttCount": "{count, plural, one {# revision} other {# revisions}}",
+    "gridCount": "{count, plural, one {# grid} other {# grids}}",
     "stats": {
-      "overview": "Grid",
+      "overview": "Overview",
+      "editor": "Editor",
+      "grid": "Grid",
+      "conflicts": "Conflicts",
+      "changes": "Requests",
       "rooms": "Rooms"
     },
     "tabs": {
       "overview": "Overview",
+      "editor": "Editor",
+      "grid": "Grid",
+      "conflicts": "Conflicts",
+      "changes": "Requests",
       "rooms": "Rooms"
     },
     "search": {
       "overview": "Search…",
+      "editor": "Search…",
+      "grid": "Name…",
+      "conflicts": "Search…",
+      "changes": "Teacher, class…",
       "rooms": "Name or type…"
     },
     "columns": {
       "name": "Name",
       "type": "Type",
       "capacity": "Capacity",
-      "status": "Status"
+      "status": "Status",
+      "revision": "Revision",
+      "publishedAt": "Published",
+      "actions": "Actions",
+      "periods": "Periods"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
+      "ARCHIVED": "Archived"
+    },
+    "days": {
+      "MONDAY": "Mon",
+      "TUESDAY": "Tue",
+      "WEDNESDAY": "Wed",
+      "THURSDAY": "Thu",
+      "FRIDAY": "Fri",
+      "SATURDAY": "Sat",
+      "SUNDAY": "Sun"
+    },
+    "activity": {
+      "CLUB": "Club",
+      "LIBRARY": "Library",
+      "MUSIC": "Music",
+      "CHINESE": "Chinese",
+      "GENERAL_CLEANING": "Cleaning",
+      "STUDY_HALL": "Study hall",
+      "OTHER": "Other"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "createGrid": "Create standard grid",
+      "createDraft": "New draft",
+      "publish": "Publish",
+      "revise": "New revision",
+      "pdf": "Class PDF",
+      "openEditor": "Open",
+      "linkMode": "Link sessions",
+      "linkSelected": "Link ({count})",
+      "unlink": "Unlink",
+      "addOffGrid": "Off-grid / Saturday",
+      "requestChange": "Request a change"
+    },
+    "changes": {
+      "pendingCount": "{count, plural, one {# pending request} other {# pending requests}}",
+      "refresh": "Refresh",
+      "loadError": "Could not load change requests.",
+      "actionError": "Action failed.",
+      "approveSuccess": "Request approved — applied to the draft.",
+      "rejectSuccess": "Request rejected.",
+      "approve": "Approve",
+      "approving": "…",
+      "reject": "Reject",
+      "rejectTitle": "Reject request",
+      "rejectHint": "Provide a rejection reason (visible to the teacher).",
+      "reviewNote": "Rejection reason",
+      "reviewNoteRequired": "Reason must be at least 5 characters.",
+      "confirmReject": "Confirm rejection",
+      "rejecting": "…",
+      "emptyTitle": "No pending requests",
+      "emptyDescription": "Teacher timetable change proposals will appear here.",
+      "tableCount": "{count, plural, one {# request} other {# requests}}",
+      "columns": {
+        "teacher": "Teacher",
+        "class": "Class",
+        "slot": "Slot",
+        "kind": "Type",
+        "reason": "Reason",
+        "when": "Requested",
+        "actions": "Actions"
+      },
+      "kinds": {
+        "UPDATE": "Update",
+        "REMOVE": "Remove",
+        "ADD": "Add"
+      }
+    },
+    "toast": {
+      "gridCreated": "Grid created.",
+      "draftCreated": "Draft created.",
+      "published": "Timetable published.",
+      "revised": "New revision created.",
+      "entrySaved": "Entry saved.",
+      "entryDeleted": "Entry deleted.",
+      "linked": "Shared session created.",
+      "unlinked": "Shared session cleared."
     },
     "empty": {
       "overview": {
-        "title": "Grid coming next",
-        "description": "Timetable slot listing / editing will follow."
+        "title": "No timetable yet",
+        "description": "Create a grid then a draft to start editing."
+      },
+      "editor": {
+        "title": "Nothing to edit",
+        "description": "Pick a revision and a class, or create a draft."
+      },
+      "grid": {
+        "title": "No grid",
+        "description": "The standard Mon–Fri 8-period grid can be created in one click."
+      },
+      "conflicts": {
+        "title": "Select a timetable",
+        "description": "Open a revision to analyse conflicts."
       },
       "rooms": {
         "title": "No rooms",
         "description": "Add rooms in the Academic module."
       }
+    },
+    "conflicts": {
+      "banner": "{count, plural, one {# blocking conflict detected} other {# blocking conflicts detected}}",
+      "noneTitle": "No conflicts",
+      "noneDescription": "No blocking overlaps or warnings for this revision."
+    },
+    "editor": {
+      "timetable": "Revision",
+      "class": "Class",
+      "sessionGroups": "Shared sessions"
+    },
+    "grid": {
+      "period": "Slot",
+      "add": "+",
+      "offGrid": "Off-grid",
+      "lessons": "lessons"
+    },
+    "entry": {
+      "createTitle": "New entry",
+      "editTitle": "Edit entry",
+      "description": "Subject, teacher, LV2 options, activity…",
+      "readOnly": "Read only.",
+      "delete": "Delete",
+      "class": "Class",
+      "kind": "Kind",
+      "kindLesson": "Lesson",
+      "kindActivity": "Activity",
+      "day": "Day",
+      "slotMode": "Slot",
+      "slotPeriod": "Grid period",
+      "slotCustom": "Custom times",
+      "customStart": "Start",
+      "customEnd": "End",
+      "startPeriod": "Period",
+      "periodCount": "Length (periods)",
+      "classSubject": "Class subject",
+      "activityType": "Activity",
+      "teacher": "Teacher",
+      "room": "Room",
+      "subjectLabel": "Printed label",
+      "teacherLabel": "Printed teacher",
+      "optionGroup": "Option group",
+      "optionCode": "Option code",
+      "note": "Note",
+      "none": "—"
+    }
+  },
+  "teacherSpace": {
+    "assignmentSwitcherLabel": "Subject followed",
+    "home": {
+      "quickTitle": "Teacher desk",
+      "quickHeadline": "Jump to what matters",
+      "quickHint": "Classes, grades and timetable — your daily tools.",
+      "assignmentsTitle": "Active assignments",
+      "shortcuts": {
+        "classes": "My classes",
+        "classesHint": "This year’s assignments",
+        "grades": "Grades",
+        "gradesHint": "Report sheet and entry",
+        "timetable": "Timetable",
+        "timetableHint": "Lessons, school view, PDF"
+      }
+    }
+  },
+  "parentSpace": {
+    "loadError": "Could not load family data.",
+    "yearLabel": "School year",
+    "yearEmpty": "No school year",
+    "yearLocked": "Read only",
+    "noProfileTitle": "Guardian profile missing",
+    "noProfileDescription": "Your account is not linked to a parent / guardian profile.",
+    "childSwitcherLabel": "Child followed",
+    "primaryContact": "Primary contact",
+    "matricule": "ID {value}",
+    "selectedChild": "Selected child",
+    "enrolledIn": "Enrolled in {className} · {year}",
+    "noEnrollment": "No enrollment for the current year.",
+    "relationship": {
+      "FATHER": "Father",
+      "MOTHER": "Mother",
+      "LEGAL_GUARDIAN": "Legal guardian",
+      "OTHER": "Family link"
+    },
+    "children": {
+      "description": "Only children linked to your account appear here — never other pupils.",
+      "emptyTitle": "No linked children",
+      "emptyDescription": "Administration must link you as guardian on the student’s file."
+    },
+    "shortcuts": {
+      "grades": "Grades",
+      "gradesHint": "Live sequence averages",
+      "reportCards": "Report cards",
+      "reportCardsHint": "Published annual bulletin (PDF)",
+      "timetable": "Timetable",
+      "timetableHint": "Child’s class, school timetable and PDF"
+    },
+    "grades": {
+      "description": "Sequence marks for the selected child (if your link allows it).",
+      "hint": "Read only — PENDING marks are never shown as 0.",
+      "forbiddenTitle": "Grades access not allowed",
+      "forbiddenBody": "Your guardian link does not include grade access for this child.",
+      "emptyTitle": "No marks yet",
+      "emptyDescription": "No sequence marks are available for this child this year.",
+      "unknownSubject": "Subject",
+      "termFilter": "Term",
+      "allTerms": "All",
+      "termOption": "T{number}",
+      "tableCount": "{count, plural, one {# subject} other {# subjects}}",
+      "columns": {
+        "subject": "Subject",
+        "session": "S{number}"
+      }
+    },
+    "reportCards": {
+      "description": "Published annual report cards for the selected child.",
+      "hint": "Only ANNUAL + PUBLISHED bulletins can be downloaded.",
+      "forbiddenTitle": "Download not allowed",
+      "forbiddenBody": "Your guardian link does not include report-card download for this child.",
+      "emptyTitle": "No published bulletin",
+      "emptyDescription": "The annual report card will appear here once the school publishes it.",
+      "tableCount": "{count, plural, one {# bulletin} other {# bulletins}}",
+      "annual": "Annual report card",
+      "revision": "Revision {revision}",
+      "published": "Published",
+      "download": "PDF",
+      "downloading": "…",
+      "pdfError": "Could not open the PDF.",
+      "columns": {
+        "period": "Period",
+        "average": "Average",
+        "rank": "Rank",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "timetable": {
+      "description": "Your children’s timetable and the whole school — view and download PDF.",
+      "hint": "Pick a child to see their class week.",
+      "hintGeneral": "All school classes: pick one to view and download its timetable.",
+      "hintClass": "Class {className} — published timetable (read only).",
+      "tabsAria": "Timetable view",
+      "tabs": {
+        "child": "Child’s class",
+        "general": "Whole school"
+      },
+      "filterClass": "School class",
+      "pickClass": "Choose a class…",
+      "pickClassTitle": "Choose a class",
+      "pickClassDescription": "Select any class in the school to view and download its timetable.",
+      "readOnlyNotice": "View and download only — no changes can be requested.",
+      "emptyTitle": "No timetable yet",
+      "emptyDescription": "Administration has not published a timetable for this year.",
+      "noEnrollmentTitle": "No enrollment",
+      "noEnrollmentDescription": "This child has no enrollment for the current year.",
+      "emptyClassTitle": "No slots for this class",
+      "emptyClassDescription": "No cells are scheduled for this class.",
+      "pdf": "Download PDF",
+      "pdfNeedClass": "Choose a class to download the PDF.",
+      "pdfError": "Could not open the PDF."
     }
   }
 }

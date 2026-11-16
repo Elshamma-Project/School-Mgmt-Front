@@ -20,6 +20,9 @@ export type NotificationCategory =
   | "CORRECTION_DECIDED"
   | "REPORT_SHEET_REJECTED"
   | "STAFF_SIGNAL"
+  | "TIMETABLE_PUBLISHED"
+  | "TIMETABLE_CHANGE_REQUESTED"
+  | "TIMETABLE_CHANGE_DECIDED"
   | "SYSTEM";
 
 export type NotificationSeverity = "INFO" | "SUCCESS" | "WARNING" | "URGENT";

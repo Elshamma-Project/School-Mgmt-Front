@@ -30,7 +30,11 @@ function accentFor(
       chip: "bg-[var(--ios-danger-soft)] text-[var(--ios-danger)]",
     };
   }
-  if (category === "CORRECTION_REQUESTED" || category === "STAFF_SIGNAL") {
+  if (
+    category === "CORRECTION_REQUESTED" ||
+    category === "STAFF_SIGNAL" ||
+    category === "TIMETABLE_CHANGE_REQUESTED"
+  ) {
     return {
       chip: "bg-[var(--ios-warning-soft)] text-[var(--ios-warning)]",
     };

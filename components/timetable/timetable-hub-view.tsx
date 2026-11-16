@@ -1,10 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, DoorOpen } from "lucide-react";
-import { useTranslations } from "next-intl";
+import {
+  AlertTriangle,
+  CalendarDays,
+  DoorOpen,
+  FileDown,
+  FilePenLine,
+  Grid3x3,
+  Link2,
+  Plus,
+  RefreshCw,
+} from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import {
+  TimetableEntryDialog,
+  type EntryDialogSeed,
+} from "@/components/timetable/timetable-entry-dialog";
+import { TimetableChangesPanel } from "@/components/timetable/timetable-changes-panel";
+import { TimetableWeekGrid } from "@/components/timetable/timetable-week-grid";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Select } from "@/components/ui/select";
 import { StatCard } from "@/components/ui/stat-card";
 import {
   HubLoadingRows,
@@ -14,7 +32,42 @@ import {
   HubYearBanner,
 } from "@/components/workspace/hub-chrome";
 import { useRouter } from "@/i18n/navigation";
-import { listAcademicYears, listRooms, type RoomResponse } from "@/lib/api/academic";
+import {
+  listAcademicYears,
+  listClasses,
+  listClassSubjects,
+  listRooms,
+  listSubjects,
+  type AcademicYearResponse,
+  type ClassSubjectResponse,
+  type RoomResponse,
+  type SchoolClassResponse,
+  type SubjectResponse,
+} from "@/lib/api/academic";
+import { listStaff, type StaffResponse } from "@/lib/api/staff";
+import {
+  createTimeSlotGrid,
+  createTimetableDraft,
+  deleteTimetableEntry,
+  downloadTimetableClassPdf,
+  getTimetableConflicts,
+  linkSessionGroup,
+  listTimeSlotGrids,
+  listTimetableEntries,
+  listTimetables,
+  publishTimetable,
+  reviseTimetable,
+  unlinkSessionGroup,
+  updateTimetableEntry,
+  upsertTimetableEntry,
+  type DayOfWeek,
+  type TimeSlotGridResponse,
+  type TimetableConflictsResponse,
+  type TimetableEntryResponse,
+  type TimetableResponse,
+  type UpsertTimetableEntryRequest,
+} from "@/lib/api/timetable";
+import { userHasCapability } from "@/lib/auth/permissions";
 import { getRoleHomePath } from "@/lib/auth/workspaces";
 import {
   moduleListPath,
@@ -22,108 +75,379 @@ import {
   TIMETABLE_TABS,
   type TimetableTab,
 } from "@/lib/modules/tabs";
+import { buildDefaultGridRequest } from "@/lib/timetable/default-grid";
 import { notify } from "@/lib/ui/notify";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/stores/auth-store";
 import { ApiError, isAuthFailure } from "@/types/api";
 import { primaryRole } from "@/types/auth";
 
-/** Hub emploi du temps — salles déjà branchées ; grille/emploi = prochaine étape API. */
 export function TimetableHubView() {
   const t = useTranslations("timetableHub");
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const schoolId = useAuthStore((s) => s.user?.schoolId);
+  const roles = useAuthStore((s) => s.user?.roles);
   const role = primaryRole(useAuthStore((s) => s.user));
   const workspaceHome = role ? getRoleHomePath(role) : "/administration";
+  const canManage = userHasCapability(roles, "manageTimetable");
 
   const tab = parseTimetableTab(searchParams.get("tab"));
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [yearLabel, setYearLabel] = useState<string | null>(null);
-  const [yearStatus, setYearStatus] = useState<string | null>(null);
-  const [yearLocked, setYearLocked] = useState(false);
+  const [year, setYear] = useState<AcademicYearResponse | null>(null);
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
+  const [classes, setClasses] = useState<SchoolClassResponse[]>([]);
+  const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
+  const [teachers, setTeachers] = useState<StaffResponse[]>([]);
+  const [grids, setGrids] = useState<TimeSlotGridResponse[]>([]);
+  const [timetables, setTimetables] = useState<TimetableResponse[]>([]);
+  const [selectedTimetableId, setSelectedTimetableId] = useState<string>("");
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
+  const [entries, setEntries] = useState<TimetableEntryResponse[]>([]);
+  const [classSubjects, setClassSubjects] = useState<ClassSubjectResponse[]>([]);
+  const [conflicts, setConflicts] = useState<TimetableConflictsResponse | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+  const [entrySeed, setEntrySeed] = useState<EntryDialogSeed | null>(null);
+  const [linkMode, setLinkMode] = useState(false);
+  const [linkSelection, setLinkSelection] = useState<string[]>([]);
+
+  const selectedTimetable = useMemo(
+    () => timetables.find((x) => x.id === selectedTimetableId) ?? null,
+    [timetables, selectedTimetableId],
+  );
+  const selectedGrid = useMemo(() => {
+    if (!selectedTimetable) return grids[0] ?? null;
+    return grids.find((g) => g.id === selectedTimetable.gridId) ?? null;
+  }, [grids, selectedTimetable]);
+  const draft = useMemo(
+    () => timetables.find((x) => x.status === "DRAFT") ?? null,
+    [timetables],
+  );
+  const published = useMemo(
+    () => timetables.find((x) => x.status === "PUBLISHED") ?? null,
+    [timetables],
+  );
+  const yearLocked = Boolean(year?.locked);
+  const canEdit =
+    canManage && !yearLocked && selectedTimetable?.status === "DRAFT";
 
   const selectTab = (next: TimetableTab) => {
     router.replace(moduleListPath(workspaceHome, "timetable", next, "overview"));
   };
 
-  const load = useCallback(async () => {
+  const loadCore = useCallback(async () => {
     setLoading(true);
     try {
-      const [years, roomsPage] = await Promise.all([
+      const [years, roomsPage, subjectsPage, staffPage] = await Promise.all([
         listAcademicYears({ page: 0, size: 20, schoolId }),
         listRooms({ page: 0, size: 100, schoolId }),
+        listSubjects({ page: 0, size: 200, active: true, schoolId }),
+        listStaff({ page: 0, size: 200, active: true, schoolId }),
       ]);
-      const year =
+      const currentYear =
         years.content.find((y) => y.current) ??
         years.content.find((y) => y.status === "ACTIVE") ??
         years.content[0] ??
         null;
-      setYearLabel(year?.label ?? null);
-      setYearStatus(year?.status ?? null);
-      setYearLocked(Boolean(year?.locked));
+      setYear(currentYear);
       setRooms(roomsPage.content);
+      setSubjects(subjectsPage.content);
+      setTeachers(staffPage.content);
+
+      if (!currentYear) {
+        setClasses([]);
+        setGrids([]);
+        setTimetables([]);
+        return;
+      }
+
+      const [classesPage, gridList, ttList] = await Promise.all([
+        listClasses({
+          academicYearId: currentYear.id,
+          page: 0,
+          size: 100,
+          active: true,
+          schoolId,
+        }),
+        listTimeSlotGrids({ academicYearId: currentYear.id, schoolId }),
+        listTimetables({ academicYearId: currentYear.id, schoolId }),
+      ]);
+      setClasses(classesPage.content);
+      setGrids(gridList);
+      setTimetables(ttList);
+      setSelectedClassId((prev) => prev || classesPage.content[0]?.id || "");
+      const preferred =
+        ttList.find((x) => x.status === "DRAFT") ??
+        ttList.find((x) => x.status === "PUBLISHED") ??
+        ttList[0];
+      setSelectedTimetableId((prev) =>
+        prev && ttList.some((x) => x.id === prev) ? prev : preferred?.id || "",
+      );
     } catch (error) {
       if (isAuthFailure(error)) return;
       if (error instanceof ApiError) notify.error(error.message);
       else notify.error(t("loadError"));
-      setRooms([]);
     } finally {
       setLoading(false);
     }
   }, [schoolId, t]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const loadEntries = useCallback(async () => {
+    if (!selectedTimetableId || !selectedClassId) {
+      setEntries([]);
+      return;
+    }
+    try {
+      const [entryList, csPage] = await Promise.all([
+        listTimetableEntries({
+          timetableId: selectedTimetableId,
+          classId: selectedClassId,
+          schoolId,
+        }),
+        listClassSubjects({
+          classId: selectedClassId,
+          page: 0,
+          size: 100,
+          active: true,
+          schoolId,
+        }),
+      ]);
+      setEntries(entryList);
+      setClassSubjects(csPage.content);
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("loadError"));
+    }
+  }, [selectedTimetableId, selectedClassId, schoolId, t]);
 
-  const q = query.trim().toLowerCase();
+  const loadConflicts = useCallback(async () => {
+    if (!selectedTimetableId) {
+      setConflicts(null);
+      return;
+    }
+    try {
+      setConflicts(await getTimetableConflicts(selectedTimetableId, schoolId));
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+    }
+  }, [selectedTimetableId, schoolId]);
+
+  useEffect(() => {
+    void loadCore();
+  }, [loadCore]);
+
+  useEffect(() => {
+    if (tab === "editor") void loadEntries();
+  }, [tab, loadEntries]);
+
+  useEffect(() => {
+    if (tab === "conflicts" || tab === "overview") void loadConflicts();
+  }, [tab, loadConflicts]);
+
   const filteredRooms = useMemo(() => {
+    const q = query.trim().toLowerCase();
     if (!q) return rooms;
     return rooms.filter(
       (r) => r.name.toLowerCase().includes(q) || r.type.toLowerCase().includes(q),
     );
-  }, [q, rooms]);
+  }, [query, rooms]);
+
+  const run = async (fn: () => Promise<void>, successKey: string) => {
+    setBusy(true);
+    try {
+      await fn();
+      notify.success(t(successKey));
+      await loadCore();
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("actionError"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleCreateGrid = () => {
+    if (!year) return;
+    void run(async () => {
+      await createTimeSlotGrid(buildDefaultGridRequest(year.id, schoolId));
+    }, "toast.gridCreated");
+  };
+
+  const handleCreateDraft = () => {
+    if (!year || !grids[0]) {
+      notify.error(t("needGrid"));
+      return;
+    }
+    void run(async () => {
+      await createTimetableDraft({
+        academicYearId: year.id,
+        gridId: grids[0].id,
+        schoolId,
+      });
+    }, "toast.draftCreated");
+  };
+
+  const handlePublish = () => {
+    if (!draft) return;
+    void run(async () => {
+      await publishTimetable(draft.id, schoolId);
+    }, "toast.published");
+  };
+
+  const handleRevise = () => {
+    if (!published) return;
+    void run(async () => {
+      await reviseTimetable(published.id, schoolId);
+    }, "toast.revised");
+  };
+
+  const handlePdf = async () => {
+    if (!selectedTimetableId || !selectedClassId) return;
+    try {
+      const blob = await downloadTimetableClassPdf(selectedTimetableId, selectedClassId, {
+        schoolId,
+        language: locale.startsWith("en") ? "EN" : "FR",
+      });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      notify.error(t("pdfError"));
+    }
+  };
+
+  const openCell = (args: {
+    day: DayOfWeek;
+    startPeriod: number | null;
+    entries: TimetableEntryResponse[];
+  }) => {
+    if (linkMode && args.entries[0]) {
+      setLinkSelection((prev) => {
+        const id = args.entries[0].id;
+        return prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      });
+      return;
+    }
+    const primary = args.entries[0] ?? null;
+    setEntrySeed({
+      day: args.day,
+      startPeriod: args.startPeriod,
+      classId: selectedClassId,
+      entry: primary,
+    });
+    setEntryDialogOpen(true);
+  };
+
+  const saveEntry = async (payload: UpsertTimetableEntryRequest, entryId?: string) => {
+    if (!selectedTimetableId) return;
+    setBusy(true);
+    try {
+      const result = entryId
+        ? await updateTimetableEntry(entryId, { ...payload, schoolId }, schoolId)
+        : await upsertTimetableEntry(selectedTimetableId, { ...payload, schoolId });
+      for (const warning of result.warnings) {
+        notify.warning(`${warning.code}: ${warning.message}`);
+      }
+      notify.success(t("toast.entrySaved"));
+      setEntryDialogOpen(false);
+      await loadEntries();
+      await loadConflicts();
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("actionError"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeEntry = async (entryId: string) => {
+    setBusy(true);
+    try {
+      await deleteTimetableEntry(entryId, schoolId);
+      notify.success(t("toast.entryDeleted"));
+      setEntryDialogOpen(false);
+      await loadEntries();
+      await loadConflicts();
+    } catch (error) {
+      if (isAuthFailure(error)) return;
+      if (error instanceof ApiError) notify.error(error.message);
+      else notify.error(t("actionError"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleLinkSession = () => {
+    if (!selectedTimetableId || linkSelection.length < 2) {
+      notify.error(t("linkNeedTwo"));
+      return;
+    }
+    void run(async () => {
+      await linkSessionGroup(selectedTimetableId, {
+        entryIds: linkSelection,
+        schoolId,
+      });
+      setLinkSelection([]);
+      setLinkMode(false);
+      await loadEntries();
+    }, "toast.linked");
+  };
+
+  const handleUnlink = (sessionGroupId: string) => {
+    if (!selectedTimetableId) return;
+    void run(async () => {
+      await unlinkSessionGroup(selectedTimetableId, sessionGroupId, [], schoolId);
+      await loadEntries();
+    }, "toast.unlinked");
+  };
 
   return (
     <div className="space-y-5 slide-up">
       <HubYearBanner
         label={t("yearLabel")}
-        yearLabel={yearLabel}
-        yearStatus={yearStatus}
+        yearLabel={year?.label ?? null}
+        yearStatus={year?.status ?? null}
         yearStatusLabel={
-          yearStatus && t.has(`yearStatus.${yearStatus}`)
-            ? t(`yearStatus.${yearStatus}`)
-            : yearStatus
+          year?.status && t.has(`yearStatus.${year.status}`)
+            ? t(`yearStatus.${year.status}`)
+            : year?.status
         }
         yearLocked={yearLocked}
         lockedLabel={yearLocked ? t("yearLockedBadge") : null}
-        hint={yearLocked ? t("yearLockedHint") : undefined}
+        hint={yearLocked ? t("yearLockedHint") : t("yearHint")}
         loading={loading}
         emptyLabel={t("yearEmpty")}
       />
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-        <StatCard
-          label={t("stats.overview")}
-          value={0}
-          loading={loading}
-          tone="blue"
-          active={tab === "overview"}
-          onSelect={() => selectTab("overview")}
-          icon={<CalendarDays className="size-[18px] stroke-[1.75]" aria-hidden />}
-        />
-        <StatCard
-          label={t("stats.rooms")}
-          value={rooms.filter((r) => r.active).length}
-          loading={loading}
-          tone="green"
-          active={tab === "rooms"}
-          onSelect={() => selectTab("rooms")}
-          icon={<DoorOpen className="size-[18px] stroke-[1.75]" aria-hidden />}
-        />
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6 sm:gap-3">
+        {(
+          [
+            ["overview", CalendarDays, "blue", timetables.length],
+            ["editor", Grid3x3, "slate", entries.length],
+            ["grid", RefreshCw, "slate", grids.length],
+            ["conflicts", AlertTriangle, "amber", conflicts?.blocking.length ?? 0],
+            ["changes", FilePenLine, "amber", 0],
+            ["rooms", DoorOpen, "green", rooms.filter((r) => r.active).length],
+          ] as const
+        ).map(([key, Icon, tone, value]) => (
+          <StatCard
+            key={key}
+            label={t(`stats.${key}`)}
+            value={value}
+            loading={loading}
+            tone={tone}
+            active={tab === key}
+            onSelect={() => selectTab(key)}
+            icon={<Icon className="size-[18px] stroke-[1.75]" aria-hidden />}
+          />
+        ))}
       </div>
 
       <HubToolbar
@@ -139,11 +463,342 @@ export function TimetableHubView() {
       {loading ? (
         <HubLoadingRows />
       ) : tab === "overview" ? (
-        <EmptyState
-          title={t("empty.overview.title")}
-          description={t("empty.overview.description")}
-          icon={<CalendarDays className="size-9 stroke-[1.5]" aria-hidden />}
-        />
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {canManage && !yearLocked ? (
+              <>
+                <Button size="sm" disabled={busy || !year} onClick={handleCreateGrid}>
+                  <Plus className="size-4" /> {t("actions.createGrid")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={busy || !grids.length || Boolean(draft)}
+                  onClick={handleCreateDraft}
+                >
+                  {t("actions.createDraft")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={busy || !draft}
+                  onClick={handlePublish}
+                >
+                  {t("actions.publish")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={busy || !published || Boolean(draft)}
+                  onClick={handleRevise}
+                >
+                  {t("actions.revise")}
+                </Button>
+              </>
+            ) : null}
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!selectedTimetableId || !selectedClassId}
+              onClick={() => void handlePdf()}
+            >
+              <FileDown className="size-4" /> {t("actions.pdf")}
+            </Button>
+          </div>
+
+          {timetables.length === 0 ? (
+            <EmptyState
+              title={t("empty.overview.title")}
+              description={t("empty.overview.description")}
+              icon={<CalendarDays className="size-9 stroke-[1.5]" aria-hidden />}
+            />
+          ) : (
+            <HubTableShell countLabel={t("ttCount", { count: timetables.length })}>
+              <table className="w-full min-w-[640px] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
+                    <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                      {t("columns.revision")}
+                    </th>
+                    <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                      {t("columns.status")}
+                    </th>
+                    <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                      {t("columns.publishedAt")}
+                    </th>
+                    <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                      {t("columns.actions")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {timetables.map((item, index) => (
+                    <tr
+                      key={item.id}
+                      className={cn(
+                        "border-b border-[var(--ios-separator)]/55 last:border-b-0",
+                        index % 2 === 1 &&
+                          "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
+                        selectedTimetableId === item.id &&
+                          "bg-[color-mix(in_srgb,var(--ios-blue)_8%,transparent)]",
+                      )}
+                    >
+                      <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
+                        r{item.revision}
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <HubStatusPill
+                          active={item.status === "PUBLISHED"}
+                          activeLabel={t(`status.${item.status}`)}
+                          inactiveLabel={t(`status.${item.status}`)}
+                        />
+                      </td>
+                      <td className="px-3 py-3.5 text-[12px] text-[var(--ios-secondary-label)]">
+                        {item.publishedAt
+                          ? new Date(item.publishedAt).toLocaleString(locale)
+                          : "—"}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            setSelectedTimetableId(item.id);
+                            selectTab("editor");
+                          }}
+                        >
+                          {t("actions.openEditor")}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </HubTableShell>
+          )}
+
+          {conflicts && conflicts.blocking.length > 0 ? (
+            <div className="rounded-2xl border border-[color-mix(in_srgb,var(--ios-orange)_35%,var(--ios-separator))] bg-[color-mix(in_srgb,var(--ios-orange)_8%,var(--ios-card))] px-4 py-3 text-[13px] text-[var(--ios-label)]">
+              {t("conflicts.banner", { count: conflicts.blocking.length })}
+            </div>
+          ) : null}
+        </div>
+      ) : tab === "editor" ? (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="grid gap-1 text-[12px] text-[var(--ios-secondary-label)]">
+              {t("editor.timetable")}
+              <Select
+                value={selectedTimetableId}
+                onChange={(e) => setSelectedTimetableId(e.target.value)}
+                className="min-w-[180px]"
+              >
+                {timetables.map((tt) => (
+                  <option key={tt.id} value={tt.id}>
+                    r{tt.revision} — {t(`status.${tt.status}`)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <label className="grid gap-1 text-[12px] text-[var(--ios-secondary-label)]">
+              {t("editor.class")}
+              <Select
+                value={selectedClassId}
+                onChange={(e) => setSelectedClassId(e.target.value)}
+                className="min-w-[180px]"
+              >
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            {canEdit ? (
+              <>
+                <Button
+                  size="sm"
+                  variant={linkMode ? "default" : "secondary"}
+                  onClick={() => {
+                    setLinkMode((v) => !v);
+                    setLinkSelection([]);
+                  }}
+                >
+                  <Link2 className="size-4" /> {t("actions.linkMode")}
+                </Button>
+                {linkMode ? (
+                  <Button
+                    size="sm"
+                    disabled={linkSelection.length < 2 || busy}
+                    onClick={handleLinkSession}
+                  >
+                    {t("actions.linkSelected", { count: linkSelection.length })}
+                  </Button>
+                ) : null}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    setEntrySeed({
+                      day: "SATURDAY",
+                      startPeriod: null,
+                      classId: selectedClassId,
+                      entry: null,
+                    });
+                    setEntryDialogOpen(true);
+                  }}
+                >
+                  {t("actions.addOffGrid")}
+                </Button>
+              </>
+            ) : null}
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!selectedTimetableId || !selectedClassId}
+              onClick={() => void handlePdf()}
+            >
+              <FileDown className="size-4" /> {t("actions.pdf")}
+            </Button>
+          </div>
+
+          {!selectedGrid || !selectedTimetableId || !selectedClassId ? (
+            <EmptyState
+              title={t("empty.editor.title")}
+              description={t("empty.editor.description")}
+              icon={<Grid3x3 className="size-9 stroke-[1.5]" aria-hidden />}
+            />
+          ) : (
+            <TimetableWeekGrid
+              grid={selectedGrid}
+              entries={entries}
+              canEdit={canEdit || linkMode}
+              onCellClick={openCell}
+            />
+          )}
+
+          {entries.some((e) => e.sessionGroupId) ? (
+            <div className="rounded-2xl border border-[var(--ios-separator)] bg-[var(--ios-card)] p-4">
+              <p className="mb-2 text-[12px] font-semibold text-[var(--ios-label)]">
+                {t("editor.sessionGroups")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[...new Set(entries.map((e) => e.sessionGroupId).filter(Boolean))].map((sg) => (
+                  <div
+                    key={sg!}
+                    className="flex items-center gap-2 rounded-full bg-[var(--ios-fill)] px-3 py-1.5 text-[11px]"
+                  >
+                    <span className="font-mono text-[var(--ios-secondary-label)]">
+                      {sg!.slice(0, 8)}…
+                    </span>
+                    {canEdit ? (
+                      <button
+                        type="button"
+                        className="text-[var(--ios-danger)]"
+                        onClick={() => handleUnlink(sg!)}
+                      >
+                        {t("actions.unlink")}
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : tab === "grid" ? (
+        grids.length === 0 ? (
+          <EmptyState
+            title={t("empty.grid.title")}
+            description={t("empty.grid.description")}
+            icon={<RefreshCw className="size-9 stroke-[1.5]" aria-hidden />}
+            action={
+              canManage && !yearLocked ? (
+                <Button onClick={handleCreateGrid}>{t("actions.createGrid")}</Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <HubTableShell countLabel={t("gridCount", { count: grids.length })}>
+            <table className="w-full min-w-[640px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-[var(--ios-separator)] bg-[color-mix(in_srgb,var(--ios-fill)_42%,var(--ios-card))]">
+                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.name")}
+                  </th>
+                  <th className="px-3 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.periods")}
+                  </th>
+                  <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ios-secondary-label)]">
+                    {t("columns.status")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {grids.map((grid, index) => (
+                  <tr
+                    key={grid.id}
+                    className={cn(
+                      "border-b border-[var(--ios-separator)]/55 last:border-b-0",
+                      index % 2 === 1 &&
+                        "bg-[color-mix(in_srgb,var(--ios-fill)_22%,transparent)]",
+                    )}
+                  >
+                    <td className="px-5 py-3.5 text-[13px] font-semibold text-[var(--ios-label)]">
+                      {grid.name}
+                    </td>
+                    <td className="px-3 py-3.5 text-[12px] text-[var(--ios-label)]">
+                      {grid.periods.filter((p) => p.kind === "LESSON").length}{" "}
+                      {t("grid.lessons")}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <HubStatusPill
+                        active={grid.active}
+                        activeLabel={t("statusActive")}
+                        inactiveLabel={t("inactive")}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </HubTableShell>
+        )
+      ) : tab === "conflicts" ? (
+        !conflicts ? (
+          <EmptyState
+            title={t("empty.conflicts.title")}
+            description={t("empty.conflicts.description")}
+            icon={<AlertTriangle className="size-9 stroke-[1.5]" aria-hidden />}
+          />
+        ) : conflicts.blocking.length === 0 && conflicts.warnings.length === 0 ? (
+          <EmptyState
+            title={t("conflicts.noneTitle")}
+            description={t("conflicts.noneDescription")}
+            icon={<AlertTriangle className="size-9 stroke-[1.5]" aria-hidden />}
+          />
+        ) : (
+          <div className="space-y-3">
+            {[...conflicts.blocking, ...conflicts.warnings].map((issue, i) => (
+              <div
+                key={`${issue.code}-${issue.entryId}-${i}`}
+                className={cn(
+                  "rounded-2xl border px-4 py-3",
+                  issue.severity === "BLOCKING"
+                    ? "border-[color-mix(in_srgb,var(--ios-danger)_30%,var(--ios-separator))] bg-[color-mix(in_srgb,var(--ios-danger)_6%,var(--ios-card))]"
+                    : "border-[var(--ios-separator)] bg-[var(--ios-card)]",
+                )}
+              >
+                <div className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--ios-secondary-label)]">
+                  {issue.severity} · {issue.code}
+                </div>
+                <div className="mt-1 text-[13px] text-[var(--ios-label)]">{issue.message}</div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : tab === "changes" ? (
+        <TimetableChangesPanel schoolId={schoolId} query={query} />
       ) : filteredRooms.length === 0 ? (
         <EmptyState
           title={t("empty.rooms.title")}
@@ -199,6 +854,21 @@ export function TimetableHubView() {
           </table>
         </HubTableShell>
       )}
+
+      <TimetableEntryDialog
+        open={entryDialogOpen}
+        onOpenChange={setEntryDialogOpen}
+        seed={entrySeed}
+        canEdit={canEdit}
+        classes={classes}
+        classSubjects={classSubjects}
+        subjects={subjects}
+        teachers={teachers}
+        rooms={rooms}
+        saving={busy}
+        onSave={saveEntry}
+        onDelete={canEdit ? removeEntry : undefined}
+      />
     </div>
   );
 }

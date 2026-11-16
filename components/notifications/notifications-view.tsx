@@ -85,7 +85,11 @@ function categoryStyle(category: NotificationCategory): CategoryStyle {
       Icon: Lock,
     };
   }
-  if (category === "CORRECTION_REQUESTED" || category === "STAFF_SIGNAL") {
+  if (
+    category === "CORRECTION_REQUESTED" ||
+    category === "STAFF_SIGNAL" ||
+    category === "TIMETABLE_CHANGE_REQUESTED"
+  ) {
     return {
       chip: "bg-[color-mix(in_srgb,var(--ios-warning)_14%,var(--ios-card))] text-[color-mix(in_srgb,var(--ios-warning)_85%,#000)]",
       iconWrap: "bg-[color-mix(in_srgb,var(--ios-warning)_14%,var(--ios-card))] text-[var(--ios-warning)]",

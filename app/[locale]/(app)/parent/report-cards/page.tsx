@@ -1,7 +1,7 @@
-import { ModulePage } from "@/components/workspace/module-page";
+import { ParentReportCardsView } from "@/components/parent/parent-report-cards-view";
 
 export const instant = false;
 
 export default function ParentReportCardsPage() {
-  return <ModulePage ns="parentReportCards" />;
+  return <ParentReportCardsView />;
 }

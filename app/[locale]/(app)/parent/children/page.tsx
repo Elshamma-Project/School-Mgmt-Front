@@ -1,7 +1,7 @@
-import { ModulePage } from "@/components/workspace/module-page";
+import { ParentChildrenView } from "@/components/parent/parent-children-view";
 
 export const instant = false;
 
 export default function ParentChildrenPage() {
-  return <ModulePage ns="parentChildren" />;
+  return <ParentChildrenView />;
 }

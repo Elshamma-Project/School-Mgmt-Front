@@ -34,6 +34,8 @@ export type SchoolResponse = {
   reportCardDisclaimer: LocalizedTextDto | null;
   timezone: string;
   active: boolean;
+  /** Q-32 : le SG peut éditer l’EDT si true. */
+  timetableSurveillantCanEdit?: boolean;
 };
 
 export type UpdateSchoolPayload = {
@@ -49,6 +51,7 @@ export type UpdateSchoolPayload = {
   reportCardDisclaimer?: LocalizedTextDto | null;
   timezone?: string;
   active?: boolean;
+  timetableSurveillantCanEdit?: boolean;
 };
 
 export async function listSchools(): Promise<SchoolResponse[]> {
@@ -83,6 +86,7 @@ export async function updateSchool(
       reportCardDisclaimer: payload.reportCardDisclaimer ?? null,
       timezone: payload.timezone ?? "Africa/Douala",
       active: payload.active ?? true,
+      timetableSurveillantCanEdit: payload.timetableSurveillantCanEdit ?? false,
     },
   });
 }
